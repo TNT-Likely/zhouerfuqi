@@ -181,6 +181,22 @@
 #zf-suite .zf-progress{display:flex;gap:6px;justify-content:center;margin-top:4px}
 #zf-suite .zf-progress i{width:6px;height:6px;border-radius:999px;background:var(--zf-soft)}
 #zf-suite .zf-progress i.on{width:18px;background:var(--zf-accent)}
+/* ===== 排班月历编辑器 ===== */
+#zf-suite .zf-cal-head{display:flex;align-items:center;gap:10px;margin-top:6px;min-height:44px}
+#zf-suite .zf-cal-nav{width:36px;height:36px;border-radius:12px;background:var(--zf-soft);display:inline-flex;align-items:center;justify-content:center;color:var(--zf-muted);cursor:pointer}
+#zf-suite .zf-cal-nav svg{width:16px;height:16px}
+#zf-suite .zf-cal-title{font-size:17px;font-weight:650;letter-spacing:-.3px;flex:1;text-align:center}
+#zf-suite .zf-cal-title small{font-size:11px;color:var(--zf-accent);margin-left:6px;font-weight:600}
+#zf-suite .zf-mode{display:grid;grid-template-columns:1fr 1fr;background:var(--zf-soft);border-radius:14px;padding:3px;gap:2px;margin-top:12px}
+#zf-suite .zf-mode button{border-radius:11px;padding:9px 2px;font-size:12px;color:var(--zf-muted)}
+#zf-suite .zf-mode button[aria-pressed="true"]{background:var(--zf-paper);color:var(--zf-ink);font-weight:600;box-shadow:0 1px 4px var(--zf-shadow)}
+#zf-suite .zf-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#zf-suite .zf-quick button{font-size:12px;padding:8px 12px;border-radius:12px;background:var(--zf-soft);color:var(--zf-ink);cursor:pointer}
+#zf-suite .zf-quick button:hover{background:var(--zf-accent-soft);color:var(--zf-accent)}
+#zf-suite .zf-day.picked{box-shadow:inset 0 0 0 2px var(--zf-accent);background:var(--zf-accent-soft)}
+#zf-suite .zf-day.dim{opacity:.4}
+#zf-suite .zf-section-label{font-size:11px;color:var(--zf-muted);letter-spacing:1.5px;margin:18px 2px 8px}
+#zf-suite .zf-legend span.pick i{background:var(--zf-accent)}
 </style>
 <body>
 <div id="zf-suite">
@@ -228,6 +244,7 @@
               <div class="zf-chips" id="heroChips"></div>
               <div class="zf-countdown" id="heroCountdown"></div>
             </div>
+            <div class="zf-section-label">班组 · GROUPS</div>
             <div id="groupCards"></div>
           </div>
         </div>
@@ -240,6 +257,7 @@
             <button class="zf-save" id="saveBtn">保存</button>
           </div>
           <div class="zf-scroll" style="padding-top:4px">
+            <div class="zf-section-label">班制规则 · SCHEDULE</div>
             <div class="zf-capsule" id="ruleSeg">
               <button data-k="weekly">每周几</button>
               <button data-k="everyNWeeks" aria-pressed="true">每 N 周</button>
@@ -294,13 +312,29 @@
           </div>
         </div>
 
-        <!-- ============ 日历 ============ -->
+        <!-- ============ 排班月历 ============ -->
         <div class="zf-page" data-page="calendar">
           <div class="zf-topbar">
-            <div class="zf-title">响铃日历</div>
-            <span style="color:var(--zf-muted);font-size:12px" id="calMonth"></span>
+            <div class="zf-title">排班月历</div>
+            <span id="calModeBadge" style="font-size:11px;color:var(--zf-muted)">规则预览</span>
           </div>
           <div class="zf-scroll">
+            <div class="zf-mode" id="calMode">
+              <button data-m="rule" aria-pressed="true">规则预览</button>
+              <button data-m="manual">手动排班</button>
+            </div>
+            <div class="zf-cal-head">
+              <button class="zf-cal-nav" id="calPrev" title="上个月"><i data-lucide="chevron-left"></i></button>
+              <div class="zf-cal-title zf-num"><span id="calTitle">2026年11月</span><small id="calHint"></small></div>
+              <button class="zf-cal-nav" id="calNext" title="下个月"><i data-lucide="chevron-right"></i></button>
+              <button class="zf-cal-nav" id="calToday" title="回到本月"><i data-lucide="calendar-check"></i></button>
+            </div>
+            <div class="zf-quick" id="quickRow" style="display:none">
+              <button data-q="workdays">填充工作日</button>
+              <button data-q="all">填充全月</button>
+              <button data-q="clear">清空本月</button>
+              <button data-q="clearAll">清空全部点选</button>
+            </div>
             <div class="zf-cal">
               <div class="zf-cal-grid" id="calGrid"></div>
               <div class="zf-legend">
@@ -308,6 +342,7 @@
                 <span><i style="background:var(--zf-accent)"></i>大周周六</span>
                 <span><i style="background:var(--zf-red)"></i>法定假日</span>
                 <span><i style="background:var(--zf-green)"></i>调休补班</span>
+                <span class="pick"><i></i>手动点选</span>
               </div>
             </div>
             <div class="zf-detail" id="dayDetail"></div>
@@ -434,6 +469,9 @@ const state = {
     { id: 't4', hour: 12, minute: 55, label: '午休', amber: true },
   ],
   selDate: '2026-11-21',
+  calY: 2026,
+  calM: 11,
+  calMode: 'rule',
 };
 const ANCHORS = ['2026-11-14', '2026-11-21', '2026-11-28', '2026-12-05'];
 const PRESETS = [
@@ -500,7 +538,7 @@ function renderHome() {
     <div class="zf-group">
       <div class="zf-group-head">
         <div class="zf-gicon"><i data-lucide="alarm-clock"></i></div>
-        <div style="flex:1;min-width:0">
+        <div style="flex:1;min-width:0;cursor:pointer" data-edit="1">
           <div class="zf-gname">上班</div>
           <div class="zf-gsub">${ruleDesc()} · ${state.times.length} 个时间</div>
         </div>
@@ -524,7 +562,8 @@ function renderHome() {
           </div>`).join('')}
       </div>
     </div>`;
-  $('groupSwitch').addEventListener('click', () => { state.groupOn = !state.groupOn; renderAll(); });
+  $('groupSwitch').addEventListener('click', (e) => { e.stopPropagation(); state.groupOn = !state.groupOn; renderAll(); });
+  gc.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => setScene('edit')));
   lucide.createIcons();
 }
 
@@ -580,29 +619,45 @@ function renderEdit() {
   }));
 }
 
+function monthMeta(y, m) {
+  const first = `${y}-${pad(m)}-01`;
+  return { first, days: new Date(y, m, 0).getDate(), firstDow: dow(first) };
+}
 function renderCalendar() {
-  $('calMonth').textContent = '2026年11月';
+  const y = state.calY, m = state.calM;
+  const manual = state.ruleKind === 'customDates';
+  $('calTitle').textContent = `${y}年${m}月`;
+  $('calHint').textContent = (y === 2026 && m === 11) ? '本月' : '';
+  $('calModeBadge').textContent = manual ? (state.calMode === 'manual' ? '手动排班 · 编辑中' : '手动排班 · 预览') : '规则预览';
+  $('quickRow').style.display = (manual && state.calMode === 'manual') ? '' : 'none';
   const grid = $('calGrid');
-  const first = '2026-11-01';
+  const { first, days, firstDow } = monthMeta(y, m);
   let html = WD.map(w => `<div class="zf-dow">${w}</div>`).join('');
-  for (let i = 1; i < dow(first); i++) html += '<div></div>';
-  for (let d = 1; d <= 30; d++) {
-    const date = `2026-11-${pad(d)}`;
+  for (let i = 1; i < firstDow; i++) html += '<div></div>';
+  for (let d = 1; d <= days; d++) {
+    const date = `${y}-${pad(m)}-${pad(d)}`;
     const ev = evalDay(rule(), date, state.holidayOn);
     const ring = state.groupOn && ev.ring;
+    const picked = state.customDates.has(date);
     const w = dow(date);
     let cls = 'zf-day', tag = '', tagCls = '';
-    if (state.selDate === date) cls += ' sel';
-    if (!ring && w >= 6) cls += ' rest';
-    if (ring && state.ruleKind === 'everyNWeeks' && state.weekdays[6] && w === 6) cls += ' big';
-    if (ev.hol === true) { tag = '假'; tagCls = 'off'; }
-    else if (ev.hol === false && ring) { tag = '班'; tagCls = 'swap'; }
-    else if (ring && w === 6) { tag = '大周'; tagCls = 'big'; }
-    else if (!ring && w === 6) { tag = '小周'; }
-    else if (!ring && w === 7) { tag = '休'; }
-    if (TODAY === date) { cls += ' sel'; }
+    if (picked) cls += ' picked';
+    if (date === TODAY) cls += ' sel';
+    if (manual) {
+      if (ev.hol === true && !picked) cls += ' dim';
+      if (picked) { tag = '✓'; tagCls = 'big'; }
+      else if (ev.hol === true) { tag = '假'; tagCls = 'off'; }
+    } else {
+      if (!ring && w >= 6) cls += ' rest';
+      if (ring && state.ruleKind === 'everyNWeeks' && state.weekdays[6] && w === 6) cls += ' big';
+      if (ev.hol === true) { tag = '假'; tagCls = 'off'; }
+      else if (ev.hol === false && ring) { tag = '班'; tagCls = 'swap'; }
+      else if (ring && w === 6 && state.ruleKind === 'everyNWeeks') { tag = '大周'; tagCls = 'big'; }
+      else if (!ring && w === 6) { tag = '小周'; }
+      else if (!ring && w === 7) { tag = '休'; }
+    }
     let dots = '';
-    if (ring) {
+    if (!manual && ring) {
       const morning = state.times.filter(x => !x.amber).length;
       const has12 = state.times.some(x => x.amber);
       dots = `<div class="dots">${'<i></i>'.repeat(Math.min(morning, 3))}${has12 ? '<i class="a"></i>' : ''}</div>`;
@@ -612,7 +667,7 @@ function renderCalendar() {
   grid.innerHTML = html;
   grid.querySelectorAll('.zf-day').forEach(el => el.addEventListener('click', () => {
     const date = el.dataset.date;
-    if (state.ruleKind === 'customDates') {
+    if (manual) {
       state.customDates.has(date) ? state.customDates.delete(date) : state.customDates.add(date);
       renderAll();
     } else {
@@ -621,7 +676,6 @@ function renderCalendar() {
     }
   }));
   renderDetail();
-  lucide.createIcons();
 }
 
 function renderDetail() {
@@ -629,8 +683,10 @@ function renderDetail() {
   const date = state.selDate;
   const ev = evalDay(rule(), date, state.holidayOn);
   const ring = state.groupOn && ev.ring;
+  const manual = state.ruleKind === 'customDates';
   let st;
-  if (ev.hol === true) st = '法定假日 · 联动开启时自动跳过';
+  if (manual) st = state.customDates.has(date) ? '已加入排班(点选即权威,不受节假日影响)' : '未排班 · 点击上方格子加入';
+  else if (ev.hol === true) st = '法定假日 · 联动开启时自动跳过';
   else if (ev.hol === false) st = '调休补班日 · 法定上班';
   else if (dow(date) >= 6) st = '周末';
   else st = '工作日';
@@ -638,9 +694,42 @@ function renderDetail() {
   const evh = ring
     ? `<div class="ev">${state.times.map(x => `<span>${fmtT(x)}${x.label ? ' ' + x.label : ''}</span>`).join('')}</div>`
     : `<div class="ev"><span>${state.groupOn ? '无响铃' : '整组已停用'}</span></div>`;
-  box.innerHTML = `<b>${cnDate(date)} 周${wdOf(date)} · ${ring ? (ev.reason === 'swap' ? '补班上班' : kindLabel(date)) : '不响'}</b>
+  box.innerHTML = `<b>${cnDate(date)} 周${wdOf(date)} · ${ring ? (ev.reason === 'swap' ? '补班上班' : kindLabel(date)) : (manual ? '未点选' : '不响')}</b>
     <div class="st">${st}</div>${evh}`;
 }
+
+/* 月历导航 / 模式 / 快捷填充 */
+$('calPrev').addEventListener('click', () => { state.calM--; if (state.calM === 0) { state.calM = 12; state.calY--; } renderCalendar(); });
+$('calNext').addEventListener('click', () => { state.calM++; if (state.calM === 13) { state.calM = 1; state.calY++; } renderCalendar(); });
+$('calToday').addEventListener('click', () => {
+  state.calY = Number(TODAY.slice(0, 4)); state.calM = Number(TODAY.slice(5, 7)); renderCalendar();
+});
+$('calMode').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  const m2 = b.dataset.m;
+  if (m2 === 'manual' && state.ruleKind !== 'customDates') {
+    // 进入手动排班:把可见月份的规则响铃日播种为点选起点
+    const { days } = monthMeta(state.calY, state.calM);
+    for (let d = 1; d <= days; d++) {
+      const date = `${state.calY}-${pad(state.calM)}-${pad(d)}`;
+      if (evalDay(rule(), date, state.holidayOn).ring) state.customDates.add(date);
+    }
+    state.ruleKind = 'customDates';
+  }
+  state.calMode = m2;
+  renderAll();
+}));
+$('quickRow').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+  const q = b.dataset.q;
+  const { days } = monthMeta(state.calY, state.calM);
+  for (let d = 1; d <= days; d++) {
+    const date = `${state.calY}-${pad(state.calM)}-${pad(d)}`;
+    if (q === 'workdays' && dow(date) <= 5) state.customDates.add(date);
+    if (q === 'all') state.customDates.add(date);
+    if (q === 'clear') state.customDates.delete(date);
+  }
+  if (q === 'clearAll') state.customDates.clear();
+  renderAll();
+}));
 
 function renderGuide() {
   const STEPS = [
