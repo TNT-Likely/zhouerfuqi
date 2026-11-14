@@ -46,27 +46,89 @@ flowchart TB
 
 **依赖规则**:`core` 不 import 任何 RN/平台代码;`scheduler/holidays/stores` 可依赖 `core` 与原生网关的 **TS 接口**;原生实现只被网关调用。保证 core 永远可以被 node:test 直接测(现状如此)。
 
-## 2. 目录结构(M1 完成后)
+## 2. 目录结构(完整规划,✅=已存在)
 
 ```
 zhouerfuqi/
+├── .github/workflows/
+│   ├── ci.yml                          # [M1] PR:core 测试 + typecheck
+│   └── release-apk.yml                 # [M1] tag → gradle assembleRelease → APK artifact(华为侧载主渠道)
 ├── packages/
-│   └── core/                    # 规则引擎 [M0已实现]:types/dates/holidays/schedule + 13 单测
-├── apps/mobile/                 # Expo RN(New Architecture)              [M1]
-│   ├── app/                     # expo-router:(tabs) 首页/日历/设置 + 编辑页 + 响铃页
+│   └── core/                           # ✅ 规则引擎(平台无关,唯一事实源)
+│       ├── package.json                #    node:test 零依赖,typecheck:tsc
+│       ├── src/
+│       │   ├── index.ts                #    出口
+│       │   ├── types.ts                #    AlarmGroup / RepeatRule / Occurrence / DayEvaluation
+│       │   ├── dates.ts                #    纯 UTC 日期运算(无时区歧义)
+│       │   ├── holidays.ts             #    HolidayCalendar(兼容 holiday-cn 格式)
+│       │   └── schedule.ts             #    isRuleDay / evaluateDay / expand* / nextOccurrences
+│       └── test/schedule.test.ts       #    13 用例
+├── apps/mobile/                        # [M1] Expo RN(New Architecture,dev-client)
+│   ├── app.config.ts                   #    图标/启动屏/MMKV config plugin
+│   ├── app/                            # ── expo-router:路由即界面(对照设计稿)
+│   │   ├── _layout.tsx                 #    主题 Provider(深色/日间,对应设计令牌)
+│   │   ├── (tabs)/
+│   │   │   ├── index.tsx               #    首页(设计稿 A:hero + 组列表)
+│   │   │   ├── calendar.tsx            #    响铃日历(设计稿 C)
+│   │   │   └── settings.tsx            #    设置:保活向导入口 / 铃声 / 备份 / 节假日更新
+│   │   ├── group/[id].tsx              #    编辑组(设计稿 B;id="new" 为新建)
+│   │   ├── ring.tsx                    #    响铃页(设计稿 D;原生全屏意图深链直达)
+│   │   └── guide.tsx                   #    保活向导(设计稿 E;settings 可跳转)
 │   ├── src/
-│   │   ├── scheduler/           # 物化器:expandGroups → diff → Gateway.sync
-│   │   ├── stores/              # zustand(MMKV 持久化):groups/settings/guide
-│   │   ├── services/holidays.ts # 年度快照加载 + 可选在线更新
-│   │   └── gateway/             # AlarmGateway 接口 + 平台实现装配
-│   └── modules/zf-alarm/        # Expo Module:create-expo-module 脚手架
-│       ├── android/…Kotlin      # setAlarmClock / Receiver / RingActivity / FGS
-│       └── ios/…Swift           # AlarmKit(iOS 26) / 通知降级(iOS<26)
-├── design/                      # 交互设计稿 [已实现]
-└── docs/                        # 本文档
+│   │   ├── stores/                     # ── zustand + MMKV(开机重排需同步读)
+│   │   │   ├── groups.ts               #    AlarmGroup[](持久化 groups.v1)
+│   │   │   ├── settings.ts             #    horizon/铃声/贪睡(settings.v1)
+│   │   │   └── guide.ts                #    向导进度(guide.v1)
+│   │   ├── scheduler/                  # ── 物化层(架构 §4 的实现)
+│   │   │   ├── materialize.ts          #    expandGroups → MaterializedAlarm[](id=组:时间:日期)
+│   │   │   ├── registry.ts             #    注册表 diff(registry.v1,幂等)
+│   │   │   └── sync.ts                 #    syncAll():规则变更/触发/开机/时区/每日03:30 统一入口
+│   │   ├── gateway/                    # ── 原生网关(接口隔离,实现可替换)
+│   │   │   ├── types.ts                #    AlarmGateway:sync/cancel/permissions/onFired/onDismiss
+│   │   │   ├── notifyKit.ts            #    [M1] Android 实现(notify-kit,SET_ALARM_CLOCK)
+│   │   │   ├── alarmKit.ts             #    [M2] iOS 26 实现(AlarmKit 封装)
+│   │   │   └── index.ts                #    按平台装配;iOS<26 自动切降级实现
+│   │   ├── services/
+│   │   │   ├── holidays.ts             #    快照加载 / 可选在线更新 / 用户覆盖合并
+│   │   │   └── backup.ts               #    整包导出/导入 JSON
+│   │   └── components/                 #    GroupCard / TimePill / Chip / CalendarDay / Segmented
+│   │       └── theme.ts                #    设计令牌(与 design/index.html CSS 变量一一对应)
+│   ├── modules/zf-alarm/               # ── 自研 Expo Module(npx create-expo-module 脚手架)
+│   │   ├── expo-module.config.json
+│   │   ├── src/index.ts                #    TS API:sync(alarms)/cancel(ids)/requestPermissions()/onFired
+│   │   └── android/src/main/…
+│   │       ├── ZfAlarmModule.kt        #    setAlarmClock 注册/取消(requestCode=id 稳定哈希)
+│   │       ├── ZfAlarmReceiver.kt      #    精确闹钟到点 → 全屏意图 + 闹钟通知
+│   │       ├── BootReceiver.kt         #    BOOT_COMPLETED / TIME_SET / TIMEZONE_CHANGED → 触发重排
+│   │       ├── RingActivity.kt         #    锁屏全屏响铃页(setShowWhenLocked/setTurnScreenOn)
+│   │       └── RingService.kt          #    [M3] FGS 渐进音量引擎(M1 先用通知通道铃声)
+│   ├── assets/
+│   │   ├── holidays/2026.json          #    holiday-cn 年度快照(scripts 拉取,离线兜底)
+│   │   ├── sounds/                     #    铃声
+│   │   └── images/                     #    App 图标(由 design/logo.svg 生成)/ 启动屏
+│   ├── android/ ios/                   #    prebuild 产物(dev-client)
+│   └── maestro/                        #    [M1] E2E:建组→改锚点→日历断言
+├── design/                             # ✅ 交互设计稿 + Logo
+│   ├── index.html
+│   ├── logo.svg
+│   └── logo-mono.svg
+├── docs/architecture.md                # ✅ 本文档
+├── scripts/
+│   └── fetch-holidays.mjs              # [M1] 拉 holiday-cn(注意 12 月跨年文件,官方 README 提示)
+├── pnpm-workspace.yaml                 # ✅
+├── package.json                        # ✅
+├── .gitignore                          # ✅
+├── LICENSE                             # ✅
+└── README.md                           # ✅
 ```
 
-## 3. 技术选型
+**三条依赖红线**:
+
+1. `packages/core` 不 import 任何 RN/平台代码——永远可以被 node:test 直接测;
+2. `src/` 逻辑层只能依赖 `core` 与 `gateway/types.ts` 的**接口**,不直接摸原生模块——notify-kit → AlarmKit → 自研引擎的替换不动上层;
+3. 路由层(`app/`)只做装配和跳转,业务规则一律下沉——响铃页被原生深链拉起时,`ring.tsx` 只是从 store 读"这次响的是哪条",不自己判断。
+
+## 3. 技术选型## 3. 技术选型
 
 | 决策 | 选择 | 理由 | 备选/回退 |
 | --- | --- | --- | --- |
