@@ -95,8 +95,12 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // CI 通过 -PappVersionName/-PappVersionCode 注入,默认回退 app.json 值
-        versionCode (findProperty('appVersionCode') ?: '1').toInteger()
-        versionName (findProperty('appVersionName') ?: "0.1.0")
+        def _appVersionCode = '1'
+        if (project.hasProperty('appVersionCode')) _appVersionCode = project.property('appVersionCode').toString()
+        def _appVersionName = '0.1.0'
+        if (project.hasProperty('appVersionName')) _appVersionName = project.property('appVersionName').toString()
+        versionCode _appVersionCode.toInteger()
+        versionName _appVersionName
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
