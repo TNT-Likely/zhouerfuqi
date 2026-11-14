@@ -59,6 +59,11 @@ apps/mobile       Expo + React Native App(M1 起)
 - [ ] **M2** iOS:AlarmKit 接入与降级策略
 - [ ] **M3** 打磨:渐进音量、贪睡、自定义铃声、响铃日历预览、holiday-cn 数据自动更新、GitHub Actions 出 APK
 
+## 设计
+
+- [design/index.html](design/index.html) —— HTML 设计稿 v0.1:品牌与 Logo、设计令牌、五张核心界面(首页 / 规则编辑 / 响铃日历 / 响铃页 / 华为保活引导)、组件样张,浏览器打开即可查看;
+- [design/logo.svg](design/logo.svg) / [design/logo-mono.svg](design/logo-mono.svg) —— 全彩与单色 Logo,可直接用于 GitHub 与 App 图标生成(7 段弧 = 一周循环,橙 = 下一个班日)。
+
 ## 本地开发
 
 要求 Node.js ≥ 22.6(原生运行 TS,无需编译步骤)。
