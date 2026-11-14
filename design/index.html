@@ -22,9 +22,7 @@
   --zf-accent:#ff7a45;
   --zf-accent-soft:light-dark(rgba(255,122,69,.10),rgba(255,122,69,.16));
   --zf-accent-ink:#2b1206;
-  --zf-blue:light-dark(#3b82f6,#60a5fa);
   --zf-green:light-dark(#22c55e,#34d399);
-  --zf-amber:light-dark(#d97706,#fbbf24);
   --zf-red:light-dark(#ef4444,#f87171);
   --zf-shadow:light-dark(rgba(36,40,44,.10),rgba(0,0,0,.55));
   --zf-radius:22px;
@@ -67,7 +65,6 @@
 #zf-suite .zf-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
 #zf-suite .zf-chip{font-size:11px;line-height:1;padding:6px 10px;border-radius:999px;border:1px solid var(--zf-line);color:var(--zf-muted);background:var(--zf-soft);white-space:nowrap}
 #zf-suite .zf-chip.hot{background:var(--zf-accent-soft);border-color:transparent;color:var(--zf-accent);font-weight:600}
-#zf-suite .zf-chip.blue{background:color-mix(in srgb,var(--zf-blue) 12%,transparent);border-color:transparent;color:var(--zf-blue)}
 #zf-suite .zf-chip.green{background:color-mix(in srgb,var(--zf-green) 12%,transparent);border-color:transparent;color:var(--zf-green)}
 #zf-suite .zf-chip.red{background:color-mix(in srgb,var(--zf-red) 12%,transparent);border-color:transparent;color:var(--zf-red)}
 #zf-suite .zf-countdown{margin-top:12px;font-size:12px;color:var(--zf-muted)}
@@ -90,7 +87,6 @@
 #zf-suite .zf-rowitem .zf-t{font-size:15px;font-weight:600;letter-spacing:-.2px}
 #zf-suite .zf-rowitem .zf-meta{font-size:11px;color:var(--zf-muted);margin-top:3px}
 #zf-suite .zf-rowitem .zf-next{margin-left:auto;font-size:12px;color:var(--zf-accent);white-space:nowrap}
-#zf-suite .zf-rowitem .zf-next.amber{color:var(--zf-amber)}
 /* 编辑页 */
 #zf-suite .zf-navbar{display:flex;align-items:center;justify-content:space-between;min-height:58px;padding:0 23px;gap:6px}
 #zf-suite .zf-navbar .zf-back{display:inline-flex;align-items:center;gap:4px;color:var(--zf-muted);font-size:14px}
@@ -124,14 +120,13 @@
 #zf-suite .zf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 #zf-suite .zf-dow{font-size:10px;color:var(--zf-muted);text-align:center;padding:4px 0}
 #zf-suite .zf-day{height:46px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;cursor:pointer;user-select:none}
-#zf-suite .zf-day.sel{background:var(--zf-paper);outline:1.5px solid var(--zf-blue);outline-offset:1px}
+#zf-suite .zf-day.sel{background:var(--zf-paper);outline:1.5px solid var(--zf-accent);outline-offset:1px}
 #zf-suite .zf-day.big{background:var(--zf-accent-soft)}
 #zf-suite .zf-day.big .n{color:var(--zf-accent);font-weight:800}
 #zf-suite .zf-day .n{font-size:13px;font-weight:600;color:var(--zf-ink)}
 #zf-suite .zf-day.rest .n{color:var(--zf-muted)}
 #zf-suite .zf-day .dots{display:flex;gap:2px}
-#zf-suite .zf-day .dots i{width:4px;height:4px;border-radius:999px;background:var(--zf-blue)}
-#zf-suite .zf-day .dots i.a{background:var(--zf-amber)}
+#zf-suite .zf-day .dots i{width:4px;height:4px;border-radius:999px;background:var(--zf-accent)}
 #zf-suite .zf-day .tag{position:absolute;top:3px;right:5px;font-size:8px;font-weight:700;color:var(--zf-muted)}
 #zf-suite .zf-day .tag.big{color:var(--zf-accent)}
 #zf-suite .zf-day .tag.off{color:var(--zf-red)}
@@ -174,8 +169,8 @@
 /* 保活向导 */
 #zf-suite .zf-step{border-radius:16px;background:var(--zf-paper);border:1px solid var(--zf-line);padding:15px 16px;display:flex;gap:12px;cursor:pointer;user-select:none;margin-top:12px;opacity:1}
 #zf-suite .zf-step.done{opacity:.55}
-#zf-suite .zf-step .no{width:26px;height:26px;border-radius:999px;background:color-mix(in srgb,var(--zf-blue) 15%,transparent);color:var(--zf-blue);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
-#zf-suite .zf-step.done .no{background:color-mix(in srgb,var(--zf-green) 15%,transparent);color:var(--zf-green)}
+#zf-suite .zf-step .no{width:26px;height:26px;border-radius:999px;background:var(--zf-soft);color:var(--zf-ink);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
+#zf-suite .zf-step.done .no{background:var(--zf-accent-soft);color:var(--zf-accent)}
 #zf-suite .zf-step b{font-size:14px;font-weight:650}
 #zf-suite .zf-step .path{margin-top:8px;font-size:10.5px;background:var(--zf-soft);border-radius:8px;padding:6px 10px;color:var(--zf-muted);font-family:ui-monospace,Menlo,monospace}
 #zf-suite .zf-step p{font-size:11.5px;color:var(--zf-muted);margin-top:6px;line-height:1.7}
@@ -341,7 +336,7 @@
             <div class="zf-cal">
               <div class="zf-cal-grid" id="calGrid"></div>
               <div class="zf-legend">
-                <span><i style="background:var(--zf-blue)"></i>班日响铃</span>
+                <span><i style="background:var(--zf-accent)"></i>班日响铃</span>
                 <span><i style="background:var(--zf-accent)"></i>大周周六</span>
                 <span><i style="background:var(--zf-red)"></i>法定假日</span>
                 <span><i style="background:var(--zf-green)"></i>调休补班</span>
@@ -400,16 +395,16 @@
     </div>
   </div>
 
-  <div class="zf-section">设计令牌 · DESIGN TOKENS(方案 D 暗色:纯黑 + 主题色边框)</div>
+  <div class="zf-section">设计令牌 · DESIGN TOKENS(三主色 + 中性层;方案 D 暗色)</div>
   <div class="zf-tokens">
-    <div class="zf-token"><div class="c" style="background:#FF7A45"></div><p><b>primary / 晨曦橙</b>#FF7A45</p></div>
-    <div class="zf-token"><div class="c" style="background:#000000;outline:1px solid rgba(255,122,69,.3)"></div><p><b>dark bg / 纯黑</b>#000000(OLED)</p></div>
-    <div class="zf-token"><div class="c" style="background:#1C1C1E;outline:1px solid rgba(255,122,69,.3)"></div><p><b>dark surface</b>#1C1C1E</p></div>
-    <div class="zf-token"><div class="c" style="background:#FAFAFA;outline:1px solid #e6e8eb"></div><p><b>light scaffold</b>#FAFAFA</p></div>
-    <div class="zf-token"><div class="c" style="background:#FFFFFF;outline:1px solid #e6e8eb"></div><p><b>light surface</b>#FFFFFF</p></div>
-    <div class="zf-token"><div class="c" style="background:linear-gradient(to bottom,#fff 50%,#1C1C1E 50%);outline:1px solid #e6e8eb"></div><p><b>line</b>亮 #ECEEEF · 暗 主题色 30%</p></div>
+    <div class="zf-token"><div class="c" style="background:#FF7A45"></div><p><b>1 晨曦橙 / 主色</b>主操作 · 选中 · 排班日 · 大周</p></div>
+    <div class="zf-token"><div class="c" style="background:#22C55E"></div><p><b>2 放行绿 / 成功</b>调休补班 · 成功状态</p></div>
+    <div class="zf-token"><div class="c" style="background:#EF4444"></div><p><b>3 警示红 / 假日</b>法定假日 · 删除 · 错误</p></div>
+    <div class="zf-token"><div class="c" style="background:#000000;outline:1px solid rgba(255,122,69,.3)"></div><p><b>暗 bg / 纯黑</b>#000000(OLED)</p></div>
+    <div class="zf-token"><div class="c" style="background:#1C1C1E;outline:1px solid rgba(255,122,69,.3)"></div><p><b>暗 surface</b>#1C1C1E</p></div>
+    <div class="zf-token"><div class="c" style="background:linear-gradient(to bottom,#FAFAFA 50%,#1C1C1E 50%);outline:1px solid #e6e8eb"></div><p><b>中性层</b>亮 #FAFAFA/#FFF · 暗 #000/#1C1C1E</p></div>
   </div>
-  <p class="zf-note">圆角:卡片 22 / 控件 16 / 胶囊 999。间距 8/12/16。数字一律 <b>tabular-nums</b>,大数字 650 字重 + 负字距。暗色下卡片用<b>主题色 30% 边框</b>代替分割线(BeeCount 方案 D);亮色下 hairline #ECEEEF。语义色:蓝=班日、橙=主操作、绿=补班放行、红=假日、黄=午休。</p>
+  <p class="zf-note"><b>三色原则</b>:橙=「要响/主操作」,绿=「放行/成功」,红=「假日/警示」——除此之外全部中性灰阶。圆角:卡片 22 / 控件 16 / 胶囊 999;间距 8/12/16;数字一律 tabular-nums,大数字 650 字重 + 负字距;暗色下卡片以主题色 30% 边框替代分割线(方案 D)。</p>
 
   <footer>周而复起 zhouerfuqi · 交互原型 v0.3 · 图标 Lucide(vendor)· 引擎与 packages/core 同语义 · <a href="https://github.com/TNT-Likely/zhouerfuqi" target="_blank">GitHub</a></footer>
 </div>
@@ -525,7 +520,6 @@ function renderHome() {
     let html = `<span class="zf-chip hot">${kindLabel(nx.date)}</span>`;
     if (nx.ev.hol === false) html += '<span class="zf-chip green">法定上班 · 补班</span>';
     if (nx.ev.hol === true) html += '<span class="zf-chip red">假日点选</span>';
-    if (state.holidayOn) html += '<span class="zf-chip blue">节假日联动 ON</span>';
     $('heroChips').innerHTML = html;
     const d = diff(nx.date, TODAY);
     $('heroCountdown').textContent = d === 0 ? '今天响' : d === 1 ? '明天响' : `距响铃还有 ${d} 天`;
@@ -560,7 +554,7 @@ function renderHome() {
               <div class="zf-t zf-num">${fmtT(x)}</div>
               <div class="zf-meta">${x.label || ' '}</div>
             </div>
-            ${nx && state.groupOn ? `<span class="zf-next zf-num${x.amber ? ' amber' : ''}" style="${x.amber ? 'color:var(--zf-amber)' : ''}">${cnDate(nx.date)}</span>` : ''}
+            ${nx && state.groupOn ? `<span class="zf-next zf-num">${cnDate(nx.date)}</span>` : ''}
           </div>`).join('')}
       </div>
     </div>`;
@@ -660,9 +654,7 @@ function renderCalendar() {
     }
     let dots = '';
     if (!manual && ring) {
-      const morning = state.times.filter(x => !x.amber).length;
-      const has12 = state.times.some(x => x.amber);
-      dots = `<div class="dots">${'<i></i>'.repeat(Math.min(morning, 3))}${has12 ? '<i class="a"></i>' : ''}</div>`;
+      dots = `<div class="dots">${'<i></i>'.repeat(Math.min(state.times.length, 4))}</div>`;
     }
     html += `<div class="${cls}" data-date="${date}"><span class="n">${d}</span>${tag ? `<span class="tag ${tagCls}">${tag}</span>` : ''}${dots}</div>`;
   }
