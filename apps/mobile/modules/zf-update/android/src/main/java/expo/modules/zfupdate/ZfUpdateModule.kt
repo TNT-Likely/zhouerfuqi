@@ -29,8 +29,14 @@ class ZfUpdateModule : Module() {
     // 通过系统安装器安装下载好的 APK(FileProvider content:// 共享)
     Function("installApk") { path: String ->
       val context = appContext.reactContext ?: throw Exception("React context unavailable")
-      val file = File(path)
-      if (!file.exists()) throw Exception("APK 不存在: $path")
+      // expo-file-system 返回 file:// URI;剥前缀后再转 File
+      val cleanPath = if (path.startsWith("file://")) {
+        java.net.URI(path).path ?: path.removePrefix("file://")
+      } else {
+        path
+      }
+      val file = File(cleanPath)
+      if (!file.exists()) throw Exception("APK 不存在: $cleanPath")
 
       val uri = FileProvider.getUriForFile(context, "${context.packageName}.zfupdate", file)
       val intent = Intent(Intent.ACTION_VIEW).apply {
