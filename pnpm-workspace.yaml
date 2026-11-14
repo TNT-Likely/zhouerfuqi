@@ -1,3 +1,6 @@
 packages:
   - "packages/*"
   - "apps/*"
+# RN/Expo 工具链存在大量隐式依赖(babel-preset-expo 等),隔离式 node_modules
+# 会让 Metro transformer 解析失败;npm 式扁平结构是 RN + pnpm 的社区标准做法
+nodeLinker: hoisted

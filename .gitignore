@@ -11,5 +11,8 @@ build/
 .tools/
 .npm-cache/
 apps/mobile/.expo/
-apps/mobile/android/
 apps/mobile/ios/
+apps/mobile/android/build/
+apps/mobile/android/app/build/
+apps/mobile/android/.gradle/
+apps/mobile/android/local.properties
