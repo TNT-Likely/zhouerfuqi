@@ -84,3 +84,28 @@ node --experimental-strip-types --test packages/core/test/*.test.ts
 ## License
 
 [MIT](./LICENSE)
+
+## 发布与更新
+
+仓库:[github.com/TNT-Likely/zhouerfuqi](https://github.com/TNT-Likely/zhouerfuqi)
+
+**CI 流水线**:
+
+- `CI`:push/PR 自动跑 core 单测 + 双端 typecheck;
+- `Release APK`:推送 `v*` tag(或手动触发)→ 构建签名 release APK +
+  `update.json` → 自动发布 GitHub Release。
+
+**发版**:
+
+```bash
+git tag v0.1.x -m "..." && git push origin v0.1.x
+# CI 产出:zhouerfuqi-<ver>.apk + update.json(应用内更新源)
+```
+
+**应用内更新**:`设置 → 检查更新` → 拉取 GitHub Releases 最新
+`update.json` → 比对 versionCode → 下载 APK → FileProvider 拉起系统安装器
+(需要「允许安装未知应用」授权)。
+
+**签名说明**:`zhouerfuqi.keystore` 随仓库提交(开源自用分发,口令见
+`gradle.properties`,不含机密)。若用于正式渠道,请换成私密 keystore 并通过
+GitHub Secrets 注入同名 gradle 属性。
