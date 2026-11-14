@@ -1,0 +1,12 @@
+{
+  "name": "zhouerfuqi",
+  "private": true,
+  "description": "周而复起 —— 开源、本地优先的任意班制闹钟(大小周 / 轮班 / 自定义月历)",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "node --experimental-strip-types --test packages/core/test/*.test.ts",
+    "typecheck": "tsc --noEmit -p packages/core"
+  }
+}
