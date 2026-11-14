@@ -161,13 +161,14 @@
 #zf-suite .zf-ring .zf-done p{font-size:13px;color:rgba(240,241,237,.7)}
 #zf-suite .zf-ring .zf-done .undo{font-size:12px;color:var(--zf-accent);text-decoration:underline;cursor:pointer}
 /* 导航(悬浮胶囊) */
-#zf-suite .zf-nav{position:absolute;left:12px;right:12px;bottom:15px;z-index:3;display:grid;grid-template-columns:1fr 1fr 1.08fr 1fr;height:66px;padding:7px 7px 10px;background:var(--zf-paper);border:1px solid var(--zf-line);border-radius:24px;box-shadow:0 5px 18px var(--zf-shadow);align-items:center}
+#zf-suite .zf-nav{position:absolute;left:12px;right:12px;bottom:15px;z-index:3;display:grid;grid-template-columns:repeat(3,1fr);height:66px;padding:7px 7px 10px;background:var(--zf-paper);border:1px solid var(--zf-line);border-radius:24px;box-shadow:0 5px 18px var(--zf-shadow);align-items:center}
 #zf-suite .zf-nav button{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;min-height:47px;color:var(--zf-muted);font-size:10px;line-height:1.3;position:relative;border-radius:12px}
 #zf-suite .zf-nav button[aria-current="page"]{color:var(--zf-ink);font-weight:600}
 #zf-suite .zf-nav button[aria-current="page"]::before{content:"";position:absolute;width:31px;height:27px;border-radius:9px;background:var(--zf-accent-soft);top:-1px;z-index:-1}
 #zf-suite .zf-nav button svg{width:21px;height:21px}
-#zf-suite .zf-add-disc{display:flex;align-items:center;justify-content:center;width:45px;height:45px;background:var(--zf-accent);color:#fff;border-radius:16px;margin-top:-13px;box-shadow:0 4px 9px var(--zf-shadow)}
-#zf-suite .zf-add-disc svg{width:23px;height:23px;stroke-width:2}
+#zf-suite .zf-add-card{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border:1.5px dashed light-dark(#c9cdd3,#48484a);border-radius:16px;color:var(--zf-muted);font-size:13px;margin-top:12px;cursor:pointer;background:transparent}
+#zf-suite .zf-add-card:hover{color:var(--zf-accent);border-color:var(--zf-accent);background:var(--zf-accent-soft)}
+#zf-suite .zf-add-card svg{width:16px;height:16px}
 #zf-suite .zf-home-indicator{position:absolute;width:109px;height:4px;background:var(--zf-ink);border-radius:9px;bottom:8px;left:50%;transform:translateX(-50%);opacity:.8;z-index:4}
 #zf-suite .zf-phone[data-page="ring"] .zf-nav,#zf-suite .zf-phone[data-page="ring"] .zf-home-indicator{display:none}
 /* 保活向导 */
@@ -232,6 +233,7 @@
           <div class="zf-topbar">
             <div class="zf-title">周而复起</div>
             <div class="zf-row" style="gap:0">
+              <button class="zf-icon" data-goto="edit" title="新建班组"><i data-lucide="plus"></i></button>
               <button class="zf-icon" data-goto="calendar" title="响铃日历"><i data-lucide="calendar-days"></i></button>
               <button class="zf-icon" data-goto="guide" title="保活向导"><i data-lucide="shield-check"></i></button>
             </div>
@@ -246,6 +248,7 @@
             </div>
             <div class="zf-section-label">班组 · GROUPS</div>
             <div id="groupCards"></div>
+            <button class="zf-add-card" data-goto="edit"><i data-lucide="plus"></i>新建班组</button>
           </div>
         </div>
 
@@ -391,7 +394,6 @@
       <div class="zf-nav" id="zfNav">
         <button data-goto="home" aria-current="page"><i data-lucide="alarm-clock"></i>首页</button>
         <button data-goto="calendar"><i data-lucide="calendar-days"></i>日历</button>
-        <button class="zf-add-disc" data-goto="edit" title="新建班组"><i data-lucide="plus"></i></button>
         <button data-goto="guide"><i data-lucide="shield-check"></i>保活</button>
       </div>
       <div class="zf-home-indicator"></div>
