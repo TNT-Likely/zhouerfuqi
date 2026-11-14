@@ -6,3 +6,10 @@ build/
 .expo/
 .env
 .env.*
+
+# 本地工具与缓存(沙箱内必须放 workspace)
+.tools/
+.npm-cache/
+apps/mobile/.expo/
+apps/mobile/android/
+apps/mobile/ios/

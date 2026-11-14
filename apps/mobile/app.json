@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "周而复起",
+    "slug": "zhouerfuqi",
+    "version": "0.1.0",
+    "scheme": "zhouerfuqi",
+    "orientation": "portrait",
+    "newArchEnabled": true,
+    "userInterfaceStyle": "automatic",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "ios": {
+      "bundleIdentifier": "app.zhouerfuqi.mobile",
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "app.zhouerfuqi.mobile",
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.USE_FULL_SCREEN_INTENT",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar"
+    ]
+  }
+}

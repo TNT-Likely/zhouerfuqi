@@ -53,6 +53,8 @@ export type RingReason =
   | 'swap-workday'; // 调休补班日(规则未命中,但法定要上班)
 
 export interface Occurrence {
+  /** 所属闹钟组 */
+  groupId: string;
   /** ISO `yyyy-mm-dd` */
   date: string;
   timeId: string;

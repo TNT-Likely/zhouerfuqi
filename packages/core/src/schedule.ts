@@ -76,6 +76,7 @@ export function expandGroup(
     if (!day.ring) continue;
     for (const time of group.times) {
       out.push({
+        groupId: group.id,
         date,
         timeId: time.id,
         hour: time.hour,
