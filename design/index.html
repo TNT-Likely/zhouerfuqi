@@ -3,50 +3,61 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>周而复起 · 设计稿 v0.1</title>
+<title>周而复起 · 交互设计稿 v0.2</title>
 <style>
   :root{
-    /* ---- 画布(设计稿本身) ---- */
-    --canvas:#F2F5F9; --paper:#FFFFFF; --ink:#17233B; --ink-2:#5D6E8C; --ink-3:#93A2BC;
-    --line:#E3E9F2;
+    /* ---- 文档(App 深色优先,与手机画面同源) ---- */
+    --canvas:#0C1322; --paper:#121B2E; --paper-2:#16223A; --line:#22304B;
+    --ink:#EDF2FA; --ink-2:#8FA3C2; --ink-3:#5B6E8F;
 
-    /* ---- App 设计令牌(深色主题优先) ---- */
+    /* ---- App 设计令牌(深色) ---- */
     --bg:#0B1220; --surface:#121B2E; --surface-2:#182438; --line-dark:#22304B;
     --text:#EDF2FA; --text-2:#8FA3C2; --text-3:#5B6E8F;
     --primary:#FF7A45; --primary-press:#E96A38; --on-primary:#20100A;
     --blue:#4D9DFF; --green:#3ECF8E; --amber:#FFB547; --red:#FF6B6B;
-
     --r-card:20px; --r-inner:14px; --r-pill:999px;
   }
+  /* ---- 日间模式:整页 + 手机画面一起切换 ---- */
+  body[data-mode="light"]{
+    --canvas:#F2F5F9; --paper:#FFFFFF; --paper-2:#FAFBFE; --line:#E3E9F2;
+    --ink:#17233B; --ink-2:#5D6E8C; --ink-3:#93A2BC;
+    --bg:#F2F6FC; --surface:#FFFFFF; --surface-2:#EAF0F8; --line-dark:#D9E3F0;
+    --text:#17233B; --text-2:#5D6E8C; --text-3:#8B9CB8;
+  }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--canvas);color:var(--ink);
+  body{background:var(--canvas);color:var(--ink);transition:background .3s,color .3s;
        font-family:-apple-system,"PingFang SC","HarmonyOS Sans SC","MiSans","Segoe UI","Noto Sans CJK SC",sans-serif;
        -webkit-font-smoothing:antialiased}
   .wrap{max-width:1180px;margin:0 auto;padding:48px 28px 80px}
+  .num{font-variant-numeric:tabular-nums}
 
   /* ---------- 文档头 ---------- */
   .doc-hero{background:linear-gradient(135deg,#0B1220 0%,#16233A 60%,#1D2C48 100%);
-            border-radius:28px;padding:44px 44px 40px;color:var(--text);
-            display:flex;gap:28px;align-items:center;flex-wrap:wrap}
-  .doc-hero .mark{flex:0 0 auto}
+            border-radius:28px;padding:44px;color:var(--text);
+            display:flex;gap:28px;align-items:center;flex-wrap:wrap;
+            border:1px solid rgba(255,255,255,.06)}
   .doc-hero h1{font-size:40px;letter-spacing:2px;font-weight:800}
   .doc-hero .slogan{margin-top:8px;color:var(--text-2);font-size:16px}
-  .doc-hero .meta{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+  .doc-hero .meta{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .meta-chip{font-size:12px;padding:6px 12px;border-radius:var(--r-pill);
              background:rgba(255,255,255,.08);color:var(--text-2);border:1px solid rgba(255,255,255,.1)}
+  .mode-toggle{display:flex;background:rgba(255,255,255,.1);border-radius:var(--r-pill);padding:4px;gap:4px;margin-left:auto}
+  .mode-toggle button{border:none;background:transparent;color:var(--text-2);cursor:pointer;
+                      font-size:12px;padding:7px 16px;border-radius:var(--r-pill);font-family:inherit}
+  .mode-toggle button.on{background:var(--primary);color:var(--on-primary);font-weight:800}
+  .mode-note{margin-top:14px;font-size:12px;color:rgba(143,163,194,.9)}
 
   /* ---------- 通用节 ---------- */
   section{margin-top:56px}
   h2{font-size:24px;font-weight:800;display:flex;align-items:center;gap:10px}
   h2 .idx{font-size:12px;font-weight:700;color:var(--ink-3);background:var(--paper);
           border:1px solid var(--line);border-radius:8px;padding:4px 8px}
-  .lead{color:var(--ink-2);font-size:14px;margin-top:8px;max-width:820px;line-height:1.8}
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);padding:24px}
+  .lead{color:var(--ink-2);font-size:14px;margin-top:8px;max-width:860px;line-height:1.8}
+  .lead b{color:var(--ink)}
 
   /* ---------- 品牌 ---------- */
   .brand-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-top:20px}
-  .icon-cell{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);
-             padding:20px;text-align:center}
+  .icon-cell{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);padding:20px;text-align:center}
   .icon-cell .ph{height:110px;display:flex;align-items:center;justify-content:center}
   .icon-cell p{margin-top:14px;font-size:12px;color:var(--ink-2)}
   .icon-cell p b{color:var(--ink);display:block;font-size:13px;margin-bottom:2px}
@@ -54,25 +65,17 @@
   .ic-lg{width:104px;height:104px}
   .ic-android{border-radius:26%}
   .ic-ios{border-radius:22.5%}
-  .ic-circle{border-radius:50%}
-  .meaning{margin-top:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-  .meaning div{background:#FAFBFE;border:1px solid var(--line);border-radius:var(--r-inner);padding:14px 16px;font-size:13px;color:var(--ink-2);line-height:1.7}
-  .meaning b{color:var(--ink)}
-  .wordmark{margin-top:20px;display:flex;align-items:baseline;gap:24px;flex-wrap:wrap;background:#FAFBFE;border:1px solid var(--line);border-radius:var(--r-inner);padding:24px}
+  .wordmark{margin-top:20px;display:flex;align-items:baseline;gap:24px;flex-wrap:wrap;background:var(--paper-2);border:1px solid var(--line);border-radius:var(--r-inner);padding:24px}
   .wordmark .zh{font-size:34px;font-weight:800;letter-spacing:3px}
   .wordmark .en{font-size:14px;letter-spacing:7px;color:var(--ink-3);font-weight:600}
   .wordmark .note{font-size:12px;color:var(--ink-3)}
 
-  /* ---------- 色板 / 令牌 ---------- */
+  /* ---------- 色板 ---------- */
   .tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:14px;margin-top:20px}
   .swatch{border:1px solid var(--line);border-radius:var(--r-inner);overflow:hidden;background:var(--paper)}
-  .swatch .chip{height:64px}
+  .swatch .chipc{height:64px}
   .swatch p{padding:10px 12px;font-size:12px;color:var(--ink-2)}
   .swatch p b{display:block;color:var(--ink);font-size:12.5px}
-  .type-scale{margin-top:20px;display:grid;gap:10px}
-  .type-row{display:flex;align-items:baseline;gap:18px;background:#FAFBFE;border:1px solid var(--line);border-radius:var(--r-inner);padding:14px 18px}
-  .type-row .spec{font-size:11px;color:var(--ink-3);width:190px;flex:0 0 auto;font-family:ui-monospace,Menlo,monospace}
-  .num{font-variant-numeric:tabular-nums}
 
   /* ---------- 手机 ---------- */
   .screens{display:flex;gap:26px;overflow-x:auto;padding:26px 4px 30px;scroll-snap-type:x proximity}
@@ -81,176 +84,159 @@
   .screen-block .notes{font-size:12px;color:var(--ink-2);line-height:1.8;padding:0 2px}
   .screen-block .notes b{color:var(--ink)}
   .phone{width:336px;height:660px;background:#05080F;border-radius:46px;padding:10px;
-         box-shadow:0 24px 48px -18px rgba(23,35,59,.35)}
+         box-shadow:0 24px 48px -18px rgba(8,14,28,.5)}
   .screen{position:relative;width:100%;height:100%;background:var(--bg);border-radius:37px;
-          overflow:hidden;color:var(--text);display:flex;flex-direction:column}
-  .statusbar{display:flex;justify-content:space-between;align-items:center;
-             padding:14px 22px 4px;font-size:12px;color:var(--text-2)}
+          overflow:hidden;color:var(--text);display:flex;flex-direction:column;transition:background .3s}
+  .statusbar{display:flex;justify-content:space-between;align-items:center;padding:14px 22px 4px;font-size:12px;color:var(--text-2)}
   .statusbar .sig{letter-spacing:2px}
   .appbar{display:flex;align-items:center;gap:10px;padding:10px 18px 6px}
   .appbar .app-name{font-size:16px;font-weight:800;letter-spacing:1px}
   .appbar .sp{flex:1}
-  .iconbtn{width:30px;height:30px;border-radius:10px;background:var(--surface);display:flex;
-          align-items:center;justify-content:center;color:var(--text-2);font-size:13px}
+  .iconbtn{width:30px;height:30px;border-radius:10px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:13px}
   .body{flex:1;padding:6px 16px 16px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
 
-  /* 首页 */
   .hero{background:linear-gradient(160deg,var(--surface) 0%,var(--surface-2) 100%);
         border:1px solid var(--line-dark);border-radius:var(--r-card);padding:18px 18px 16px}
   .hero .label{font-size:11px;color:var(--text-3);letter-spacing:2px}
-  .hero .time{font-size:56px;font-weight:800;letter-spacing:1px;line-height:1.15;margin-top:2px}
+  .hero .time{font-size:52px;font-weight:800;line-height:1.15;margin-top:2px}
   .hero .time em{font-style:normal;color:var(--primary);font-size:22px;font-weight:700;margin-left:6px}
   .hero .date{color:var(--text-2);font-size:13px;margin-top:2px}
   .hero .chips{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
-  .chip{font-size:11px;padding:5px 10px;border-radius:var(--r-pill);border:1px solid var(--line-dark);color:var(--text-2);background:var(--surface)}
+  .chip{font-size:11px;padding:5px 10px;border-radius:var(--r-pill);border:1px solid var(--line-dark);color:var(--text-2);background:var(--surface);white-space:nowrap}
   .chip.hot{background:rgba(255,122,69,.14);border-color:rgba(255,122,69,.4);color:var(--primary);font-weight:700}
   .chip.blue{background:rgba(77,157,255,.12);border-color:rgba(77,157,255,.35);color:var(--blue)}
   .chip.green{background:rgba(62,207,142,.12);border-color:rgba(62,207,142,.35);color:var(--green)}
   .chip.amber{background:rgba(255,181,71,.12);border-color:rgba(255,181,71,.35);color:var(--amber)}
+  .chip.red{background:rgba(255,107,107,.12);border-color:rgba(255,107,107,.35);color:var(--red)}
   .hero .countdown{margin-top:12px;font-size:12px;color:var(--text-3)}
 
   .group-card{background:var(--surface);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px}
   .group-head{display:flex;align-items:center;gap:10px}
-  .group-head .gicon{width:34px;height:34px;border-radius:12px;background:rgba(255,122,69,.15);
-                     display:flex;align-items:center;justify-content:center;font-size:15px}
+  .group-head .gicon{width:34px;height:34px;border-radius:12px;background:rgba(255,122,69,.15);display:flex;align-items:center;justify-content:center;font-size:15px}
   .group-head .gname{font-size:15px;font-weight:700}
   .group-head .gsub{font-size:11px;color:var(--text-3);margin-top:1px}
   .group-head .sp{flex:1}
-  .switch{width:44px;height:26px;border-radius:var(--r-pill);background:var(--primary);position:relative}
-  .switch::after{content:"";position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+  .switch{width:44px;height:26px;border-radius:var(--r-pill);background:var(--primary);position:relative;cursor:pointer;flex:0 0 auto;transition:background .2s}
+  .switch::after{content:"";position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:right .2s,left .2s}
   .switch.off{background:var(--surface-2)}
   .switch.off::after{right:auto;left:3px;background:var(--text-3)}
   .rule-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
   .time-list{margin-top:12px;display:grid;gap:8px}
-  .time-pill{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line-dark);
-             border-radius:var(--r-inner);padding:10px 12px}
-  .time-pill .t{font-size:20px;font-weight:700;letter-spacing:.5px}
+  .time-pill{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line-dark);border-radius:var(--r-inner);padding:10px 12px}
+  .time-pill .t{font-size:20px;font-weight:700}
   .time-pill .t small{font-size:11px;color:var(--text-3);font-weight:500;margin-left:6px}
-  .time-pill .next{margin-left:auto;font-size:11px;color:var(--primary);background:rgba(255,122,69,.1);
-                   border-radius:var(--r-pill);padding:3px 9px}
-  .time-pill.dim{opacity:.55}
+  .time-pill .next{margin-left:auto;font-size:11px;color:var(--primary);background:rgba(255,122,69,.1);border-radius:var(--r-pill);padding:3px 9px;white-space:nowrap}
+  .time-pill .next.amber{color:var(--amber);background:rgba(255,181,71,.1)}
   .fab{align-self:center;margin-top:auto;width:52px;height:52px;border-radius:20px;background:var(--primary);
        color:var(--on-primary);font-size:26px;font-weight:700;display:flex;align-items:center;justify-content:center;
-       box-shadow:0 10px 24px rgba(255,122,69,.35)}
+       box-shadow:0 10px 24px rgba(255,122,69,.35);cursor:pointer;user-select:none}
 
-  /* 编辑页 */
   .nav{display:flex;align-items:center;padding:12px 18px;gap:10px}
   .nav .back{font-size:18px;color:var(--text-2)}
   .nav .title{font-size:16px;font-weight:800}
-  .nav .save{margin-left:auto;color:var(--primary);font-weight:700;font-size:14px}
-  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface);
-       border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:4px}
-  .seg span{font-size:11.5px;text-align:center;padding:8px 0;border-radius:var(--r-pill);color:var(--text-3)}
+  .nav .save{margin-left:auto;color:var(--primary);font-weight:700;font-size:14px;cursor:pointer}
+  .seg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:var(--surface);border:1px solid var(--line-dark);border-radius:var(--r-pill);padding:4px}
+  .seg span{font-size:11.5px;text-align:center;padding:8px 0;border-radius:var(--r-pill);color:var(--text-3);cursor:pointer;user-select:none}
   .seg span.on{background:var(--primary);color:var(--on-primary);font-weight:700}
   .weekday-row{display:flex;justify-content:space-between;padding:2px 4px}
   .wd{width:38px;height:38px;border-radius:50%;background:var(--surface);border:1px solid var(--line-dark);
-      display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-2)}
+      display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-2);cursor:pointer;user-select:none}
   .wd.on{background:var(--primary);border-color:var(--primary);color:var(--on-primary);font-weight:800}
-  .wd .lab{font-size:9px}
   .field-card{background:var(--surface);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px}
   .field-title{font-size:12px;color:var(--text-3);letter-spacing:1px;margin-bottom:10px}
-  .anchor{display:flex;align-items:center;gap:12px}
-  .anchor .cal{width:44px;height:44px;border-radius:12px;background:rgba(255,122,69,.14);display:flex;
-               flex-direction:column;align-items:center;justify-content:center;color:var(--primary)}
-  .anchor .cal b{font-size:16px}
-  .anchor .cal i{font-style:normal;font-size:9px}
-  .anchor .txt b{font-size:15px}
-  .anchor .txt p{font-size:11.5px;color:var(--text-3);margin-top:2px}
-  .anchor .chev{margin-left:auto;color:var(--text-3)}
-  .stepper{display:flex;align-items:center;gap:14px;margin-top:12px}
+  .stepper{display:flex;align-items:center;gap:14px}
   .stepper .btn{width:34px;height:34px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line-dark);
-                display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px}
-  .stepper .val{font-size:22px;font-weight:800;min-width:60px;text-align:center}
+                display:flex;align-items:center;justify-content:center;color:var(--text-2);font-size:16px;cursor:pointer;user-select:none}
+  .stepper .val{font-size:22px;font-weight:800;min-width:56px;text-align:center}
   .stepper .unit{color:var(--text-3);font-size:13px}
   .hint{font-size:11px;color:var(--text-3);line-height:1.7;margin-top:10px}
+  .anchor-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .achip{font-size:12px;padding:7px 12px;border-radius:12px;border:1px solid var(--line-dark);background:var(--surface-2);
+         color:var(--text-2);cursor:pointer;user-select:none}
+  .achip.on{border-color:var(--primary);color:var(--primary);background:rgba(255,122,69,.12);font-weight:700}
   .toggle-row{display:flex;align-items:center;gap:12px}
   .toggle-row .txt b{font-size:14px}
   .toggle-row .txt p{font-size:11px;color:var(--text-3);margin-top:2px}
   .primary-btn{margin-top:4px;background:var(--primary);color:var(--on-primary);border-radius:var(--r-inner);
-               padding:13px;text-align:center;font-weight:800;font-size:14px;letter-spacing:2px}
+               padding:13px;text-align:center;font-weight:800;font-size:14px;letter-spacing:2px;cursor:pointer;user-select:none}
+  .primary-btn.disabled{opacity:.4;pointer-events:none}
 
-  /* 日历 */
-  .cal-head{display:flex;align-items:baseline;gap:8px;padding:2px 4px}
-  .cal-head b{font-size:18px}
-  .cal-head span{font-size:11px;color:var(--text-3);margin-left:auto}
   .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:4px}
   .dow{font-size:10px;color:var(--text-3);text-align:center;padding:4px 0}
   .day{height:46px;border-radius:12px;background:var(--surface);border:1px solid transparent;
-       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative}
+       display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;cursor:pointer;user-select:none}
   .day .n{font-size:13px;font-weight:600;color:var(--text-2)}
   .day.rest .n{color:var(--text-3)}
+  .day.rest{background:transparent;border-color:transparent}
+  .day.sel{outline:1.5px solid var(--blue);outline-offset:1px}
   .day.big{background:rgba(255,122,69,.16);border-color:rgba(255,122,69,.55)}
   .day.big .n{color:var(--primary);font-weight:800}
-  .day.today{outline:1.5px solid var(--blue);outline-offset:1px}
+  .day.today::after{content:"今天";position:absolute;bottom:-1px;left:50%;transform:translate(-50%,50%);
+                    font-size:8px;color:var(--blue);background:var(--bg);padding:0 4px;border-radius:4px}
   .day .dots{display:flex;gap:2px}
   .day .dots i{width:4px;height:4px;border-radius:50%;background:var(--blue)}
   .day .dots i.a{background:var(--amber)}
-  .day .tag{position:absolute;top:3px;right:5px;font-size:8px;color:var(--primary);font-weight:800}
-  .day .tag.rest{color:var(--text-3)}
+  .day .tag{position:absolute;top:3px;right:5px;font-size:8px;color:var(--text-3);font-weight:700}
+  .day .tag.big{color:var(--primary)}
+  .day .tag.off{color:var(--red)}
+  .day .tag.swap{color:var(--green)}
   .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;padding:0 2px}
   .legend span{font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:5px}
   .legend i{width:8px;height:8px;border-radius:3px;display:inline-block}
-  .day-detail{background:var(--surface-2);border:1px solid var(--line-dark);border-radius:var(--r-inner);padding:12px 14px}
+  .day-detail{background:var(--surface-2);border:1px solid var(--line-dark);border-radius:var(--r-inner);padding:12px 14px;min-height:74px}
   .day-detail b{font-size:13px}
+  .day-detail .st{font-size:11px;color:var(--text-3);margin-top:4px}
   .day-detail .ev{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-  .day-detail .ev span{font-size:11px;background:var(--surface);border:1px solid var(--line-dark);
-                       padding:4px 9px;border-radius:var(--r-pill);color:var(--text-2)}
+  .day-detail .ev span{font-size:11px;background:var(--surface);border:1px solid var(--line-dark);padding:4px 9px;border-radius:var(--r-pill);color:var(--text-2)}
 
-  /* 响铃页 */
-  .ring{justify-content:center;align-items:center;text-align:center;background:
-        radial-gradient(120% 80% at 50% 0%,#1C2B47 0%,#0B1220 55%,#070C16 100%)}
+  .ring{justify-content:center;align-items:center;text-align:center;
+        background:radial-gradient(120% 80% at 50% 0%,#1C2B47 0%,#0B1220 55%,#070C16 100%)}
+  body[data-mode="light"] .ring{background:radial-gradient(120% 80% at 50% 0%,#DCE7F7 0%,#F2F6FC 55%,#E9EFF8 100%)}
   .ring .brand-mini{position:absolute;top:44px;width:100%;font-size:11px;color:var(--text-3);letter-spacing:3px}
   .ring .r-date{font-size:14px;color:var(--text-2);margin-bottom:6px}
-  .ring .r-time{font-size:88px;font-weight:200;letter-spacing:2px;line-height:1}
-  .ring .r-label{margin-top:18px;font-size:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);
-                 padding:8px 16px;border-radius:var(--r-pill);color:var(--text)}
+  .ring .r-time{font-size:84px;font-weight:200;letter-spacing:2px;line-height:1}
+  .ring .r-label{margin-top:18px;font-size:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:8px 16px;border-radius:var(--r-pill)}
+  body[data-mode="light"] .ring .r-label{background:rgba(23,35,59,.06);border-color:rgba(23,35,59,.14)}
   .ring .r-sub{margin-top:10px;font-size:11px;color:var(--text-3)}
   .ring-actions{position:absolute;bottom:44px;width:100%;display:flex;gap:14px;justify-content:center;padding:0 24px}
-  .ring-actions .btn{flex:1;padding:16px;border-radius:var(--r-inner);font-size:14px;font-weight:700}
+  .ring-actions .btn{flex:1;padding:16px;border-radius:var(--r-inner);font-size:14px;font-weight:700;cursor:pointer;user-select:none}
   .ring-actions .snooze{background:rgba(255,255,255,.1);color:var(--text)}
+  body[data-mode="light"] .ring-actions .snooze{background:rgba(23,35,59,.08)}
   .ring-actions .stop{background:var(--primary);color:var(--on-primary)}
-  .ring .swipe{position:absolute;bottom:14px;width:100%;font-size:10px;color:var(--text-3)}
+  .ring .ring-done{display:none;flex-direction:column;align-items:center;gap:10px}
+  .ring .ring-done .ok{font-size:44px;color:var(--green)}
+  .ring .ring-done p{font-size:13px;color:var(--text-2)}
+  .ring .ring-done .undo{font-size:12px;color:var(--primary);cursor:pointer;text-decoration:underline}
 
-  /* 保活引导 */
   .guide-head{padding:14px 20px 0}
   .guide-head b{font-size:20px}
   .guide-head p{font-size:12px;color:var(--text-3);margin-top:6px;line-height:1.7}
-  .step{background:var(--surface);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px;display:flex;gap:12px}
+  .step{background:var(--surface);border:1px solid var(--line-dark);border-radius:var(--r-card);padding:16px;display:flex;gap:12px;cursor:pointer;user-select:none;transition:opacity .2s}
   .step .no{width:26px;height:26px;border-radius:50%;background:rgba(77,157,255,.15);color:var(--blue);
             display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex:0 0 auto}
   .step b{font-size:14px}
   .step p{font-size:11.5px;color:var(--text-3);margin-top:4px;line-height:1.7}
-  .step .path{margin-top:8px;font-size:10.5px;background:var(--surface-2);border:1px solid var(--line-dark);
-              border-radius:8px;padding:6px 10px;color:var(--text-2);font-family:ui-monospace,Menlo,monospace}
+  .step .path{margin-top:8px;font-size:10.5px;background:var(--surface-2);border:1px solid var(--line-dark);border-radius:8px;padding:6px 10px;color:var(--text-2);font-family:ui-monospace,Menlo,monospace}
+  .step.done{opacity:.55}
+  .step.done .no{background:rgba(62,207,142,.15);color:var(--green)}
   .dots-progress{display:flex;gap:6px;justify-content:center}
   .dots-progress i{width:6px;height:6px;border-radius:50%;background:var(--line-dark)}
   .dots-progress i.on{background:var(--primary);width:18px;border-radius:var(--r-pill)}
 
-  /* ---------- 组件样张 ---------- */
-  .comp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:20px}
-  .comp{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);padding:20px}
-  .comp h4{font-size:13px;margin-bottom:14px;color:var(--ink-2);font-weight:700}
-  .comp .stage{background:var(--bg);border-radius:var(--r-inner);padding:18px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
-  .comp .stage .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .comp .cap{margin-top:10px;font-size:11.5px;color:var(--ink-3);line-height:1.7}
-
   footer{margin-top:64px;color:var(--ink-3);font-size:12px;text-align:center}
 </style>
 </head>
-<body>
+<body data-mode="dark">
 <div class="wrap">
 
   <!-- ============ 文档头 ============ -->
   <header class="doc-hero">
-    <div class="mark">
+    <div>
       <svg width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="周而复起 logo">
-        <defs>
-          <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#16233A"/><stop offset="1" stop-color="#0B1220"/>
-          </linearGradient>
-        </defs>
+        <defs><linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#16233A"/><stop offset="1" stop-color="#0B1220"/>
+        </linearGradient></defs>
         <rect width="120" height="120" rx="28" fill="url(#bgGrad)"/>
-        <!-- 一周循环:7 段弧,高亮段 = 下一个班日 -->
         <g fill="none" stroke="#31476B" stroke-width="9" stroke-linecap="round">
           <path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/>
           <path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/>
@@ -260,82 +246,68 @@
           <path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/>
         </g>
         <path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="#FF7A45" stroke-width="9" stroke-linecap="round"/>
-        <!-- 钟体:系统闹钟的隐喻 -->
         <g transform="translate(33.6,33) scale(2.2)" fill="#F4F7FC">
           <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
         </g>
         <circle cx="60" cy="52" r="3" fill="#FF7A45"/>
       </svg>
     </div>
-    <div>
+    <div style="flex:1;min-width:260px">
       <h1>周而复起 <span style="font-size:15px;color:var(--text-3);letter-spacing:5px;font-weight:600">ZHOUERFUQI</span></h1>
       <div class="slogan">闹钟周而复起,班表从不掉链子 —— 开源、本地优先的任意班制闹钟</div>
       <div class="meta">
-        <span class="meta-chip">设计稿 v0.1</span>
+        <span class="meta-chip">交互设计稿 v0.2</span>
+        <span class="meta-chip">内嵌规则引擎 · 实时重算</span>
         <span class="meta-chip">2026-11-14</span>
-        <span class="meta-chip">深色主题优先</span>
-        <span class="meta-chip">Expo RN · Android 先行</span>
+        <div class="mode-toggle">
+          <button id="modeDark" class="on">🌙 深色</button>
+          <button id="modeLight">☀️ 日间</button>
+        </div>
       </div>
+      <div class="mode-note">右上一键切换全页深色 / 日间。示例「今天」固定为 2026-11-14(周六);所有界面由内嵌引擎实时驱动——改规则,首页、日历、原因标签会跟着变。</div>
     </div>
   </header>
 
   <!-- ============ 01 品牌 ============ -->
   <section id="brand">
     <h2><span class="idx">01</span>品牌与 Logo</h2>
-    <p class="lead">
-      图形 = <b>7 段弧(一周循环)</b> + <b>钟体(系统级闹钟)</b> + <b>橙色高亮段(下一个班日)</b>。
-      高亮段会随班表「走」:今天选中哪一个班日,弧就亮在哪一段—— logo 本身就是产品心智:班表在转,闹钟周而复起。
-    </p>
+    <p class="lead">图形 = <b>7 段弧(一周循环)</b> + <b>钟体(系统级闹钟)</b> + <b>橙色高亮段(下一个班日)</b>。高亮段随班表「走」——班表在转,闹钟周而复起。</p>
     <div class="brand-grid">
       <div class="icon-cell"><div class="ph"><svg class="ic ic-android" viewBox="0 0 120 120"><rect width="120" height="120" rx="31" fill="#0E1626"/><g fill="none" stroke="#31476B" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/></g><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="#FF7A45" stroke-width="9" stroke-linecap="round"/><g transform="translate(33.6,33) scale(2.2)" fill="#F4F7FC"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" fill="#FF7A45"/></svg></div><p><b>Android 自适应图标</b>圆角 26% · squircle</p></div>
       <div class="icon-cell"><div class="ph"><svg class="ic ic-ios" viewBox="0 0 120 120"><rect width="120" height="120" rx="27" fill="url(#bgGrad)"/><g fill="none" stroke="#31476B" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/></g><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="#FF7A45" stroke-width="9" stroke-linecap="round"/><g transform="translate(33.6,33) scale(2.2)" fill="#F4F7FC"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" fill="#FF7A45"/></svg></div><p><b>iOS 图标</b>圆角 22.5% · 超椭圆</p></div>
-      <div class="icon-cell"><div class="ph"><svg class="ic ic-lg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#FFFFFF" stroke="#E3E9F2"/><g fill="none" stroke="#C9D4E6" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70"/></g><g transform="translate(33.6,33) scale(2.2)" fill="#17233B"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" fill="#FF7A45"/></svg></div><p><b>浅色场景</b>浅色底/打印/文档</p></div>
-      <div class="icon-cell"><div class="ph"><svg class="ic ic-lg" viewBox="0 0 120 120"><g fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" style="color:#17233B"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70"/></g><g transform="translate(33.6,33) scale(2.2)" fill="currentColor" style="color:#17233B"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" fill="currentColor" style="color:#17233B"/></svg></div><p><b>单色 Glyph</b>README / 通知小图标</p></div>
-    </div>
-    <div class="meaning">
-      <div><b>七段弧</b>—— 一周七天的循环;班制规则(每周几/每 N 周)在环上"转动"。</div>
-      <div><b>橙色高亮段</b>—— 下一个班日。大小周锚点设置后,高亮段每两周跳一格。</div>
-      <div><b>钟体</b>—— 系统级响铃的隐喻:exact alarm / AlarmKit,可靠优先。</div>
-      <div><b>橙点</b>—— 钟顶的呼吸点 = 响铃瞬间的"起"。周而复,起在一瞬。</div>
+      <div class="icon-cell"><div class="ph"><svg class="ic ic-lg" viewBox="0 0 120 120"><rect width="120" height="120" rx="60" fill="#FFFFFF" stroke="#E3E9F2"/><g fill="none" stroke="#C9D4E6" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70"/></g><g transform="translate(33.6,33) scale(2.2)" fill="#17233B"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" fill="#FF7A45"/></svg></div><p><b>浅色场景</b>文档 / 打印</p></div>
+      <div class="icon-cell"><div class="ph"><svg class="ic ic-lg" viewBox="0 0 120 120"><g fill="none" stroke="#17233B" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70"/></g><g transform="translate(33.6,33) scale(2.2)" fill="#17233B"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" fill="#17233B"/></svg></div><p><b>单色 Glyph</b>README / 通知</p></div>
     </div>
     <div class="wordmark">
       <span class="zh">周而复起</span>
       <span class="en">ZHOUERFUQI</span>
-      <span class="note">中文 PingFang SC / HarmonyOS Sans Bold,字距 +3px;英文全大写字距 +7px。Slogan:「闹钟周而复起,班表从不掉链子」。</span>
+      <span class="note">PingFang SC / HarmonyOS Sans Bold,字距 +3px;英文全大写字距 +7px。</span>
     </div>
   </section>
 
   <!-- ============ 02 设计令牌 ============ -->
   <section id="tokens">
     <h2><span class="idx">02</span>设计令牌</h2>
-    <p class="lead">深色主题为默认(凌晨被闹钟吵醒时,刺眼的大白屏是敌人)。主色「晨曦橙」= 日出与警报的折中:足够醒目,不像纯红那么焦躁。</p>
+    <p class="lead">深色为默认主题(凌晨被闹钟吵醒时,刺眼的大白屏是敌人)。主色「晨曦橙」= 日出与警报的折中。右上角开关可体验<b>日间模式全量换肤</b>。</p>
     <div class="tokens">
-      <div class="swatch"><div class="chip" style="background:#FF7A45"></div><p><b>primary / 晨曦橙</b>#FF7A45</p></div>
-      <div class="swatch"><div class="chip" style="background:#4D9DFF"></div><p><b>blue / 晨蓝</b>#4D9DFF(普通班日)</p></div>
-      <div class="swatch"><div class="chip" style="background:#3ECF8E"></div><p><b>green / 放行绿</b>#3ECF8E(补班自动响)</p></div>
-      <div class="swatch"><div class="chip" style="background:#FFB547"></div><p><b>amber / 午休黄</b>#FFB547(12:55 组)</p></div>
-      <div class="swatch"><div class="chip" style="background:#FF6B6B"></div><p><b>red / 假日红</b>#FF6B6B(法定假日)</p></div>
-      <div class="swatch"><div class="chip" style="background:#0B1220"></div><p><b>bg / 夜幕</b>#0B1220</p></div>
-      <div class="swatch"><div class="chip" style="background:#121B2E"></div><p><b>surface</b>#121B2E</p></div>
-      <div class="swatch"><div class="chip" style="background:#182438"></div><p><b>surface-2</b>#182438</p></div>
-      <div class="swatch"><div class="chip" style="background:#EDF2FA"></div><p><b>text / 主文本</b>#EDF2FA</p></div>
-      <div class="swatch"><div class="chip" style="background:#8FA3C2"></div><p><b>text-2 / 次文本</b>#8FA3C2</p></div>
+      <div class="swatch"><div class="chipc" style="background:#FF7A45"></div><p><b>primary / 晨曦橙</b>#FF7A45</p></div>
+      <div class="swatch"><div class="chipc" style="background:#4D9DFF"></div><p><b>blue / 晨蓝</b>#4D9DFF</p></div>
+      <div class="swatch"><div class="chipc" style="background:#3ECF8E"></div><p><b>green / 放行绿</b>#3ECF8E</p></div>
+      <div class="swatch"><div class="chipc" style="background:#FFB547"></div><p><b>amber / 午休黄</b>#FFB547</p></div>
+      <div class="swatch"><div class="chipc" style="background:#FF6B6B"></div><p><b>red / 假日红</b>#FF6B6B</p></div>
+      <div class="swatch"><div class="chipc" style="background:#0B1220;outline:1px solid #22304B"></div><p><b>bg / 夜幕</b>#0B1220</p></div>
+      <div class="swatch"><div class="chipc" style="background:#121B2E;outline:1px solid #22304B"></div><p><b>surface</b>#121B2E</p></div>
+      <div class="swatch"><div class="chipc" style="background:#F2F6FC;outline:1px solid #D9E3F0"></div><p><b>日间 bg</b>#F2F6FC</p></div>
+      <div class="swatch"><div class="chipc" style="background:#FFFFFF;outline:1px solid #D9E3F0"></div><p><b>日间 surface</b>#FFFFFF</p></div>
     </div>
-    <div class="type-scale">
-      <div class="type-row"><span class="spec">Hero 数字 · 56/800 · tabular</span><span class="num" style="font-size:40px;font-weight:800">06:40</span></div>
-      <div class="type-row"><span class="spec">页面标题 · 16/800 · 字距+1</span><span style="font-size:16px;font-weight:800;letter-spacing:1px">编辑班组</span></div>
-      <div class="type-row"><span class="spec">正文 · 15/600</span><span style="font-size:15px;font-weight:600">上班组 · 大周周六</span></div>
-      <div class="type-row"><span class="spec">辅助说明 · 12/400 · text-3</span><span style="font-size:12px;color:var(--ink-3)">法定假日自动跳过,调休补班日自动响</span></div>
-      <div class="type-row"><span class="spec">角标 · 11/700 · pill</span><span style="font-size:11px;font-weight:700;color:var(--primary)">大周周六</span></div>
-    </div>
-    <p class="lead" style="margin-top:16px">圆角:卡片 20 / 卡内 14 / 控件 12 / pill 999。间距基数为 4,常用 12 / 16 / 20。数字一律 <b>tabular-nums</b>(时间对齐不跳动)。图标:铃/齿轮等用 2px 圆角线性风格,与 Logo 弧线呼应。</p>
+    <p class="lead" style="margin-top:16px">圆角:卡片 20 / 卡内 14 / 控件 12 / pill 999。间距基数 4,常用 12/16/20。数字一律 <b>tabular-nums</b>。两种主题共用同一套语义色,仅中性层翻转。</p>
   </section>
 
-  <!-- ============ 03 核心界面 ============ -->
+  <!-- ============ 03 交互界面 ============ -->
   <section id="screens">
-    <h2><span class="idx">03</span>核心界面 × 5</h2>
-    <p class="lead">横向滚动查看。示例数据取自你的真实班表:上班组 = 6:40 / 6:50 / 7:00 / 12:55;今天 2026-11-14(周六,小周休),下个大周周六 = 11-21。</p>
-    <div class="screens">
+    <h2><span class="idx">03</span>交互界面 × 5(直接点着玩)</h2>
+    <p class="lead">① 首页开关整组、② 编辑页换规则/改锚点、③ 日历点日期看当天明细(月历模式下点选=排班)——<b>首页与日历全部实时重算</b>。示例含合成节假日:11-05 / 11-19 放假、11-08 周日补班,用于演示联动。</p>
+    <div class="screens" id="screensRow">
 
       <!-- A 首页 -->
       <div class="screen-block">
@@ -349,81 +321,100 @@
           <div class="body">
             <div class="hero">
               <div class="label">下次响铃 · NEXT RING</div>
-              <div class="time num">06:40<em>×3</em></div>
-              <div class="date">11 月 21 日 周六 · 06:40 / 06:50 / 07:00 三连</div>
-              <div class="chips"><span class="chip hot">大周周六</span><span class="chip green">法定上班</span><span class="chip">节假日联动 ON</span></div>
-              <div class="countdown">距响铃还有 6 天 9 小时</div>
+              <div class="time num" id="heroTime">06:40</div>
+              <div class="date" id="heroDate"></div>
+              <div class="chips" id="heroChips"></div>
+              <div class="countdown" id="heroCountdown"></div>
             </div>
             <div class="group-card">
               <div class="group-head">
                 <div class="gicon">⏰</div>
-                <div><div class="gname">上班组</div><div class="gsub">每 2 周 · 周六 · 含工作日</div></div>
-                <span class="sp"></span><div class="switch"></div>
+                <div><div class="gname">上班组</div><div class="gsub" id="gsub"></div></div>
+                <span class="sp"></span><div class="switch" id="groupSwitch"></div>
               </div>
-              <div class="rule-row"><span class="chip hot">每 2 周</span><span class="chip">周六</span><span class="chip">周一~周五</span><span class="chip blue">节假日联动</span></div>
-              <div class="time-list">
-                <div class="time-pill"><span class="t num">06:40</span><small style="color:var(--text-3);font-size:11px">第一道</small><span class="next">11-21</span></div>
-                <div class="time-pill"><span class="t num">06:50</span><small style="color:var(--text-3);font-size:11px">第二道</small><span class="next">11-21</span></div>
-                <div class="time-pill"><span class="t num">12:55</span><small style="color:var(--text-3);font-size:11px">午休</small><span class="next" style="color:var(--amber);background:rgba(255,181,71,.1)">11-21</span></div>
-              </div>
+              <div class="rule-row" id="ruleChips"></div>
+              <div class="time-list" id="timePills"></div>
             </div>
             <div class="group-card" style="opacity:.75">
               <div class="group-head">
                 <div class="gicon" style="background:rgba(255,181,71,.15)">🌞</div>
                 <div><div class="gname">周末懒觉组</div><div class="gsub">每 2 周 · 周六 · 仅休日 9:30</div></div>
-                <span class="sp"></span><div class="switch off"></div>
+                <span class="sp"></span><div class="switch off" id="lazySwitch"></div>
               </div>
             </div>
-            <div class="fab">+</div>
+            <div class="fab" id="fab" title="新建班组(演示)">+</div>
           </div>
         </div></div>
         <h3>A · 首页</h3>
-        <p class="notes"><b>信息优先级</b>:下次响铃(大数字)> 原因标签(为什么这天响)> 组列表。原因标签是本产品的灵魂——用户随时知道「明天到底响不响、为什么响」。</p>
+        <p class="notes"><b>信息优先级</b>:下次响铃(大数字)> 原因标签(为什么这天响)> 组列表。试试:关掉「上班组」开关,或回编辑页改锚点。</p>
       </div>
 
       <!-- B 编辑规则 -->
       <div class="screen-block">
         <div class="phone"><div class="screen">
           <div class="statusbar"><span class="num">9:41</span><span class="sig">▂▄▆ 🔋</span></div>
-          <div class="nav"><span class="back">‹</span><span class="title">编辑班组</span><span class="save">保存</span></div>
+          <div class="nav"><span class="back">‹</span><span class="title">编辑班组</span><span class="save" id="saveBtn">保存</span></div>
           <div class="body">
-            <div class="seg"><span>每周几</span><span class="on">每 N 周</span><span>每 N 天</span><span>月历</span></div>
-            <div class="weekday-row">
-              <div class="wd">一</div><div class="wd">二</div><div class="wd">三</div><div class="wd">四</div><div class="wd">五</div>
-              <div class="wd on">六</div><div class="wd">日</div>
+            <div class="seg" id="ruleSeg">
+              <span data-k="weekly">每周几</span>
+              <span data-k="everyNWeeks" class="on">每 N 周</span>
+              <span data-k="everyNDays">每 N 天</span>
+              <span data-k="customDates">月历</span>
             </div>
-            <div class="field-card">
-              <div class="field-title">周期 N</div>
-              <div class="stepper"><div class="btn">−</div><div class="val num">2 周</div><div class="btn">+</div><span class="unit" style="margin-left:6px">即「大小周」</span></div>
-            </div>
-            <div class="field-card">
-              <div class="field-title">锚点 · 最近一个大周周六</div>
-              <div class="anchor">
-                <div class="cal"><b>21</b><i>11月</i></div>
-                <div class="txt"><b>2026-11-21 周六</b><p>这一天算大周吗?选「是」即可,之后每 2 周自动对齐</p></div>
-                <span class="chev">›</span>
+            <div class="weekday-row" id="weekdayRow"></div>
+            <div class="panel" id="p-everyNWeeks">
+              <div class="field-card">
+                <div class="field-title">周期 N(n=2 即大小周)</div>
+                <div class="stepper">
+                  <div class="btn" data-step="-1">−</div>
+                  <div class="val num" id="nVal">2 周</div>
+                  <div class="btn" data-step="1">+</div>
+                  <span class="unit">1=单休 · 2=大小周 · 3=三周一体</span>
+                </div>
               </div>
-              <div class="hint">也可以反着选:指定一个小周周六,引擎自动推导另一极。</div>
+              <div class="field-card">
+                <div class="field-title">锚点 · 最近一个大周(选中)日</div>
+                <div class="anchor-chips" id="anchorChips"></div>
+                <div class="hint">只问一个问题:「最近的这个班日算大周吗?」选中即完成整条规则。</div>
+              </div>
             </div>
-            <div class="field-card">
-              <div class="field-title">响铃时间(本组 4 条)</div>
-              <div class="time-list">
-                <div class="time-pill"><span class="t num">06:40</span><small style="color:var(--text-3);font-size:11px">第一道</small></div>
-                <div class="time-pill"><span class="t num">07:00</span><small style="color:var(--text-3);font-size:11px">底线</small></div>
-                <div class="time-pill dim"><span class="t num">+ 添加时间</span></div>
+            <div class="panel" id="p-everyNDays" style="display:none">
+              <div class="field-card">
+                <div class="field-title">每 N 天响一天(上 X 休 Y 最简形态)</div>
+                <div class="stepper">
+                  <div class="btn" data-stepd="-1">−</div>
+                  <div class="val num" id="nValD">3 天</div>
+                  <div class="btn" data-stepd="1">+</div>
+                  <span class="unit">起点 = 锚点日</span>
+                </div>
+              </div>
+              <div class="field-card">
+                <div class="field-title">锚点</div>
+                <div class="anchor-chips" id="anchorChipsD"></div>
+              </div>
+            </div>
+            <div class="panel" id="p-customDates" style="display:none">
+              <div class="field-card">
+                <div class="field-title">手动点选的日期</div>
+                <div class="anchor-chips" id="customChips"></div>
+                <div class="hint">点选即权威:日期不受节假日联动影响。也可切到「响铃日历」直接点格子加选。</div>
+              </div>
+            </div>
+            <div class="panel" id="p-weekly" style="display:none">
+              <div class="field-card"><div class="field-title">每周固定星期几</div>
+                <div class="hint">普通双休 / 单休场景。配合下方「节假日联动」即等价于系统「智能工作日」。</div>
               </div>
             </div>
             <div class="field-card">
               <div class="toggle-row">
-                <div class="txt"><b>节假日联动</b><p>法定假日跳过 · 调休补班日自动响 · 数据来自 holiday-cn</p></div>
-                <span class="sp" style="flex:1"></span><div class="switch"></div>
+                <div class="txt"><b>节假日联动</b><p>法定假日跳过 · 调休补班日自动响(合成演示数据)</p></div>
+                <span style="flex:1"></span><div class="switch" id="holidaySwitch"></div>
               </div>
             </div>
-            <div class="primary-btn">保 存</div>
           </div>
         </div></div>
         <h3>B · 规则编辑</h3>
-        <p class="notes"><b>锚点只问一个问题</b>:「最近的那个大周周六是几号?」——把大小周这个最难描述的规则,压缩成一次点选。<b>N stepper</b> 同时覆盖单休(n=1)/大小周(n=2)/三周一体(n=3)。</p>
+        <p class="notes"><b>锚点只问一个问题</b>:「最近的这个班日算大周吗?」把最难描述的大小周压缩成一次点选。切到「每周几」再勾上周四,可以看到 11-05 / 11-19 放假被自动跳过。</p>
       </div>
 
       <!-- C 响铃日历 -->
@@ -432,75 +423,44 @@
           <div class="statusbar"><span class="num">9:41</span><span class="sig">▂▄▆ 🔋</span></div>
           <div class="nav"><span class="back">‹</span><span class="title">响铃日历</span><span class="save" style="color:var(--text-3)">2026年11月</span></div>
           <div class="body">
-            <div class="field-card" style="flex:1;display:flex;flex-direction:column">
-              <div class="cal-grid">
-                <div class="dow">一</div><div class="dow">二</div><div class="dow">三</div><div class="dow">四</div><div class="dow">五</div><div class="dow">六</div><div class="dow">日</div>
-                <div class="day" style="background:transparent;border:none"></div><div class="day" style="background:transparent;border:none"></div><div class="day" style="background:transparent;border:none"></div><div class="day" style="background:transparent;border:none"></div><div class="day" style="background:transparent;border:none"></div><div class="day" style="background:transparent;border:none"></div>
-                <div class="day rest"><span class="n">1</span><span class="tag rest">休</span></div>
-                <div class="day"><span class="n">2</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">3</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">4</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">5</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">6</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day rest"><span class="n">7</span><span class="tag rest">小周</span></div>
-                <div class="day rest"><span class="n">8</span><span class="tag rest">休</span></div>
-                <div class="day"><span class="n">9</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">10</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">11</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">12</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">13</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day rest"><span class="n">14</span><span class="tag rest">今天</span></div>
-                <div class="day rest"><span class="n">15</span><span class="tag rest">休</span></div>
-                <div class="day"><span class="n">16</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">17</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">18</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">19</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">20</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day big today"><span class="n">21</span><span class="tag">大周</span><div class="dots"><i style="background:var(--primary)"></i><i style="background:var(--primary)"></i><i style="background:var(--primary)"></i><i class="a"></i></div></div>
-                <div class="day rest"><span class="n">22</span><span class="tag rest">休</span></div>
-                <div class="day"><span class="n">23</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">24</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">25</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">26</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day"><span class="n">27</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-                <div class="day rest"><span class="n">28</span><span class="tag rest">小周</span></div>
-                <div class="day rest"><span class="n">29</span><span class="tag rest">休</span></div>
-                <div class="day"><span class="n">30</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-              </div>
+            <div class="field-card" style="flex:1;display:flex;flex-direction:column;justify-content:flex-start">
+              <div class="cal-grid" id="calGrid"></div>
               <div class="legend">
                 <span><i style="background:var(--blue)"></i>班日响铃</span>
                 <span><i style="background:var(--primary)"></i>大周周六</span>
                 <span><i style="background:var(--red)"></i>法定假日</span>
                 <span><i style="background:var(--green)"></i>调休补班</span>
-                <span><i style="background:#33507A"></i>休息日</span>
               </div>
             </div>
-            <div class="day-detail">
-              <b>11 月 21 日 周六 · 大周上班</b>
-              <div class="ev"><span>06:40 上班</span><span>06:50 上班</span><span>07:00 上班</span><span>12:55 午休</span></div>
-            </div>
+            <div class="day-detail" id="dayDetail"></div>
           </div>
         </div></div>
         <h3>C · 响铃日历</h3>
-        <p class="notes"><b>一切规则可视化验收</b>:哪天响、几点响、什么原因,一眼看穿。着色 = 节假日层;高亮 = 大周锚点;点 = 当日时间数。这是用户信任引擎的唯一入口。</p>
+        <p class="notes">规则的可视化验收:哪天响、几点响、什么原因。<b>月历模式下点击任意日期 = 加入/移出手动排班</b>;其他模式下点击 = 查看当天明细。</p>
       </div>
 
       <!-- D 响铃页 -->
       <div class="screen-block">
         <div class="phone"><div class="screen ring">
           <div class="brand-mini">周 而 复 起 · 系统级响铃</div>
-          <div class="r-date">11 月 21 日 · 周六 · 大周</div>
-          <div class="r-time num">06:40</div>
-          <div class="r-label">上班组 · 第一道 · 还有 06:50 / 07:00 兜底</div>
-          <div class="r-sub">音量将在 30 秒内渐强 · 静音/勿扰不影响</div>
-          <div class="ring-actions">
-            <div class="btn snooze">稍后 9 分钟</div>
-            <div class="btn stop">关闭</div>
+          <div id="ringMain" style="display:flex;flex-direction:column;align-items:center">
+            <div class="r-date">11 月 21 日 · 周六 · 大周</div>
+            <div class="r-time num" id="ringTime">06:40</div>
+            <div class="r-label">上班组 · 第一道 · 还有 06:50 / 07:00 兜底</div>
+            <div class="r-sub" id="ringSub">音量将在 30 秒内渐强 · 静音/勿扰不影响</div>
           </div>
-          <div class="swipe">上滑关闭并查看今日排班</div>
+          <div class="ring-done" id="ringDone">
+            <div class="ok">✓</div>
+            <p>闹钟已关闭 · 兜底 06:50 保持待命</p>
+            <span class="undo" id="ringUndo">恢复演示</span>
+          </div>
+          <div class="ring-actions" id="ringActions">
+            <div class="btn snooze" id="snoozeBtn">稍后 9 分钟</div>
+            <div class="btn stop" id="stopBtn">关闭</div>
+          </div>
         </div></div>
         <h3>D · 响铃页(锁屏全屏)</h3>
-        <p class="notes">Android:全屏意图 + 前台服务;iOS 26:AlarmKit 原生响铃(此页为 App 自绘方案参考)。<b>三连兜底</b>(06:40/06:50/07:00)在响铃页明示——这是你现在的真实习惯,产品替你说出来。</p>
+        <p class="notes">试试「稍后 9 分钟」和「关闭」。Android:全屏意图 + 前台服务;iOS 26:AlarmKit。<b>三连兜底</b>(06:40/06:50/07:00)在页面上明示。</p>
       </div>
 
       <!-- E 保活引导 -->
@@ -509,72 +469,364 @@
           <div class="statusbar"><span class="num">9:41</span><span class="sig">▂▄▆ 🔋</span></div>
           <div class="guide-head">
             <b>让闹钟不被系统杀掉</b>
-            <p>华为 / 荣耀等机型默认管控后台。完成以下 3 步(约 1 分钟),闹钟即可达到系统时钟级可靠性。</p>
+            <p>华为 / 荣耀等机型默认管控后台。完成以下 3 步(约 1 分钟),闹钟即可达到系统时钟级可靠性。点击卡片可模拟完成。</p>
           </div>
-          <div class="body" style="padding-top:12px">
-            <div class="step"><div class="no">1</div><div>
+          <div class="body" style="padding-top:12px" id="guideBody">
+            <div class="step" data-i="0"><div class="no">1</div><div>
               <b>允许自启动与后台活动</b>
               <div class="path">设置 → 应用 → 应用启动管理 → 周而复起 → 手动管理</div>
               <p>勾选:允许自启动 · 允许关联启动 · 允许后台活动</p>
             </div></div>
-            <div class="step"><div class="no">2</div><div>
+            <div class="step" data-i="1"><div class="no">2</div><div>
               <b>忽略电池优化</b>
-              <div class="path">设置 → 电池 → 更多电池设置 → 优化充电/应用专项</div>
+              <div class="path">设置 → 电池 → 更多电池设置 → 应用专项</div>
               <p>把「周而复起」设为不受限;锁屏后不清理。</p>
             </div></div>
-            <div class="step"><div class="no">3</div><div>
+            <div class="step" data-i="2"><div class="no">3</div><div>
               <b>最近任务里加锁</b>
               <div class="path">多任务卡片下拉 → 🔒 锁定</div>
-              <p>防止一键清理误杀。完成过一次即可,无需重复。</p>
+              <p>防止一键清理误杀。完成一次即可。</p>
             </div></div>
-            <div class="dots-progress"><i class="on"></i><i></i><i></i></div>
-            <div class="primary-btn">已完成,开始使用</div>
+            <div class="dots-progress" id="guideDots"><i class="on"></i><i></i><i></i></div>
+            <div class="primary-btn disabled" id="guideDone">已完成,开始使用</div>
           </div>
         </div></div>
         <h3>E · 保活引导(华为 4.x)</h3>
-        <p class="notes">第三方闹钟与原生体验的<b>唯一真实差距</b>就在这页。做成一次性向导 + 随时从设置进入;每步提供「打开对应系统页」的深链按钮(设计稿以路径文字示意)。</p>
+        <p class="notes">第三方闹钟与原生体验的<b>唯一真实差距</b>就在这页。三步全部完成后主按钮才解锁。</p>
       </div>
 
     </div>
   </section>
 
-  <!-- ============ 04 组件 ============ -->
-  <section id="components">
-    <h2><span class="idx">04</span>组件样张</h2>
-    <div class="comp-grid">
-      <div class="comp"><h4>状态标签 Chip</h4>
-        <div class="stage"><div class="row">
-          <span class="chip hot">大周周六</span><span class="chip blue">节假日联动</span>
-          <span class="chip green">补班自动响</span><span class="chip">每 2 周</span>
-        </div></div>
-        <p class="cap">语义色固定:橙=班制主因,蓝=联动层,绿=引擎兜底,灰=中性。禁用红色做常规标签,红只留给假日。</p>
-      </div>
-      <div class="comp"><h4>开关 Switch</h4>
-        <div class="stage"><div class="row">
-          <div class="switch"></div><span style="font-size:12px;color:var(--text-2)">组启用</span>
-          <div class="switch off"></div><span style="font-size:12px;color:var(--text-3)">已停用</span>
-        </div></div>
-        <p class="cap">组开关 = 整组静音/启用;组内单条时间不再提供独立开关,避免「到底哪层关了」的困惑。</p>
-      </div>
-      <div class="comp"><h4>时间条 Time Pill</h4>
-        <div class="stage"><div class="time-list" style="width:100%">
-          <div class="time-pill"><span class="t num">12:55</span><small style="color:var(--text-3);font-size:11px">午休</small><span class="next" style="color:var(--amber);background:rgba(255,181,71,.1)">11-21</span></div>
-          <div class="time-pill"><span class="t num">06:40</span><small style="color:var(--text-3);font-size:11px">第一道</small><span class="next">11-21</span></div>
-        </div></div>
-        <p class="cap">tabular 数字;右侧「下次响铃日」徽章让每条时间都有确定感。</p>
-      </div>
-      <div class="comp"><h4>日历单元状态</h4>
-        <div class="stage"><div class="row" style="align-items:stretch">
-          <div class="day"><span class="n">16</span><div class="dots"><i></i><i></i><i></i><i class="a"></i></div></div>
-          <div class="day big"><span class="n">21</span><span class="tag">大周</span><div class="dots"><i style="background:var(--primary)"></i><i style="background:var(--primary)"></i><i style="background:var(--primary)"></i><i class="a"></i></div></div>
-          <div class="day rest"><span class="n">22</span><span class="tag rest">休</span></div>
-        </div></div>
-        <p class="cap">普通班日 / 大周班日 / 休息日 三态;假日与补班色通过 legend 体系扩展。</p>
-      </div>
-    </div>
-  </section>
-
-  <footer>周而复起 zhouerfuqi · 设计稿 v0.1 · 2026-11-14 · MIT · 配套文件 design/logo.svg、design/logo-mono.svg</footer>
+  <footer>周而复起 zhouerfuqi · 交互设计稿 v0.2 · 2026-11-14 · MIT · 配套 design/logo.svg、design/logo-mono.svg</footer>
 </div>
+
+<script>
+/*JS-START*/
+/* ================= 迷你规则引擎(与 packages/core 同语义) ================= */
+const TODAY = '2026-11-14'; // 示例「今天」:周六,小周
+const WD = ['','一','二','三','四','五','六','日'];
+const MS = 864e5;
+// 合成节假日(演示 china-smart):true=放假 false=补班
+const HOLIDAYS = { '2026-11-05': true, '2026-11-08': false, '2026-11-19': true, '2026-12-31': false };
+
+const pd = d => new Date(d + 'T00:00:00Z');
+const iso = dt => dt.toISOString().slice(0, 10);
+const addDays = (d, n) => iso(new Date(pd(d).getTime() + n * MS));
+const diff = (a, b) => Math.round((pd(a) - pd(b)) / MS);
+const dow = d => { const w = pd(d).getUTCDay(); return w === 0 ? 7 : w; };
+const mod = (a, n) => ((a % n) + n) % n;
+const weekStart = d => addDays(d, -(dow(d) - 1));
+
+function isRuleDay(rule, date) {
+  if (rule.kind === 'weekly') return rule.weekdays.includes(dow(date));
+  if (rule.kind === 'everyNWeeks')
+    return rule.weekdays.includes(dow(date)) &&
+      mod(Math.floor(diff(weekStart(date), weekStart(rule.anchor)) / 7), rule.n) === 0;
+  if (rule.kind === 'everyNDays') return mod(diff(date, rule.anchor), rule.n) === 0;
+  return rule.dates.includes(date);
+}
+function evalDay(rule, date, holidayOn) {
+  const hit = isRuleDay(rule, date);
+  const hol = HOLIDAYS[date];
+  const mode = rule.kind === 'customDates' || !holidayOn ? 'raw' : 'china-smart';
+  if (mode === 'raw') return { hit, hol, ring: hit, reason: hit ? 'rule' : null };
+  if (hit) { const ring = hol !== true; return { hit, hol, ring, reason: ring ? 'rule' : null }; }
+  const ring = hol === false;
+  return { hit, hol, ring, reason: ring ? 'swap' : null };
+}
+function nextOccurrence(rule, holidayOn, times) {
+  for (let i = 0; i < 370; i++) {
+    const date = addDays(TODAY, i);
+    const ev = evalDay(rule, date, holidayOn);
+    if (ev.ring) return { date, ev, dowN: dow(date) };
+  }
+  return null;
+}
+
+/* ================= 状态 ================= */
+const state = {
+  groupOn: true,
+  holidayOn: true,
+  ruleKind: 'everyNWeeks',
+  weekdays: { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: false },
+  n: 2,
+  anchor: '2026-11-21',
+  nD: 3,
+  anchorD: '2026-11-10',
+  customDates: new Set(['2026-11-21', '2026-11-28', '2026-12-05']),
+  times: [
+    { t: '06:40', l: '第一道' },
+    { t: '06:50', l: '第二道' },
+    { t: '07:00', l: '底线' },
+    { t: '12:55', l: '午休', amber: true },
+  ],
+  selDate: '2026-11-21',
+};
+const ANCHORS = ['2026-11-14', '2026-11-21', '2026-11-28', '2026-12-05'];
+const QUICK = ['2026-11-21', '2026-11-28', '2026-12-05', '2026-12-12'];
+
+function rule() {
+  if (state.ruleKind === 'weekly') return { kind: 'weekly', weekdays: activeWeekdays() };
+  if (state.ruleKind === 'everyNWeeks') return { kind: 'everyNWeeks', n: state.n, weekdays: activeWeekdays(), anchor: state.anchor };
+  if (state.ruleKind === 'everyNDays') return { kind: 'everyNDays', n: state.nD, anchor: state.anchorD };
+  return { kind: 'customDates', dates: [...state.customDates] };
+}
+function activeWeekdays() { return [1,2,3,4,5,6,7].filter(d => state.weekdays[d]); }
+function wdLabel(list) { return list.length ? list.map(d => WD[d]).join('') : '未选'; }
+function kindLabel(ev, date) {
+  const r = rule();
+  if (r.kind === 'weekly') return '工作日 ' + wdLabel(activeWeekdays());
+  if (r.kind === 'everyNWeeks') {
+    // 「大周」语义只属于锚点星期几(周六);工作日部分每周都响
+    if (r.weekdays.includes(dow(date)) && dow(date) === 6)
+      return r.n === 2 ? '大周周六' : '每 ' + r.n + ' 周的周六';
+    return '工作日 ' + wdLabel(r.weekdays);
+  }
+  if (r.kind === 'everyNDays') return '每 ' + r.n + ' 天';
+  return '手动排班';
+}
+function ruleDesc() {
+  const r = rule();
+  if (r.kind === 'weekly') return '每周 · ' + wdLabel(activeWeekdays());
+  if (r.kind === 'everyNWeeks') return '每 ' + r.n + ' 周 · ' + wdLabel(activeWeekdays());
+  if (r.kind === 'everyNDays') return '每 ' + r.nD + ' 天';
+  return '手动 ' + state.customDates.size + ' 天';
+}
+const $ = id => document.getElementById(id);
+
+/* ================= A 首页 ================= */
+function renderA() {
+  const heroTime = $('heroTime'), heroDate = $('heroDate'), chips = $('heroChips'), cd = $('heroCountdown');
+  if (!state.groupOn) {
+    heroTime.textContent = '— —';
+    heroDate.textContent = '上班组已停用';
+    chips.innerHTML = '<span class="chip red">整组静音</span>';
+    cd.textContent = '打开开关后重新计算';
+  } else {
+    const nx = nextOccurrence(rule(), state.holidayOn, state.times);
+    if (!nx) {
+      heroTime.textContent = '— —';
+      heroDate.textContent = '当前规则 370 天内无响铃';
+      chips.innerHTML = '<span class="chip red">无有效规则</span>';
+      cd.textContent = '回编辑页勾选星期或点选日期';
+    } else {
+      heroTime.textContent = state.times[0].t;
+      const d = diff(nx.date, TODAY);
+      heroDate.textContent = cnDate(nx.date) + ' ' + '周' + WD[nx.dowN];
+      let html = '<span class="chip hot">' + kindLabel(nx.ev, nx.date) + '</span>';
+      if (nx.ev.hol === false) html += '<span class="chip green">法定上班 · 补班</span>';
+      if (nx.ev.hol === true) html += '<span class="chip red">假日点选</span>';
+      if (state.holidayOn) html += '<span class="chip blue">节假日联动 ON</span>';
+      chips.innerHTML = html;
+      cd.textContent = d === 0 ? '今天响' : (d === 1 ? '明天响' : '距响铃还有 ' + d + ' 天');
+    }
+  }
+  // 组卡片
+  $('gsub').textContent = ruleDesc() + ' · ' + state.times.length + ' 个时间';
+  const rc = $('ruleChips');
+  const r = rule();
+  let rh = '<span class="chip hot">' + ({ weekly: '每周几', everyNWeeks: '每 ' + state.n + ' 周', everyNDays: '每 ' + state.nD + ' 天', customDates: '月历点选' })[state.ruleKind] + '</span>';
+  if (r.weekdays) rh += '<span class="chip">' + wdLabel(r.weekdays) + '</span>';
+  if (r.kind === 'everyNWeeks') rh += '<span class="chip">锚点 ' + state.anchor.slice(5) + '</span>';
+  if (r.kind === 'customDates') rh += '<span class="chip">点选 ' + state.customDates.size + ' 天</span>';
+  rh += '<span class="chip ' + (state.holidayOn ? 'blue' : '') + '">节假日' + (state.holidayOn ? '联动' : '忽略') + '</span>';
+  rc.innerHTML = rh;
+  const tp = $('timePills');
+  tp.innerHTML = state.times.map(x => {
+    const nx = state.groupOn ? nextOccurrence(rule(), state.holidayOn, state.times) : null;
+    return '<div class="time-pill"><span class="t num">' + x.t + '</span><small>' + (x.l || '') + '</small>' +
+      (nx ? '<span class="next' + (x.amber ? ' amber' : '') + '">' + cnDate(nx.date) + '</span>' : '') +
+      '</div>';
+  }).join('');
+}
+function cnDate(date) {
+  const [, m, d] = date.split('-');
+  return parseInt(m) + '月' + parseInt(d) + '日';
+}
+
+/* ================= C 日历 ================= */
+function renderC() {
+  const grid = $('calGrid');
+  const first = '2026-11-01';
+  let html = '';
+  for (let i = 1; i <= 7; i++) html += '<div class="dow">' + WD[i] + '</div>';
+  for (let i = 1; i < dow(first); i++) html += '<div></div>';
+  for (let d = 1; d <= 30; d++) {
+    const date = '2026-11-' + String(d).padStart(2, '0');
+    const ev = evalDay(rule(), date, state.holidayOn);
+    const ring = state.groupOn && ev.ring;
+    const w = dow(date);
+    let cls = 'day', tag = '', tagCls = '';
+    if (state.customDates.has(date) && state.ruleKind === 'customDates') cls += ' sel';
+    if (!ring && w >= 6) cls += ' rest';
+    if (ring && state.ruleKind === 'everyNWeeks' && state.weekdays[6] && w === 6) cls += ' big';
+    if (state.selDate === date) cls += ' sel';
+    if (w === 7 && !ring) tag = '休';
+    if (!ring && state.ruleKind === 'everyNWeeks' && state.weekdays[6] && w === 6) tag = '小周';
+    if (ring && state.ruleKind === 'everyNWeeks' && state.weekdays[6] && w === 6) { tag = '大周'; tagCls = 'big'; }
+    if (ev.hol === true) { tag = '假'; tagCls = 'off'; }
+    if (ev.hol === false && ring) { tag = '班'; tagCls = 'swap'; }
+    if (TODAY === date) cls += ' today';
+    let dots = '';
+    if (ring) {
+      const morning = state.times.filter(x => !x.amber).length;
+      const has12 = state.times.some(x => x.amber);
+      dots = '<div class="dots">' + '<i></i>'.repeat(Math.min(morning, 3)) + (has12 ? '<i class="a"></i>' : '') + '</div>';
+    }
+    html += '<div class="' + cls + '" data-date="' + date + '"><span class="n">' + d + '</span>' +
+      (tag ? '<span class="tag ' + tagCls + '">' + tag + '</span>' : '') + dots + '</div>';
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('.day').forEach(el => {
+    el.addEventListener('click', () => onDayClick(el.dataset.date));
+  });
+  renderDetail();
+}
+function onDayClick(date) {
+  if (state.ruleKind === 'customDates') {
+    if (state.customDates.has(date)) state.customDates.delete(date); else state.customDates.add(date);
+    renderA(); renderC();
+  } else {
+    state.selDate = date;
+    renderC();
+  }
+}
+function renderDetail() {
+  const box = $('dayDetail');
+  const date = state.selDate;
+  const ev = evalDay(rule(), date, state.holidayOn);
+  const ring = state.groupOn && ev.ring;
+  let st;
+  if (ev.hol === true) st = '法定假日 · ' + (ev.hit && state.holidayOn && rule().kind !== 'customDates' ? '已自动跳过' : '联动关闭,规则仍会响');
+  else if (ev.hol === false) st = '调休补班日 · 法定上班';
+  else if (dow(date) >= 6) st = '周末';
+  else st = '工作日';
+  if (ring && ev.reason === 'swap') st += ' · 补班自动响起';
+  let evh = '';
+  if (ring) {
+    evh = '<div class="ev">' + state.times.map(x =>
+      '<span>' + x.t + (x.l ? ' ' + x.l : '') + '</span>').join('') + '</div>';
+  } else if (state.groupOn) {
+    evh = '<div class="ev"><span>无响铃</span></div>';
+  } else {
+    evh = '<div class="ev"><span>整组已停用</span></div>';
+  }
+  box.innerHTML = '<b>' + cnDate(date) + ' 周' + WD[dow(date)] + ' · ' + (ring ? (ev.reason === 'swap' ? '补班上班' : kindLabel(ev, date)) : '不响') + '</b>' +
+    '<div class="st">' + st + '</div>' + evh;
+}
+
+/* ================= B 编辑页 ================= */
+function renderB() {
+  document.querySelectorAll('#ruleSeg span').forEach(el => {
+    el.classList.toggle('on', el.dataset.k === state.ruleKind);
+  });
+  ['p-weekly', 'p-everyNWeeks', 'p-everyNDays', 'p-customDates'].forEach(id => {
+    $(id).style.display = id === 'p-' + state.ruleKind ? '' : 'none';
+  });
+  $('weekdayRow').style.display = (state.ruleKind === 'weekly' || state.ruleKind === 'everyNWeeks') ? '' : 'none';
+  $('nVal').textContent = state.n + ' 周';
+  $('nValD').textContent = state.nD + ' 天';
+  const chip = (list, cur, fn) => list.map(d =>
+    '<span class="achip' + (d === cur ? ' on' : '') + '" data-d="' + d + '">' +
+    cnDate(d) + ' 周' + WD[dow(d)] + '</span>').join('');
+  const ac = $('anchorChips'); ac.innerHTML = chip(ANCHORS, state.anchor);
+  ac.querySelectorAll('.achip').forEach(el => el.addEventListener('click', () => { state.anchor = el.dataset.d; renderB(); renderAll(); }));
+  const acd = $('anchorChipsD'); acd.innerHTML = chip(ANCHORS, state.anchorD);
+  acd.querySelectorAll('.achip').forEach(el => el.addEventListener('click', () => { state.anchorD = el.dataset.d; renderB(); renderAll(); }));
+  const cq = $('customChips');
+  cq.innerHTML = QUICK.map(d => '<span class="achip' + (state.customDates.has(d) ? ' on' : '') + '" data-d="' + d + '">' + cnDate(d) + '</span>').join('');
+  cq.querySelectorAll('.achip').forEach(el => el.addEventListener('click', () => {
+    const d = el.dataset.d;
+    state.customDates.has(d) ? state.customDates.delete(d) : state.customDates.add(d);
+    renderB(); renderAll();
+  }));
+}
+function wireB() {
+  document.querySelectorAll('#ruleSeg span').forEach(el => {
+    el.addEventListener('click', () => { state.ruleKind = el.dataset.k; renderB(); renderAll(); });
+  });
+  const wr = $('weekdayRow');
+  wr.innerHTML = [1,2,3,4,5,6,7].map(i => '<div class="wd' + (state.weekdays[i] ? ' on' : '') + '" data-i="' + i + '">' + WD[i] + '</div>').join('');
+  wr.querySelectorAll('.wd').forEach(el => el.addEventListener('click', () => {
+    const i = +el.dataset.i;
+    state.weekdays[i] = !state.weekdays[i];
+    el.classList.toggle('on', state.weekdays[i]);
+    renderAll();
+  }));
+  document.querySelectorAll('.btn[data-step]').forEach(el => el.addEventListener('click', () => {
+    state.n = Math.min(4, Math.max(1, state.n + (+el.dataset.step)));
+    renderB(); renderAll();
+  }));
+  document.querySelectorAll('.btn[data-stepd]').forEach(el => el.addEventListener('click', () => {
+    state.nD = Math.min(7, Math.max(2, state.nD + (+el.dataset.stepd)));
+    renderB(); renderAll();
+  }));
+  $('holidaySwitch').addEventListener('click', () => {
+    state.holidayOn = !state.holidayOn;
+    $('holidaySwitch').classList.toggle('off', !state.holidayOn);
+    renderAll();
+  });
+  $('saveBtn').addEventListener('click', () => {
+    $('saveBtn').textContent = '已保存 ✓';
+    setTimeout(() => { $('saveBtn').textContent = '保存'; }, 1200);
+  });
+}
+
+/* ================= A/D/E 其余交互 ================= */
+function wireRest() {
+  $('groupSwitch').addEventListener('click', () => {
+    state.groupOn = !state.groupOn;
+    $('groupSwitch').classList.toggle('off', !state.groupOn);
+    renderAll();
+  });
+  $('lazySwitch').addEventListener('click', () => $('lazySwitch').classList.toggle('off'));
+  $('fab').addEventListener('click', () => {
+    $('fab').textContent = '🚧';
+    setTimeout(() => { $('fab').textContent = '+'; }, 900);
+  });
+  $('snoozeBtn').addEventListener('click', () => {
+    $('ringTime').textContent = '06:49';
+    $('ringSub').textContent = '已延后 9 分钟 → 06:49 再响';
+  });
+  $('stopBtn').addEventListener('click', () => {
+    $('ringMain').style.display = 'none';
+    $('ringActions').style.display = 'none';
+    $('ringDone').style.display = 'flex';
+  });
+  $('ringUndo').addEventListener('click', () => {
+    $('ringTime').textContent = '06:40';
+    $('ringSub').textContent = '音量将在 30 秒内渐强 · 静音/勿扰不影响';
+    $('ringMain').style.display = 'flex';
+    $('ringActions').style.display = 'flex';
+    $('ringDone').style.display = 'none';
+  });
+  const steps = document.querySelectorAll('.step');
+  steps.forEach(el => el.addEventListener('click', () => {
+    el.classList.toggle('done');
+    el.querySelector('.no').textContent = el.classList.contains('done') ? '✓' : (+el.dataset.i + 1);
+    const doneCount = document.querySelectorAll('.step.done').length;
+    const dots = $('guideDots');
+    dots.innerHTML = [0,1,2].map(i => '<i class="' + (i < doneCount ? 'on' : '') + '"></i>').join('');
+    $('guideDone').classList.toggle('disabled', doneCount < 3);
+  }));
+  $('guideDone').addEventListener('click', () => { $('guideDone').textContent = '已保存,闹钟火力全开 🔥'; });
+}
+
+/* ================= 主题 ================= */
+function wireMode() {
+  const set = m => {
+    document.body.dataset.mode = m;
+    $('modeDark').classList.toggle('on', m === 'dark');
+    $('modeLight').classList.toggle('on', m === 'light');
+  };
+  $('modeDark').addEventListener('click', () => set('dark'));
+  $('modeLight').addEventListener('click', () => set('light'));
+}
+
+function renderAll() { renderA(); renderC(); }
+wireB(); wireRest(); wireMode(); renderAll();
+/*JS-END*/
+</script>
 </body>
 </html>
