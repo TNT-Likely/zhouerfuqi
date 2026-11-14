@@ -5,6 +5,8 @@ import { useGuide } from '@/stores/guide';
 import { holidayInfo } from '@/services/holidays';
 import { gateway } from '@/gateway';
 import { scheduleTestRing, syncAll } from '@/scheduler/sync';
+import { checkUpdate, downloadAndInstall } from '@/services/updater';
+import { getVersion } from '../../modules/zf-update/src';
 import { useTheme } from '@/theme';
 
 export default function SettingsScreen() {
@@ -12,10 +14,50 @@ export default function SettingsScreen() {
   const steps = useGuide((s) => s.steps);
   const info = holidayInfo();
   const [perm, setPerm] = useState<{ notifications: boolean; exactAlarms: boolean } | null>(null);
+  const [ver, setVer] = useState<{ versionName: string; versionCode: number } | null>(null);
+  const [checking, setChecking] = useState(false);
 
   useEffect(() => {
     gateway.status().then(setPerm).catch(() => setPerm(null));
+    try {
+      setVer(getVersion());
+    } catch {
+      setVer(null);
+    }
   }, []);
+
+  const onCheckUpdate = async () => {
+    if (checking) return;
+    setChecking(true);
+    try {
+      const r = await checkUpdate();
+      if (r.status === 'available') {
+        Alert.alert(
+          `发现新版本 ${r.info.versionName}`,
+          `${r.info.notes || ' improvements'}\n\n当前 ${r.current.versionName} → 新版 ${r.info.versionName}`,
+          [
+            { text: '取消', style: 'cancel' },
+            {
+              text: '下载并安装',
+              onPress: () => {
+                void downloadAndInstall(r.info)
+                  .then(() => {
+                    Alert.alert('下载完成', '系统安装器已弹出,按提示安装即可(安装完成后请打开新版本)');
+                  })
+                  .catch((e: any) => Alert.alert('更新失败', e?.message ?? String(e)));
+              },
+            },
+          ],
+        );
+      } else if (r.status === 'up-to-date') {
+        Alert.alert('已是最新', `当前 ${r.current.versionName}(versionCode ${r.current.versionCode})`);
+      } else {
+        Alert.alert('检查失败', r.error);
+      }
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const guideDone = steps.every(Boolean);
 
@@ -48,6 +90,16 @@ export default function SettingsScreen() {
         <Text style={[styles.cardTitle, { color: t.text3 }]}>数据</Text>
         <Row label="法定节假日" sub={`${info.source} · ${info.years.join('/')} 年 · ${info.days} 天`} arrow onPress={() => Alert.alert('节假日数据', `${info.years.join('、')} 年快照已内置(${info.days} 天)。\n在线更新与手动覆盖将在后续版本提供。`)} />
         <Row label="备份与导出" sub="整包 JSON 导出(规划中)" arrow onPress={() => Alert.alert('规划中', '导出/导入将在 M1 后半段提供。')} />
+      </View>
+
+      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
+        <Text style={[styles.cardTitle, { color: t.text3 }]}>应用更新</Text>
+        <Row
+          label={checking ? '检查中…' : '检查更新'}
+          sub={ver ? `当前 ${ver.versionName}(versionCode ${ver.versionCode})· 源:GitHub Releases` : '读取版本中…'}
+          arrow
+          onPress={() => void onCheckUpdate()}
+        />
       </View>
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>

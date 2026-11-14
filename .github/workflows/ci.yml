@@ -1,0 +1,32 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Core 规则引擎单测
+        run: pnpm test
+
+      - name: core typecheck
+        run: node node_modules/typescript/bin/tsc --noEmit -p packages/core
+
+      - name: app typecheck
+        working-directory: apps/mobile
+        run: node ../../node_modules/typescript/bin/tsc --noEmit

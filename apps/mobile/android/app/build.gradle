@@ -91,11 +91,12 @@ android {
 
     namespace 'app.zhouerfuqi.mobile'
     defaultConfig {
-        applicationId 'app.zhouerfuqi.mobile'
+        applicationId 'com.tntlikely.zhouerfuqi'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "0.1.0"
+        // CI 通过 -PappVersionName/-PappVersionCode 注入,默认回退 app.json 值
+        versionCode (findProperty('appVersionCode') ?: '1').toInteger()
+        versionName (findProperty('appVersionName') ?: "0.1.0")
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
@@ -106,15 +107,21 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            // 自更新分发用签名:keystore 与口令随仓库提交(开源自用应用,不含机密)。
+            // 若要换成私密签名,改用 GitHub Secrets 注入同名属性即可。
+            storeFile file(findProperty('ZHOUERFUQI_RELEASE_STORE_FILE') ?: 'zhouerfuqi.keystore')
+            storePassword (findProperty('ZHOUERFUQI_RELEASE_STORE_PASSWORD') ?: 'zhouerfuqi2026')
+            keyAlias (findProperty('ZHOUERFUQI_RELEASE_KEY_ALIAS') ?: 'zhouerfuqi')
+            keyPassword (findProperty('ZHOUERFUQI_RELEASE_KEY_PASSWORD') ?: 'zhouerfuqi2026')
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
