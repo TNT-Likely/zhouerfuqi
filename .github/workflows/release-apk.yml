@@ -90,3 +90,13 @@ jobs:
 
             - 下载 `zhouerfuqi-${{ steps.ver.outputs.version_name }}.apk` 直接安装
             - 已装旧版的用户可在 App 内「设置 → 检查更新」自助升级
+
+      - name: Commit update manifest to main
+        run: |
+          mkdir -p updates
+          cp dist/update.json updates/update.json
+          git config user.name "zhouerfuqi-ci"
+          git config user.email "ci@zhouerfuqi.local"
+          git add updates/update.json
+          git commit -m "ci: update manifest ${{ github.ref_name }}" || echo "manifest unchanged"
+          git push origin HEAD:main

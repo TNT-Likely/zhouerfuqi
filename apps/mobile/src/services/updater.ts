@@ -39,6 +39,17 @@ export async function checkUpdate(
   source: { owner: string; repo: string } = DEFAULT_UPDATE_SOURCE,
 ): Promise<UpdateCheckResult> {
   const current = getVersion();
+
+  // 首选:仓库内 raw manifest(CI 每次发版提交,raw.githubusercontent 无 API 限流)
+  try {
+    const meta = await fetchJson(
+      `https://raw.githubusercontent.com/${source.owner}/${source.repo}/main/updates/update.json`,
+    );
+    return evaluateUpdate(meta, current);
+  } catch {
+    // 回退:releases/latest API(匿名 60 次/小时/IP,易 403)
+  }
+
   try {
     const release = await fetchJson(
       `https://api.github.com/repos/${source.owner}/${source.repo}/releases/latest`,
@@ -46,23 +57,28 @@ export async function checkUpdate(
     const assets: { name: string; browser_download_url: string }[] = release.assets ?? [];
     const metaAsset = assets.find((a) => a.name === 'update.json');
     if (!metaAsset) throw new Error('Release 缺少 update.json 资产');
-
     const meta = await fetchJson(metaAsset.browser_download_url);
-    const info: UpdateInfo = {
-      versionName: String(meta.versionName ?? release.tag_name),
-      versionCode: Number(meta.versionCode ?? 0),
-      apkUrl: String(meta.apk ?? ''),
-      notes: String(meta.notes ?? release.body ?? ''),
-    };
-    if (!info.apkUrl) throw new Error('update.json 缺少 apk 地址');
-
-    if (info.versionCode > current.versionCode) {
-      return { status: 'available', current, info };
-    }
-    return { status: 'up-to-date', current };
+    return evaluateUpdate(meta, current);
   } catch (e: any) {
     return { status: 'error', error: e?.message ?? String(e), current };
   }
+}
+
+function evaluateUpdate(
+  meta: any,
+  current: { versionName: string; versionCode: number },
+): UpdateCheckResult {
+  const info: UpdateInfo = {
+    versionName: String(meta.versionName ?? ''),
+    versionCode: Number(meta.versionCode ?? 0),
+    apkUrl: String(meta.apk ?? ''),
+    notes: String(meta.notes ?? ''),
+  };
+  if (!info.apkUrl) throw new Error('update.json 缺少 apk 地址');
+  if (info.versionCode > current.versionCode) {
+    return { status: 'available', current, info };
+  }
+  return { status: 'up-to-date', current };
 }
 
 export async function downloadAndInstall(
