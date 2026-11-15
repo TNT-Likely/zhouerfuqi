@@ -15,11 +15,11 @@
     <path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/>
     <path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/>
   </g>
-  <path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="#FF7A45" stroke-width="9" stroke-linecap="round"/>
+  <path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="#3D8BFF" stroke-width="9" stroke-linecap="round"/>
   <!-- 钟体 -->
   <g transform="translate(33.6,33) scale(2.2)" fill="#F4F7FC">
     <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
   </g>
   <!-- 呼吸点:响铃瞬间的"起" -->
-  <circle cx="60" cy="52" r="3" fill="#FF7A45"/>
+  <circle cx="60" cy="52" r="3" fill="#3D8BFF"/>
 </svg>
