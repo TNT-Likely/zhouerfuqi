@@ -132,7 +132,8 @@ android {
     }
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
+            // 与 release 同签名:真机可直接覆盖安装 dev 版(保留数据)
+            signingConfig signingConfigs.release
         }
         release {
             signingConfig signingConfigs.release

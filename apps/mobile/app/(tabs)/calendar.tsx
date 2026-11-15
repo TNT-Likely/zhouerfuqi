@@ -123,7 +123,9 @@ export default function CalendarScreen() {
       <View style={[styles.cal, { backgroundColor: t.surface, borderColor: t.line }]}>
         <View style={styles.grid}>
           {WD.map(w => <Text key={w} style={[styles.dow, { color: t.text2 }]}>{w}</Text>)}
-          {Array.from({ length: firstDow - 1 }).map((_, i) => <View key={`b${i}`} />)}
+          {Array.from({ length: firstDow - 1 }).map((_, i) => (
+            <View key={`b${i}`} style={styles.day} />
+          ))}
           {cells.map(({ date, day }) => {
             const ev = g ? evaluateDay(g, getHolidayCalendar(), date) : null;
             const ring = !!g && g.enabled && !!ev?.ring;
