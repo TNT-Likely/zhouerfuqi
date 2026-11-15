@@ -187,22 +187,16 @@ jobs:
             MARKETING_VERSION="${{ steps.ver.outputs.version_name }}" \
             CURRENT_PROJECT_VERSION="${{ steps.ver.outputs.version_code }}"
 
-      - name: Export and upload to TestFlight
+      - name: Export signed IPA
         working-directory: apps/mobile/ios
-        env:
-          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          API_ISSUER: ${{ secrets.APPLE_API_ISSUER_ID }}
-          API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
         run: |
-          mkdir -p ~/private_keys
-          printf '%s' "$API_KEY_CONTENT" > ~/private_keys/AuthKey_${API_KEY_ID}.p8
           cat > /tmp/export.plist <<'PLIST'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-            <key>method</key><string>app-store</string>
-            <key>destination</key><string>upload</string>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>export</string>
             <key>teamID</key><string>JS3KDL8437</string>
             <key>signingStyle</key><string>manual</string>
             <key>uploadSymbols</key><true/>
@@ -212,7 +206,16 @@ jobs:
           plutil -insert provisioningProfiles -dict \
             -key com.tntlikely.zhouerfuqi -string "${{ env.PROFILE_NAME }}" /tmp/export.plist
           xcodebuild -exportArchive -archivePath build/app-signed.xcarchive \
-            -exportOptionsPlist /tmp/export.plist \
-            -authenticationKeyPath ~/private_keys/AuthKey_${API_KEY_ID}.p8 \
-            -authenticationKeyID "$API_KEY_ID" \
-            -authenticationKeyIssuer "$API_ISSUER"
+            -exportOptionsPlist /tmp/export.plist -exportPath build
+
+      - name: Upload to TestFlight (altool)
+        working-directory: apps/mobile/ios
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER_ID }}
+          API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          mkdir -p ~/private_keys
+          printf '%s' "$API_KEY_CONTENT" > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+          xcrun altool --upload-app -f build/app.ipa -t ios \
+            --apiKey "$API_KEY_ID" --apiIssuer "$API_ISSUER"
