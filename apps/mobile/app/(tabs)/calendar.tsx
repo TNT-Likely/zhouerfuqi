@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { evaluateDay } from '@core';
+import { Ionicons } from '@expo/vector-icons';
+import { evaluateDay, isRuleDay, type AlarmGroup, type Weekday } from '@core';
 import { useGroups } from '@/stores/groups';
 import { getHolidayCalendar } from '@/services/holidays';
 import { todayISO } from '@/scheduler/materialize';
@@ -8,105 +9,163 @@ import { syncAll } from '@/scheduler/sync';
 import { cnDate, WD } from '@/lib/labels';
 import { useTheme, type Tokens } from '@/theme';
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
+function monthMeta(y: number, m: number) {
+  return { days: new Date(y, m, 0).getDate(), firstDow: (() => { const w = new Date(y, m - 1, 1).getDay(); return w === 0 ? 7 : w; })() };
+}
+function dowOf(date: string): number {
+  const d = new Date(`${date}T00:00:00`).getDay();
+  return d === 0 ? 7 : d;
+}
+
 export default function CalendarScreen() {
   const t = useTheme();
   const groups = useGroups((s) => s.groups);
-  const enabled = groups.filter((g) => g.enabled);
-  const cal = getHolidayCalendar();
+  const upsert = useGroups((s) => s.upsert);
+  const g = groups[0]; // 排班月历编辑的班组
+  const now = new Date();
+  const [cal, setCal] = useState({ y: now.getFullYear(), m: now.getMonth() + 1 });
+  const [mode, setMode] = useState<'rule' | 'manual'>('rule');
+  const [sel, setSel] = useState(todayISO());
+
+  const manual = g?.rule.kind === 'customDates';
+  const editing = !!g && manual && mode === 'manual' && g.enabled;
+  const dates = new Set<string>(g && g.rule.kind === 'customDates' ? g.rule.dates : []);
+  const y = cal.y, m = cal.m;
+  const { days, firstDow } = monthMeta(y, m);
   const today = todayISO();
-  const [selected, setSelected] = useState(today);
 
-  const y = Number(today.slice(0, 4));
-  const m = Number(today.slice(5, 7));
-  const daysInMonth = new Date(y, m, 0).getDate();
-  const firstDow = new Date(y, m - 1, 1).getDay(); // JS 0=周日
-  const leading = firstDow === 0 ? 7 : firstDow; // ISO:周一为起点
-
-  const cells = useMemo(() => {
-    const out: { date: string; day: number }[] = [];
-    for (let d = 1; d <= daysInMonth; d++) {
-      out.push({ date: `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`, day: d });
-    }
-    return out;
-  }, [y, m, daysInMonth]);
-
-  const evalFor = (date: string) => {
-    let ring = false;
-    let swap = false;
-    let holiday: boolean | undefined;
-    let dotCount = 0;
-    let hasAmber = false;
-    for (const g of enabled) {
-      const e = evaluateDay(g, cal, date);
-        if (e.ring) {
-        ring = true;
-        if (e.reason === 'swap-workday') swap = true;
-        if (g.times.length > dotCount) {
-          dotCount = g.times.filter((x) => !(x.hour === 12 && x.minute === 55)).length;
-          hasAmber = g.times.some((x) => x.hour === 12 && x.minute === 55);
-        }
+  const setRuleDates = (fn: (set: Set<string>) => void) => {
+    if (!g) return;
+    const set = new Set(dates);
+    fn(set);
+    upsert({ ...g, rule: { kind: 'customDates', dates: [...set].sort() } });
+    void syncAll();
+  };
+  const enterManual = () => {
+    if (!g) return;
+    if (g.rule.kind !== 'customDates') {
+      // 进入手动排班:把可见月份的规则响铃日(今天起)播种为点选起点
+      const seed = new Set<string>(g.rule.kind === 'customDates' ? g.rule.dates : []);
+      for (let d = 1; d <= days; d++) {
+        const date = `${y}-${pad(m)}-${pad(d)}`;
+        if (date >= today && isRuleDay(g.rule, date)) seed.add(date);
       }
-      if (e.holiday !== undefined) holiday = e.holiday;
+      upsert({ ...g, rule: { kind: 'customDates', dates: [...seed].sort() } });
+      void syncAll();
     }
-    return { ring, swap, holiday, dotCount, hasAmber };
+    setMode('manual');
   };
 
-  const dowOf = (date: string) => {
-    const d = new Date(`${date}T00:00:00`).getDay();
-    return d === 0 ? 7 : d;
-  };
+  const cells: { date: string; day: number }[] = [];
+  for (let d = 1; d <= days; d++) cells.push({ date: `${y}-${pad(m)}-${pad(d)}`, day: d });
 
-  const selEval = evalFor(selected);
-  const selGroupEvals = enabled.map((g) => ({ g, e: evaluateDay(g, cal, selected) }));
+  const evFor = (date: string) => evaluateDay(g ?? { id: '', name: '', enabled: true, times: [], rule: { kind: 'weekly', weekdays: [1,2,3,4,5] } }, getHolidayCalendar(), date);
+
+  const selEv = g ? evaluateDay(g, getHolidayCalendar(), sel) : null;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <Text style={[styles.title, { color: t.text }]}>响铃日历</Text>
-        <Text style={[styles.month, { color: t.text3 }]}>{y}年{m}月</Text>
+      <View style={styles.topbar}>
+        <Text style={[styles.title, { color: t.text }]}>排班月历</Text>
+        <Text style={{ fontSize: 11, color: t.text2 }}>
+          {editing ? '手动排班 · 编辑中' : manual ? '手动排班 · 预览' : '规则预览'}
+        </Text>
       </View>
 
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
+      {/* 模式切换 */}
+      <View style={[styles.mode, { backgroundColor: t.surface2 }]}>
+        <Pressable style={[styles.modeBtn, mode === 'rule' && { backgroundColor: t.surface }]} onPress={() => setMode('rule')}>
+          <Text style={{ fontSize: 12, color: mode === 'rule' ? t.text : t.text3, fontWeight: mode === 'rule' ? '600' : '400' }}>规则预览</Text>
+        </Pressable>
+        <Pressable style={[styles.modeBtn, mode === 'manual' && { backgroundColor: t.surface }]} onPress={() => { mode === 'rule' ? enterManual() : setMode('manual'); }}>
+          <Text style={{ fontSize: 12, color: mode === 'manual' ? t.text : t.text3, fontWeight: mode === 'manual' ? '600' : '400' }}>手动排班</Text>
+        </Pressable>
+      </View>
+
+      {/* 月份导航 */}
+      <View style={styles.calHead}>
+        <Pressable style={[styles.calNav, { backgroundColor: t.surface2 }]} onPress={() => setCal(c => ({ y: c.m === 1 ? c.y - 1 : c.y, m: c.m === 1 ? 12 : c.m - 1 }))}>
+          <Ionicons name="chevron-back" size={16} color={t.text2} />
+        </Pressable>
+        <Text style={[styles.calTitle, { color: t.text }]}>
+          {y}年{m}月
+          {y === now.getFullYear() && m === now.getMonth() + 1 && <Text style={{ color: t.primary, fontSize: 11, fontWeight: '600' }}>  本月</Text>}
+        </Text>
+        <Pressable style={[styles.calNav, { backgroundColor: t.surface2 }]} onPress={() => setCal(c => ({ y: c.m === 12 ? c.y + 1 : c.y, m: c.m === 12 ? 1 : c.m + 1 }))}>
+          <Ionicons name="chevron-forward" size={16} color={t.text2} />
+        </Pressable>
+        <Pressable style={[styles.calNav, { backgroundColor: t.surface2 }]} onPress={() => setCal({ y: now.getFullYear(), m: now.getMonth() + 1 })}>
+          <Ionicons name="calendar-clear-outline" size={15} color={t.text2} />
+        </Pressable>
+      </View>
+
+      {/* 快捷填充(手动排班编辑中) */}
+      {editing && (
+        <View style={styles.quick}>
+          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => { for (let d = 1; d <= days; d++) { const date = `${y}-${pad(m)}-${pad(d)}`; if (dowOf(date) <= 5) set.add(date); } })}>
+            <Text style={{ fontSize: 12, color: t.text }}>填充工作日</Text>
+          </Pressable>
+          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => { for (let d = 1; d <= days; d++) set.add(`${y}-${pad(m)}-${pad(d)}`); })}>
+            <Text style={{ fontSize: 12, color: t.text }}>填充全月</Text>
+          </Pressable>
+          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => { for (let d = 1; d <= days; d++) set.delete(`${y}-${pad(m)}-${pad(d)}`); })}>
+            <Text style={{ fontSize: 12, color: t.text }}>清空本月</Text>
+          </Pressable>
+          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => set.clear())}>
+            <Text style={{ fontSize: 12, color: t.text }}>清空全部点选</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* 月历 */}
+      <View style={[styles.cal, { backgroundColor: t.surface, borderColor: t.line }]}>
         <View style={styles.grid}>
-          {WD.map((w) => (
-            <Text key={w} style={[styles.dow, { color: t.text3 }]}>{w}</Text>
-          ))}
-          {Array.from({ length: leading - 1 }).map((_, i) => (
-            <View key={`b${i}`} />
-          ))}
+          {WD.map(w => <Text key={w} style={[styles.dow, { color: t.text2 }]}>{w}</Text>)}
+          {Array.from({ length: firstDow - 1 }).map((_, i) => <View key={`b${i}`} />)}
           {cells.map(({ date, day }) => {
-            const e = evalFor(date);
-            const dowN = dowOf(date);
+            const ev = g ? evaluateDay(g, getHolidayCalendar(), date) : null;
+            const ring = !!g && g.enabled && !!ev?.ring;
+            const picked = dates.has(date);
+            const w = dowOf(date);
             const isToday = date === today;
-            const big = e.ring && dowN === 6;
-            const rest = !e.ring && dowN >= 6;
-            let tag = '';
-            let tagColor = t.text3;
-            if (e.holiday === true) { tag = '假'; tagColor = t.red; }
-            else if (e.holiday === false) { tag = '班'; tagColor = t.green; }
-            else if (big) { tag = '大周'; tagColor = t.primary; }
-            else if (!e.ring && dowN === 6) { tag = '小周'; }
-            else if (dowN === 7) { tag = '休'; }
+            const isSel = sel === date;
+            let tag = ''; let tagColor = t.text2;
+            if (editing) {
+              if (picked) { tag = '✓'; tagColor = t.primary; }
+              else if (ev?.hol === true) { tag = '假'; tagColor = t.red; }
+            } else if (ev) {
+              if (ev.hol === true) { tag = '假'; tagColor = t.red; }
+              else if (ev.hol === false && ring) { tag = '班'; tagColor = t.green; }
+              else if (ring && w === 6 && g?.rule.kind === 'everyNWeeks') { tag = '大周'; tagColor = t.primary; }
+              else if (!ring && w === 6) { tag = '小周'; }
+              else if (!ring && w === 7) { tag = '休'; }
+            }
+            const dotCount = ring && g ? g.times.length : 0;
             return (
               <Pressable
                 key={date}
-                onPress={() => setSelected(date)}
+                onPress={() => {
+                  if (editing) { setRuleDates(set => { set.has(date) ? set.delete(date) : set.add(date); }); }
+                  else setSel(date);
+                }}
                 style={[
                   styles.day,
-                  { backgroundColor: rest || !e.ring ? 'transparent' : t.surface },
-                  big ? { backgroundColor: 'rgba(255,122,69,0.16)', borderColor: t.primary } : null,
-                  isToday ? { borderWidth: 1.5, borderColor: t.blue } : null,
+                  { backgroundColor: restBg(restFlag(!editing, ring, w)) },
+                  picked ? styles.picked : null,
+                  isSel && !picked ? styles.selSolid : null,
+                  ev?.hol === true && !picked && !editing ? styles.dim : null,
                 ]}
               >
-                <Text style={{ fontSize: 13, fontWeight: big ? '800' : '600', color: big ? t.primary : rest ? t.text3 : t.text2 }}>
+                <Text style={{ fontSize: 13, fontWeight: isSel || picked ? '700' : '600', color: isSel ? '#fff' : restFlag(!editing, ring, w) ? t.text3 : t.text }}>
                   {day}
                 </Text>
-                {e.ring ? (
+                {ring ? (
                   <View style={styles.dots}>
-                    {Array.from({ length: Math.min(e.dotCount, 3) }).map((_, i) => (
-                      <View key={i} style={[styles.dot, { backgroundColor: t.blue }]} />
+                    {Array.from({ length: Math.min(dotCount, 4) }).map((_, i) => (
+                      <View key={i} style={[styles.dot, { backgroundColor: t.primary }]} />
                     ))}
-                    {e.hasAmber ? <View style={[styles.dot, { backgroundColor: t.amber }]} /> : null}
                   </View>
                 ) : null}
                 {tag ? <Text style={[styles.tag, { color: tagColor }]}>{tag}</Text> : null}
@@ -115,74 +174,89 @@ export default function CalendarScreen() {
           })}
         </View>
         <View style={styles.legend}>
-          <Legend t={t} color={t.blue} text="班日响铃" />
+          <Legend t={t} color={t.primary} text="班日响铃" />
           <Legend t={t} color={t.primary} text="大周周六" />
           <Legend t={t} color={t.red} text="法定假日" />
           <Legend t={t} color={t.green} text="调休补班" />
+          <Legend t={t} color={t.primary} text="手动点选" />
         </View>
       </View>
 
       {/* 当日明细 */}
-      <View style={[styles.detail, { backgroundColor: t.surface2, borderColor: t.line }]}>
-        <Text style={{ color: t.text, fontSize: 13, fontWeight: '700' }}>
-          {cnDate(selected)} 周{WD[dowOf(selected) - 1]} · {selEval.ring ? (selEval.swap ? '补班上班' : '响铃日') : '不响'}
-        </Text>
-        <Text style={{ color: t.text3, fontSize: 11, marginTop: 4 }}>
-          {selEval.holiday === true ? '法定假日 · 联动开启时自动跳过' : selEval.holiday === false ? '调休补班日 · 法定上班' : dowOf(selected) >= 6 ? '周末' : '工作日'}
-        </Text>
-        <View style={styles.evRow}>
-          {selGroupEvals.length === 0 ? (
-            <Text style={{ color: t.text3, fontSize: 11 }}>当前没有启用中的班组</Text>
-          ) : (
-            selGroupEvals.map(({ g, e }) => (
-              <View key={g.id} style={{ marginTop: 8 }}>
-                <Text style={{ color: t.text2, fontSize: 12 }}>
-                  {g.name}:{e.ring ? (e.reason === 'swap-workday' ? '补班响起' : '规则响起') : '跳过'}
-                </Text>
-                {e.ring ? (
-                  <View style={[styles.evRow, { marginTop: 4 }]}>
-                    {g.times.map((tm) => (
-                      <Text key={tm.id} style={[styles.evPill, { borderColor: t.line, color: t.text2 }]}>
-                        {String(tm.hour).padStart(2, '0')}:{String(tm.minute).padStart(2, '0')}
-                      </Text>
-                    ))}
-                  </View>
-                ) : null}
-              </View>
-            ))
-          )}
-        </View>
-        <Text style={{ color: t.text3, fontSize: 10, marginTop: 10 }}>
-          提示:在编辑页把规则切到「月历」后,点击日历格子即可加入/移出手动排班。
-        </Text>
+      <View style={[styles.detail, { backgroundColor: t.surface2 }]}>
+        {(() => {
+          if (!g) return null;
+          const ev = evaluateDay(g, getHolidayCalendar(), sel);
+          const ring = g.enabled && ev.ring;
+          const editingNow = editing;
+          let st: string;
+          if (editingNow) st = dates.has(sel) ? '已加入排班(点选即权威,不受节假日影响)' : '未排班 · 点击上方格子加入';
+          else if (ev.hol === true) st = '法定假日 · 联动开启时自动跳过';
+          else if (ev.hol === false) st = '调休补班日 · 法定上班';
+          else if (dowOf(sel) >= 6) st = '周末';
+          else st = '工作日';
+          if (ring && ev.reason === 'swap') st += ' · 补班自动响起';
+          return (
+            <>
+              <Text style={{ color: t.text, fontSize: 13, fontWeight: '700' }}>
+                {cnDate(sel)} 周{WD[dowOf(sel) - 1]} · {ring ? (ev.reason === 'swap' ? '补班上班' : ring && g.rule.kind === 'everyNWeeks' && dowOf(sel) === 6 ? '大周周六' : '响铃日') : editingNow ? '未点选' : '不响'}
+              </Text>
+              <Text style={{ color: t.text2, fontSize: 11, marginTop: 4 }}>{st}</Text>
+              {ring ? (
+                <View style={styles.ev}>
+                  {g.times.map(x => (
+                    <Text key={x.id} style={[styles.evPill, { borderColor: t.line, color: t.text2 }]}>
+                      {String(x.hour).padStart(2, '0')}:{String(x.minute).padStart(2, '0')}{x.label ? ` ${x.label}` : ''}
+                    </Text>
+                  ))}
+                </View>
+              ) : null}
+            </>
+          );
+        })()}
       </View>
     </ScrollView>
   );
 }
 
+function restFlag(isPreview: boolean, ring: boolean, w: number): boolean {
+  return isPreview && !ring && w >= 6;
+}
+function restBg(rest: boolean): string | undefined {
+  return rest ? 'transparent' : undefined;
+}
 function Legend({ t, color, text }: { t: Tokens; color: string; text: string }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
       <View style={{ width: 8, height: 8, borderRadius: 3, backgroundColor: color }} />
-      <Text style={{ fontSize: 10, color: t.text3 }}>{text}</Text>
+      <Text style={{ fontSize: 10, color: t.text2 }}>{text}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48, gap: 14 },
-  header: { flexDirection: 'row', alignItems: 'baseline', paddingTop: 52, paddingHorizontal: 2, gap: 10 },
-  title: { fontSize: 18, fontWeight: '800' },
-  month: { fontSize: 12, marginLeft: 'auto' },
-  card: { borderWidth: 1, borderRadius: 20, padding: 12 },
+  container: { padding: 16, paddingBottom: 48, gap: 12 },
+  topbar: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingHorizontal: 2, gap: 10 },
+  title: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
+  mode: { flexDirection: 'row', borderRadius: 14, padding: 3, gap: 2 },
+  modeBtn: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 11 },
+  calHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, minHeight: 44 },
+  calNav: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  calTitle: { fontSize: 17, fontWeight: '700', flex: 1, textAlign: 'center' },
+  quick: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  quickBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
+  cal: { borderWidth: 1, borderRadius: 22, padding: 12 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
-  dow: { fontSize: 10, width: '13.5%', textAlign: 'center', paddingVertical: 4 },
-  day: { width: '13.5%', height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  dow: { fontSize: 10, width: '13.2%', textAlign: 'center', paddingVertical: 4 },
+  day: { width: '13.2%', height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', gap: 3, position: 'relative' },
+  picked: { shadowColor: '#1677FF', shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, borderWidth: 2, borderColor: '#1677FF' },
+  selSolid: {},
+  dim: { opacity: 0.4 },
   dots: { flexDirection: 'row', gap: 2 },
   dot: { width: 4, height: 4, borderRadius: 2 },
-  tag: { position: 'absolute', top: 2, right: 4, fontSize: 8, fontWeight: '700' },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10 },
-  detail: { borderWidth: 1, borderRadius: 14, padding: 14 },
-  evRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  tag: { position: 'absolute', top: 2, right: 5, fontSize: 8, fontWeight: '700' },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10, paddingHorizontal: 2 },
+  detail: { borderRadius: 16, padding: 14, minHeight: 78 },
+  ev: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
   evPill: { fontSize: 11, borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, overflow: 'hidden' },
 });

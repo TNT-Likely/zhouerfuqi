@@ -104,7 +104,7 @@ export default function SettingsScreen() {
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>关于</Text>
-        <Row label="周而复起" sub={`${ver ? `${ver.versionName}(${ver.versionCode})` : 'v0.1.0'} · MIT · github.com/*/zhouerfuqi`} arrow onPress={() => Alert.alert('周而复起', '开源、本地优先的任意班制闹钟。\n规则引擎 @zhouerfuqi/core · Expo RN')} />
+        <Row label="周而复起" sub={`${ver ? `${ver.versionName}(versionCode ${ver.versionCode})` : 'v0.1.0'} · MIT · github.com/TNT-Likely/zhouerfuqi`} arrow onPress={() => Alert.alert('周而复起', '开源、本地优先的任意班制闹钟。\n规则引擎 @zhouerfuqi/core · Expo RN')} />
       </View>
     </ScrollView>
   );

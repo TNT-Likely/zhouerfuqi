@@ -86,6 +86,16 @@ android {
     // 会与 RN 0.88 需要的 28.2.13676358 不一致导致 AGP 找不到 NDK;显式钉住本机已有版本
     ndkVersion "28.2.13676358"
 
+    // ABI 拆分:单 ABI APK 约为全量包的 1/4(真机装 arm64-v8a,模拟器 x86_64)
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86_64'
+            universalApk false
+        }
+    }
+
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
