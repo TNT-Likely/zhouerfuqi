@@ -102,7 +102,6 @@ jobs:
     # secrets 命名遵循 ~/Documents/apple/README.md 账号级材料惯例
     if: github.ref_type == 'tag'
     runs-on: macos-26
-    environment: ios-release
     steps:
       - uses: actions/checkout@v4
         with:
