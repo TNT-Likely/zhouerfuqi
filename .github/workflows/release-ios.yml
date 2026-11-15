@@ -64,6 +64,8 @@ jobs:
       - name: Build unsigned archive
         working-directory: apps/mobile/ios
         run: |
+          plutil -replace CFBundleShortVersionString -string "${{ steps.ver.outputs.version_name }}" app/Info.plist
+          plutil -replace CFBundleVersion -string "${{ steps.ver.outputs.version_code }}" app/Info.plist
           xcodebuild archive -workspace app.xcworkspace -scheme app -configuration Release \
             -destination 'generic/platform=iOS' -archivePath build/app.xcarchive \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
@@ -173,7 +175,10 @@ jobs:
 
       - name: Signed archive
         working-directory: apps/mobile/ios
+        # Expo 把版本写死在 Info.plist,必须归档前直接改(CLI build settings 压不过)
         run: |
+          plutil -replace CFBundleShortVersionString -string "${{ steps.ver.outputs.version_name }}" app/Info.plist
+          plutil -replace CFBundleVersion -string "${{ steps.ver.outputs.version_code }}" app/Info.plist
           xcodebuild archive -workspace app.xcworkspace -scheme app -configuration Release \
             -destination 'generic/platform=iOS' -archivePath build/app-signed.xcarchive \
             CODE_SIGN_STYLE=Manual "CODE_SIGN_IDENTITY=${{ env.SIGNING_IDENTITY }}" \
