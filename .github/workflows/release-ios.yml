@@ -156,7 +156,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KC_PASS" build.keychain >/dev/null
           security list-keychains -d user -s ~/Library/Keychains/build.keychain-db $(security list-keychains -d user | tr -d ' ' | grep -v build.keychain)
           security find-identity -v -p codesigning build.keychain
-          echo "SIGNING_IDENTITY=$(security find-identity -v -p codesigning build.keychain | awk -F'"' '/valid/{print $2; exit}')" >> "$GITHUB_ENV"
+          echo "SIGNING_IDENTITY=$(security find-identity -v -p codesigning build.keychain | sed -n 's/.*"\(.*\)".*/\1/p' | head -1)" >> "$GITHUB_ENV"
           rm -f /tmp/dist.p12
 
       - name: Install provisioning profile
@@ -189,22 +189,22 @@ jobs:
 
       - name: Export signed IPA
         working-directory: apps/mobile/ios
+        # 注意:这里不能用 heredoc——YAML 块内缩进的结束标记 bash 不认,
+        # 会把后续命令吞进 plist 内容(假绿、无产物)
         run: |
-          cat > /tmp/export.plist <<'PLIST'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key><string>app-store-connect</string>
-            <key>destination</key><string>export</string>
-            <key>teamID</key><string>JS3KDL8437</string>
-            <key>signingStyle</key><string>manual</string>
-            <key>uploadSymbols</key><true/>
-          </dict>
-          </plist>
-          plutil -insert signingCertificate -string "${{ env.SIGNING_IDENTITY }}" /tmp/export.plist
+          printf '%s\n' \
+            '<?xml version="1.0" encoding="UTF-8"?>' \
+            '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
+            '<plist version="1.0"><dict>' \
+            '<key>method</key><string>app-store-connect</string>' \
+            '<key>destination</key><string>export</string>' \
+            '<key>teamID</key><string>JS3KDL8437</string>' \
+            '<key>signingStyle</key><string>manual</string>' \
+            '<key>uploadSymbols</key><true/>' \
+            '</dict></plist>' > /tmp/export.plist
+          plutil -insert signingCertificate -string "$SIGNING_IDENTITY" /tmp/export.plist
           plutil -insert provisioningProfiles -dict \
-            -key com.tntlikely.zhouerfuqi -string "${{ env.PROFILE_NAME }}" /tmp/export.plist
+            -key com.tntlikely.zhouerfuqi -string "$PROFILE_NAME" /tmp/export.plist
           xcodebuild -exportArchive -archivePath build/app-signed.xcarchive \
             -exportOptionsPlist /tmp/export.plist -exportPath build
 
