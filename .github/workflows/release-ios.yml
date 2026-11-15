@@ -145,6 +145,8 @@ jobs:
           KC_PASS=$(openssl rand -hex 16)
           security create-keychain -p "$KC_PASS" build.keychain
           security unlock-keychain -p "$KC_PASS" build.keychain
+          # 归档要 15+ 分钟,禁掉默认 5 分钟自动上锁(否则 codesign errSecInternalComponent)
+          security set-keychain-settings -t 54000 build.keychain
           security import /tmp/dist.p12 -k build.keychain -P "$P12_PASS" -T /usr/bin/codesign
           # WWDR 中间证书(Xcode 自带;账号证书链到 G3/2030 续期版)
           WWDR=$(ls /Applications/Xcode*.app/Contents/SharedFrameworks/DVTFoundation.framework/Versions/A/Resources/AppleWWDRCA-2030.cer 2>/dev/null | head -1)
