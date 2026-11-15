@@ -132,7 +132,7 @@ cd apps/mobile/android
 
 ## 8. iOS(M2)进展
 
-**已完成(2026-11-16,模拟器闭环)**:
+**已完成(2026-11-15,模拟器闭环)**:
 
 1. ✅ `expo prebuild -p ios` 生成 ios/ 并**已提交**(与 android 同策略;.gitignore 已放开)
 2. ✅ `modules/zf-alarm-ios`(Swift/Expo Modules):
@@ -145,11 +145,29 @@ cd apps/mobile/android
    AlarmKit 授权通过 ✓、**44 枚物化响铃全部落 AlarmKit(零降级)** ✓、大周/小周锚点渲染 ✓
 5. ✅ iOS 无 MIUI 式 7 天钳制 → 不需要每日刷新器;`scheduleRefresher` 在 iOS 为 no-op
 
+**App Store Connect / 签名体系(2026-11-16 配齐)**:
+
+| 项 | 值 |
+| --- | --- |
+| Team ID | `JS3KDL8437`(xiao sun);Issuer ID `24f6ad22-b646-4b07-b054-b5acd6f48879` |
+| Bundle ID | `com.tntlikely.zhouerfuqi`(Identifier 已注册;**App 记录已建**,ASC App ID 6835119700,SKU zhouerfuqi,主语言简体中文) |
+| 分发证书 | 复用账号级 `~/Documents/apple/apple_distribution.p12`(serial 29E5BDCC…,到期 **2027-10-30**);曾误建过一张重复证书已撤销 |
+| API Key | 专用 `zhouerfuqi-ci`(Key ID `3W6NQ7Y8QJ`,App 管理权限,不与 BeeCount 共用的 564N382695 混用);.p8 存 `~/Documents/apple` 惯例之外另存本仓 `.tools/asc/`(gitignored) |
+| 描述文件 | `zhouerfuqi-appstore`(profileId M5RWDRDU58,UUID 75e59c34-…,到期随证书 2027-10-30) |
+| GitHub Secrets | `APPLE_API_ISSUER_ID` / `APPLE_API_KEY_ID` / `APPLE_API_KEY_CONTENT` / `APPLE_CERTIFICATE_P12`(base64)/ `APPLE_CERTIFICATE_PASSWORD` / `APPLE_PROVISIONING_PROFILE`——命名对齐 `~/Documents/apple/README.md` 惯例 |
+
+**CI(`release-ios.yml`,与 release-apk 同源 tag v* 触发)**:
+
+- `unsigned-ipa` job:macos-26 runner,Release 归档(CODE_SIGNING_ALLOWED=NO)→ Payload 打包 → tag 时挂 GitHub Release / 手动跑出 artifact
+- `testflight` job(仅 tag):临时钥匙串导入 `APPLE_CERTIFICATE_P12`(**注意 set-keychain-settings 禁 5 分钟自动锁,否则归档中途 errSecInternalComponent**)→ Manual 签名归档 → `xcodebuild -exportArchive -exportOptionsPlist destination=upload` + API key 认证直传 TestFlight
+- **版本号**:Expo 把 CFBundleShortVersionString/CFBundleVersion 写死在 Info.plist,CLI build settings 压不过 → CI 归档前 `plutil -replace` 直改(build 号 = 时间戳,与 Android versionCode 同策略)
+
 **剩余(真机阶段)**:
 
-1. 你的 iPhone(iOS 26+)+ 开发者签名(免费账号 7 天)装包,真机验收 AlarmKit 响铃 UI/声音
-2. 通知降级路径的点击路由:降级通知是原生 UN 直连,未接 notify-kit 事件路由(点按仅打开 app,不跳响铃页)——如需跳转,在 ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate 或改走 notify-kit
-3. iOS CI 打包(release 构建 + 签名)与 TestFlight 分发(需付费开发者账号)或本地 ad-hoc
+1. 你的 iPhone(iOS 26+)+ TestFlight 安装,真机验收 AlarmKit 响铃 UI/声音
+2. 发正式 tag(v0.2.0)验证双流水线全绿 + TestFlight 构建处理完成后通知
+3. 通知降级路径的点击路由:降级通知是原生 UN 直连,未接 notify-kit 事件路由(点按仅打开 app,不跳响铃页)——如需跳转,在 ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate 或改走 notify-kit
 4. 设置页「试响」在 iOS 走 AlarmKit(90 秒后系统闹钟 UI);锁屏场景真机确认
+5. ASC App Store 页面资料(截图/描述/审核信息)仅上架 App Store 时需要;TestFlight 不需要
 
 > Android 侧仍建议先真机跑稳一周(见 §7 待办)。
