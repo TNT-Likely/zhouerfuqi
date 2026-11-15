@@ -103,8 +103,17 @@ jobs:
           git config user.email "ci@zhouerfuqi.local"
           git add updates/update.json
           git commit -m "ci: update manifest ${{ github.ref_name }}" || echo "manifest unchanged"
-          # main 可能在构建期间前进(如文档提交):rebase 后再推,失败重试两次
-          for i in 1 2 3; do
-            git pull --rebase origin main && git push origin HEAD:main && break
-            sleep 10
+          # main 可能在构建期间前进(如文档提交):rebase 后再推;全败必须显式红,否则 manifest 丢失无感知
+          push_ok=""
+          for i in 1 2 3 4 5; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              push_ok=1
+              break
+            fi
+            echo "manifest push attempt $i failed, retry in 15s"
+            sleep 15
           done
+          if [ -z "$push_ok" ]; then
+            echo "::error::manifest write-back to main failed after 5 attempts (release assets are still published)"
+            exit 1
+          fi
