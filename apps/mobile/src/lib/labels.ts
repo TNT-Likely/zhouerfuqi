@@ -1,4 +1,4 @@
-import type { AlarmGroup } from '@core';
+import type { AlarmGroup, Weekday } from '@core';
 
 export const WD = ['一', '二', '三', '四', '五', '六', '日'] as const;
 
@@ -9,6 +9,11 @@ export function cnDate(date: string): string {
 
 export function weekdayLabel(list: number[]): string {
   return list.length ? [...list].sort().map((d) => WD[d - 1]).join('') : '未选';
+}
+
+function dow(date: string): number {
+  const d = new Date(`${date}T00:00:00`).getDay();
+  return d === 0 ? 7 : d;
 }
 
 /** 规则摘要,如「每 2 周 · 一二三四五六」 */
@@ -25,10 +30,14 @@ export function ringReasonLabel(group: AlarmGroup, date: string, isoDow: number)
   const r = group.rule;
   if (r.kind === 'customDates') return '手动排班';
   if (r.kind === 'everyNDays') return `每 ${r.n} 天`;
-  if (r.kind === 'everyNWeeks' && isoDow === 6 && r.weekdays.includes(6)) {
-    return r.n === 2 ? '大周周六' : `每 ${r.n} 周的周六`;
+  if (r.kind === 'everyNWeeks') {
+    const anchorDow = dow(r.anchor);
+    if (isoDow === anchorDow) {
+      return r.n === 2 ? `大周${WD[anchorDow - 1]}` : `每 ${r.n} 周的周${WD[anchorDow - 1]}`;
+    }
+    const others = r.weekdays.filter(d => d !== anchorDow);
+    return `工作日 ${weekdayLabel(others.length ? others : [isoDow as Weekday])}`;
   }
-  if (r.kind === 'everyNWeeks') return `工作日 ${weekdayLabel(r.weekdays)}`;
   return `工作日 ${weekdayLabel(r.weekdays)}`;
 }
 

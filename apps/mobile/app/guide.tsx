@@ -44,7 +44,7 @@ export default function GuideScreen() {
           style={[styles.step, { backgroundColor: t.surface, borderColor: t.line, opacity: steps[i] ? 0.55 : 1 }]}
         >
           <View style={[styles.no, { backgroundColor: steps[i] ? 'rgba(62,207,142,0.15)' : 'rgba(77,157,255,0.15)' }]}>
-            <Text style={{ color: steps[i] ? t.green : t.blue, fontWeight: '800', fontSize: 13 }}>{steps[i] ? '✓' : i + 1}</Text>
+            <Text style={{ color: steps[i] ? t.green : t.primary, fontWeight: '800', fontSize: 13 }}>{steps[i] ? '✓' : i + 1}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: t.text, fontSize: 14, fontWeight: '700' }}>{s.title}</Text>

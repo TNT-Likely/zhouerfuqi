@@ -94,21 +94,53 @@ describe('everyNWeeks:大小周', () => {
     ]);
   });
 
-  it('anchor 在周中时,整周共享同一奇偶(按周一为周起点对齐)', () => {
+  it('anchor 在周中时:奇偶只作用于锚点星期几,其余选中星期每周都响', () => {
     const group: AlarmGroup = {
       id: 'g3',
       name: '周一',
       enabled: true,
       times: seven,
-      rule: { kind: 'everyNWeeks', n: 2, weekdays: [1], anchor: '2026-01-07' }, // 周三
+      rule: { kind: 'everyNWeeks', n: 2, weekdays: [1], anchor: '2026-01-07' }, // 周三锚点
     };
-    // anchor 周 = 01-05(周一) 所在周;补班日 01-04、01-10 独立响起
+    // 锚点星期三隔周响?不——奇偶只作用于锚点星期几(周三);
+    // 周一不在锚点星期几内,每周都响
     const occ = expandGroup(group, cal, '2026-01-01', 20);
     assert.deepEqual(fmt(occ), [
       '2026-01-04 07:00 swap-workday',
       '2026-01-05 07:00 rule',
       '2026-01-10 07:00 swap-workday',
+      '2026-01-12 07:00 rule',
       '2026-01-19 07:00 rule',
+    ]);
+  });
+
+  it('大小周标准语义:周一~五每周响,周六隔周响', () => {
+    const group: AlarmGroup = {
+      id: 'g3b',
+      name: '大小周',
+      enabled: true,
+      times: seven,
+      rule: { kind: 'everyNWeeks', n: 2, weekdays: [1, 2, 3, 4, 5, 6], anchor: '2026-01-03' },
+    };
+    const occ = expandGroup(group, cal, '2026-01-01', 20);
+    assert.deepEqual(fmt(occ), [
+      '2026-01-03 07:00 rule', // 大周周六
+      '2026-01-04 07:00 swap-workday', // 周日补班
+      '2026-01-05 07:00 rule', // 周一,每周
+      '2026-01-06 07:00 rule',
+      '2026-01-07 07:00 rule',
+      '2026-01-08 07:00 rule',
+      '2026-01-09 07:00 rule',
+      '2026-01-10 07:00 swap-workday', // 小周周六,但补班
+      '2026-01-12 07:00 rule', // 周一每周都响(旧语义会漏掉)
+      '2026-01-13 07:00 rule',
+      '2026-01-14 07:00 rule',
+      '2026-01-15 07:00 rule',
+      '2026-01-16 07:00 rule',
+      // 01-17 大周周六但放假 → 跳过
+      '2026-01-19 07:00 rule',
+      '2026-01-20 07:00 rule',
+      // 展开窗口 20 天到 01-20 为止
     ]);
   });
 

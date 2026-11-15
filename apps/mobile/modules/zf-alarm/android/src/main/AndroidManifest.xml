@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <application>
+    <!-- 每日 03:30 自刷新闹钟(自续期)+ 开机/改时间/改时区 重排触发器 -->
+    <receiver
+      android:name="expo.modules.zfalarm.ZfAlarmReceiver"
+      android:exported="false" />
+    <!-- Headless JS:app 被杀后仍可执行 syncAll -->
+    <service
+      android:name="expo.modules.zfalarm.ZfResyncService"
+      android:exported="false" />
+  </application>
+</manifest>

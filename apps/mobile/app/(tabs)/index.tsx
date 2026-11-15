@@ -54,7 +54,7 @@ export default function HomeScreen() {
               <Text style={[styles.chip, { backgroundColor: t.accentSoft, color: t.primary, fontWeight: '600' }]}>
                 {ringReasonLabel(nextGroup, first.date, dowISO(first.date))}
               </Text>
-              {first.reason === 'swap' && (
+              {first.reason === 'swap-workday' && (
                 <Text style={[styles.chip, { backgroundColor: t.accentSoft, color: t.green }]}>补班自动响起</Text>
               )}
             </View>

@@ -47,7 +47,7 @@ export default function CalendarScreen() {
     if (!g) return;
     if (g.rule.kind !== 'customDates') {
       // 进入手动排班:把可见月份的规则响铃日(今天起)播种为点选起点
-      const seed = new Set<string>(g.rule.kind === 'customDates' ? g.rule.dates : []);
+      const seed = new Set<string>();
       for (let d = 1; d <= days; d++) {
         const date = `${y}-${pad(m)}-${pad(d)}`;
         if (date >= today && isRuleDay(g.rule, date)) seed.add(date);
@@ -134,11 +134,11 @@ export default function CalendarScreen() {
             let tag = ''; let tagColor = t.text2;
             if (editing) {
               if (picked) { tag = '✓'; tagColor = t.primary; }
-              else if (ev?.hol === true) { tag = '假'; tagColor = t.red; }
+              else if (ev?.holiday === true) { tag = '假'; tagColor = t.red; }
             } else if (ev) {
-              if (ev.hol === true) { tag = '假'; tagColor = t.red; }
-              else if (ev.hol === false && ring) { tag = '班'; tagColor = t.green; }
-              else if (ring && w === 6 && g?.rule.kind === 'everyNWeeks') { tag = '大周'; tagColor = t.primary; }
+              if (ev.holiday === true) { tag = '假'; tagColor = t.red; }
+              else if (ev.holiday === false && ring) { tag = '班'; tagColor = t.green; }
+              else if (ring && g?.rule.kind === 'everyNWeeks' && w === dowOf(g.rule.anchor)) { tag = '大周'; tagColor = t.primary; }
               else if (!ring && w === 6) { tag = '小周'; }
               else if (!ring && w === 7) { tag = '休'; }
             }
@@ -155,7 +155,7 @@ export default function CalendarScreen() {
                   { backgroundColor: restBg(restFlag(!editing, ring, w)) },
                   picked ? styles.picked : null,
                   isSel && !picked ? styles.selSolid : null,
-                  ev?.hol === true && !picked && !editing ? styles.dim : null,
+                  ev?.holiday === true && !picked && !editing ? styles.dim : null,
                 ]}
               >
                 <Text style={{ fontSize: 13, fontWeight: isSel || picked ? '700' : '600', color: isSel ? '#fff' : restFlag(!editing, ring, w) ? t.text3 : t.text }}>
@@ -191,15 +191,15 @@ export default function CalendarScreen() {
           const editingNow = editing;
           let st: string;
           if (editingNow) st = dates.has(sel) ? '已加入排班(点选即权威,不受节假日影响)' : '未排班 · 点击上方格子加入';
-          else if (ev.hol === true) st = '法定假日 · 联动开启时自动跳过';
-          else if (ev.hol === false) st = '调休补班日 · 法定上班';
+          else if (ev.holiday === true) st = '法定假日 · 联动开启时自动跳过';
+          else if (ev.holiday === false) st = '调休补班日 · 法定上班';
           else if (dowOf(sel) >= 6) st = '周末';
           else st = '工作日';
-          if (ring && ev.reason === 'swap') st += ' · 补班自动响起';
+          if (ring && ev.reason === 'swap-workday') st += ' · 补班自动响起';
           return (
             <>
               <Text style={{ color: t.text, fontSize: 13, fontWeight: '700' }}>
-                {cnDate(sel)} 周{WD[dowOf(sel) - 1]} · {ring ? (ev.reason === 'swap' ? '补班上班' : ring && g.rule.kind === 'everyNWeeks' && dowOf(sel) === 6 ? '大周周六' : '响铃日') : editingNow ? '未点选' : '不响'}
+                {cnDate(sel)} 周{WD[dowOf(sel) - 1]} · {ring ? (ev.reason === 'swap-workday' ? '补班上班' : ring && g.rule.kind === 'everyNWeeks' && dowOf(sel) === 6 ? '大周周六' : '响铃日') : editingNow ? '未点选' : '不响'}
               </Text>
               <Text style={{ color: t.text2, fontSize: 11, marginTop: 4 }}>{st}</Text>
               {ring ? (

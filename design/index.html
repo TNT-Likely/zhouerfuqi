@@ -299,7 +299,7 @@
             <div class="zf-field" id="p-anchor" style="display:none">
               <div class="zf-field-label">锚点日</div>
               <div class="zf-anchor" id="anchorChips"></div>
-              <div class="zf-hint">只问一个问题:「最近的这个班日算大周吗?」选中即完成整条规则。</div>
+              <div class="zf-hint">大小周:勾选的周一~周五每周响;锚点星期六隔 N 周响(小周休)。</div>
             </div>
             <div class="zf-field" id="p-custom" style="display:none">
               <div class="zf-field-label">手动点选的日期(点选即权威,不受节假日影响)</div>
@@ -435,8 +435,11 @@ const mod = (a, n) => ((a % n) + n) % n;
 const weekStart = d => addDays(d, -(dow(d) - 1));
 function isRuleDay(rule, date) {
   if (rule.kind === 'weekly') return rule.weekdays.includes(dow(date));
-  if (rule.kind === 'everyNWeeks')
-    return rule.weekdays.includes(dow(date)) && mod(Math.floor(diff(weekStart(date), weekStart(rule.anchor)) / 7), rule.n) === 0;
+  if (rule.kind === 'everyNWeeks') {
+    if (!rule.weekdays.includes(dow(date))) return false;
+    if (dow(date) !== dow(rule.anchor)) return true;
+    return mod(Math.floor(diff(weekStart(date), weekStart(rule.anchor)) / 7), rule.n) === 0;
+  }
   if (rule.kind === 'everyNDays') return mod(diff(date, rule.anchor), rule.n) === 0;
   return rule.dates.includes(date);
 }

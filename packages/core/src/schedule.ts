@@ -14,11 +14,13 @@ export function isRuleDay(rule: RepeatRule, date: string): boolean {
   switch (rule.kind) {
     case 'weekly':
       return rule.weekdays.includes(isoWeekday(date));
-    case 'everyNWeeks':
-      return (
-        rule.weekdays.includes(isoWeekday(date)) &&
-        mod(Math.floor(diffDays(weekStart(date), weekStart(rule.anchor)) / 7), rule.n) === 0
-      );
+    case 'everyNWeeks': {
+      // 大小周语义:锚点星期几隔 N 周响(需在选中列表内);其余选中的星期每周都响
+      const wd = isoWeekday(date);
+      if (!rule.weekdays.includes(wd)) return false;
+      if (wd !== isoWeekday(rule.anchor)) return true;
+      return mod(Math.floor(diffDays(weekStart(date), weekStart(rule.anchor)) / 7), rule.n) === 0;
+    }
     case 'everyNDays':
       return mod(diffDays(date, rule.anchor), rule.n) === 0;
     case 'customDates':
