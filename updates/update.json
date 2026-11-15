@@ -1,6 +1,6 @@
 {
-  "versionName": "0.1.2",
-  "versionCode": 1794674887,
-  "apk": "https://github.com/TNT-Likely/zhouerfuqi/releases/download/v0.1.2/zhouerfuqi-0.1.2.apk",
-  "notes": "v0.1.2 自更新闭环验证"
+  "versionName": "0.1.3",
+  "versionCode": 1794746773,
+  "apk": "https://github.com/TNT-Likely/zhouerfuqi/releases/download/v0.1.3/zhouerfuqi-0.1.3-arm64-v8a.apk",
+  "notes": "v0.1.3 新 UI(设计稿 v0.3)+ 大小周语义修正 + 每日刷新器 + ABI 拆分瘦身"
 }

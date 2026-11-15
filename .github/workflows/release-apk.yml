@@ -103,4 +103,8 @@ jobs:
           git config user.email "ci@zhouerfuqi.local"
           git add updates/update.json
           git commit -m "ci: update manifest ${{ github.ref_name }}" || echo "manifest unchanged"
-          git push origin HEAD:main
+          # main 可能在构建期间前进(如文档提交):rebase 后再推,失败重试两次
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            sleep 10
+          done
