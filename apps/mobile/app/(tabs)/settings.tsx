@@ -7,6 +7,7 @@ import { gateway } from '@/gateway';
 import { scheduleTestRing, syncAll } from '@/scheduler/sync';
 import { checkUpdate, downloadAndInstall } from '@/services/updater';
 import { getVersion } from '../../modules/zf-update/src';
+import { scheduleRefresher as zfScheduleRefresher } from '../../modules/zf-alarm/src';
 import { useTheme } from '@/theme';
 
 export default function SettingsScreen() {
@@ -84,6 +85,16 @@ export default function SettingsScreen() {
           onPress={() => void syncAll()}
         />
         <Row label="立即重排" sub="规则变更后通常自动执行;此按钮用于排查" arrow onPress={() => void syncAll().then(() => Alert.alert('已重排', '未来 14 天的响铃已同步到系统'))} />
+        <Row label="注册 03:30 刷新器(调试)"
+          sub="单独调用原生 scheduleRefresher,验证注册链路"
+          arrow onPress={() => {
+            try {
+              zfScheduleRefresher(3, 30);
+              Alert.alert('已注册', '03:30 刷新器已提交系统(dumpsys 可验)');
+            } catch (e: any) {
+              Alert.alert('注册失败', e?.message ?? String(e));
+            }
+          }} />
       </View>
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>

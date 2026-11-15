@@ -13,3 +13,8 @@ android {
     versionName "0.1.0"
   }
 }
+
+dependencies {
+  // HeadlessJsTaskService 等 RN 类:由 react-native-gradle-plugin 替换为本地 ReactAndroid
+  compileOnly "com.facebook.react:react-native:+"
+}

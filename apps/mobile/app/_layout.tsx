@@ -1,18 +1,26 @@
 import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
+import { Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import notifee from 'react-native-notify-kit';
 import { ThemeProvider } from '@/theme';
 import { gateway } from '@/gateway';
 import { syncAll } from '@/scheduler/sync';
+import { scheduleRefresher as zfScheduleRefresher } from '../modules/zf-alarm/src';
 import { useGroups } from '@/stores/groups';
 
 export default function RootLayout() {
   useEffect(() => {
     (async () => {
-      await gateway.init();
-      await gateway.requestPermissions();
-      await syncAll();
+      try {
+        await gateway.init();
+        await gateway.requestPermissions();
+        await syncAll();
+        // 每日 03:30 自刷新(补偿 MIUI 对 7 天外精确闹钟的钳制)
+        zfScheduleRefresher(3, 30);
+      } catch (e: any) {
+        Alert.alert('启动初始化失败', e?.message ?? String(e));
+      }
 
       // 全屏意图/点通知 → 直接进响铃页(notify-kit 把 data 原样带回来)
       const initial = await notifee.getInitialNotification();
