@@ -1,0 +1,100 @@
+name: Release iOS
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'versionName(留空则取 app.json 版本)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  unsigned-ipa:
+    # unsigned 包:开源用户可自行签名;签名上传 TestFlight 的流水线后续单独加 job
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compute version
+        id: ver
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ -n "$TAG" ] && [ "${{ github.ref_type }}" = "tag" ]; then
+            VN="$TAG"
+          else
+            VN="${{ inputs.version_name }}"
+            if [ -z "$VN" ]; then VN=$(node -p "require('./apps/mobile/app.json').expo.version"); fi
+          fi
+          VC=$(date +%s)   # 与 Android 同策略:单调递增 build 号
+          echo "version_name=$VN" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VC" >> "$GITHUB_OUTPUT"
+          echo "version: $VN ($VC)"
+
+      - name: Select Xcode (iOS 26+ SDK for AlarmKit)
+        run: |
+          xcodebuild -version
+          for d in /Applications/Xcode_26*.app /Applications/Xcode_27*.app; do
+            if [ -d "$d" ]; then sudo xcode-select -s "$d"; break; fi
+          done
+          xcodebuild -version
+          xcodebuild -showsdks | grep -E "iphoneos"
+
+      - name: Install pods
+        working-directory: apps/mobile/ios
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: |
+          pod --version || sudo gem install cocoapods
+          pod install
+
+      - name: Build unsigned archive
+        working-directory: apps/mobile/ios
+        run: |
+          xcodebuild archive -workspace app.xcworkspace -scheme app -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/app.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            MARKETING_VERSION="${{ steps.ver.outputs.version_name }}" \
+            CURRENT_PROJECT_VERSION="${{ steps.ver.outputs.version_code }}"
+
+      - name: Package unsigned IPA
+        working-directory: apps/mobile/ios/build
+        env:
+          VN: ${{ steps.ver.outputs.version_name }}
+        run: |
+          mkdir -p Payload
+          cp -R app.xcarchive/Products/Applications/app.app Payload/
+          zip -qry "zhouerfuqi-${VN}-unsigned.ipa" Payload
+          rm -rf Payload
+          ls -lh "zhouerfuqi-${VN}-unsigned.ipa"
+
+      - name: Attach to GitHub Release (tag only)
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: apps/mobile/ios/build/zhouerfuqi-*-unsigned.ipa
+
+      - name: Upload workflow artifact (manual run)
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhouerfuqi-unsigned-ipa
+          path: apps/mobile/ios/build/zhouerfuqi-*-unsigned.ipa
