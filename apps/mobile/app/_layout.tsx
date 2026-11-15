@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Stack, router } from 'expo-router';
-import { Alert } from 'react-native';
+import { Alert, AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import notifee from 'react-native-notify-kit';
 import { ThemeProvider } from '@/theme';
@@ -36,13 +36,18 @@ export default function RootLayout() {
       }
     });
 
-    // App 回前台时重排(架构 §4.1 触发点之一)
+    // App 回前台时重排(架构 §4.1 触发点之一);
+    // iOS 无 BOOT 广播/Headless 通道,前台重排 + 每次启动是仅有的补偿路径
     const sub = useGroups.subscribe(() => {
       void syncAll();
+    });
+    const appStateSub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') void syncAll();
     });
     return () => {
       unsub();
       sub();
+      appStateSub.remove();
     };
   }, []);
 

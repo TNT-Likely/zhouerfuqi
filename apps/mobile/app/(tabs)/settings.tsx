@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { useGuide } from '@/stores/guide';
 import { holidayInfo } from '@/services/holidays';
 import { gateway } from '@/gateway';
 import { scheduleTestRing, syncAll } from '@/scheduler/sync';
 import { checkUpdate, downloadAndInstall } from '@/services/updater';
-import { getVersion } from '../../modules/zf-update/src';
+import { getVersion, isUpdateSupported } from '../../modules/zf-update/src';
+import Constants from 'expo-constants';
 import { scheduleRefresher as zfScheduleRefresher } from '../../modules/zf-alarm/src';
 import { useTheme } from '@/theme';
 
@@ -68,7 +69,9 @@ export default function SettingsScreen() {
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>可靠性</Text>
-        <Row label="保活向导" sub={guideDone ? '已完成 ✓ · 华为/荣耀必做' : '未完成 · 华为/荣耀机型必做'} arrow onPress={() => router.push('/guide')} />
+        {Platform.OS === 'android' ? (
+          <Row label="保活向导" sub={guideDone ? '已完成 ✓ · 华为/荣耀必做' : '未完成 · 华为/荣耀机型必做'} arrow onPress={() => router.push('/guide')} />
+        ) : null}
         <Row
           label="试响(90 秒后)"
           sub="验证精确闹钟 + 全屏意图触发链"
@@ -103,6 +106,7 @@ export default function SettingsScreen() {
         <Row label="备份与导出" sub="整包 JSON 导出(规划中)" arrow onPress={() => Alert.alert('规划中', '导出/导入将在 M1 后半段提供。')} />
       </View>
 
+      {isUpdateSupported() ? (
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>应用更新</Text>
         <Row
@@ -112,10 +116,16 @@ export default function SettingsScreen() {
           onPress={() => void onCheckUpdate()}
         />
       </View>
+      ) : (
+      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
+        <Text style={[styles.cardTitle, { color: t.text3 }]}>应用更新</Text>
+        <Row label="随版本安装" sub="iOS 当前以安装包/TestFlight 分发,更新随新包进行" />
+      </View>
+      )}
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>关于</Text>
-        <Row label="周而复起" sub={`${ver ? `${ver.versionName}(versionCode ${ver.versionCode})` : 'v0.1.0'} · MIT · github.com/TNT-Likely/zhouerfuqi`} arrow onPress={() => Alert.alert('周而复起', '开源、本地优先的任意班制闹钟。\n规则引擎 @zhouerfuqi/core · Expo RN')} />
+        <Row label="周而复起" sub={`${Constants.expoConfig?.version ?? ver?.versionName ?? 'v0.1.0'} · MIT · github.com/TNT-Likely/zhouerfuqi`} arrow onPress={() => Alert.alert('周而复起', '开源、本地优先的任意班制闹钟。\n规则引擎 @zhouerfuqi/core · Expo RN')} />
       </View>
     </ScrollView>
   );

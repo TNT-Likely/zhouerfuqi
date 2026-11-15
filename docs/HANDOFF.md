@@ -1,7 +1,7 @@
 # 周而复起 · 交接文档
 
-> 更新:2026-11-15 · 维护者:TNT-Likely · 仓库:`github.com/TNT-Likely/zhouerfuqi`
-> 一句话:开源、本地优先、任意班制的 Android 闹钟(大小周/倒班/手动月历),RN(Expo)+ 原生模块,周一起 iOS。
+> 更新:2026-11-16 · 维护者:TNT-Likely · 仓库:`github.com/TNT-Likely/zhouerfuqi`
+> 一句话:开源、本地优先、任意班制的闹钟(大小周/倒班/手动月历),RN(Expo)+ 原生模块;Android M1 闭环,iOS M2 模拟器闭环。
 
 ---
 
@@ -14,8 +14,9 @@
 | 物化响铃 | ✅ 14 天 horizon 物化 one-shot,setAlarmClock(SET_ALARM_CLOCK)系统级;store 变更自动 syncAll |
 | 每日刷新器 `modules/zf-alarm` | ✅ 注册成功(明早 03:30 首跑);setAlarmClock 自续期;BOOT/TIME_SET/TIMEZONE_CHANGED → Headless JS 重排 |
 | 应用内更新 | ✅ 真机端到端验证过(raw update.json → 下载 → FileProvider 安装 → versionCode 翻转) |
-| CI 双流水线 | ✅ ci.yml(测试+typecheck);release-apk.yml(tag v* → 三 ABI APK + update.json,manifest 自动提交 main) |
+| CI 双流水线 | ✅ ci.yml(测试+typecheck);release-apk.yml(tag v* → 三 ABI APK + update.json,manifest 自动提交 main,rebase 重试×5,全败显式红) |
 | ABI 拆分 | ✅ 97MB → arm64 34MB / armv7 26MB / x86_64 34MB |
+| iOS M2(模拟器) | ✅ expo prebuild ios/ 已提交;`modules/zf-alarm-ios`(Swift):AlarmKit(iOS 26+)主路径 + UNUserNotificationCenter 通知降级;iPhone 17 Pro 模拟器:UI 全渲染 + AlarmKit 授权通过 + 44 枚响铃全落 AlarmKit 零降级 |
 | 验收 | ✅ `.docs/acceptance-20261115.md`(9 项 7 PASS/1 PARTIAL/1 NOT_RUN),方法:`.agents/skills/isolated-acceptance/SKILL.md` |
 
 ## 2. 仓库结构与关键文件
@@ -35,8 +36,10 @@ zhouerfuqi/
 │  │  ├─ stores/groups.ts    # zustand + MMKV(v4 createMMKV)
 │  │  ├─ headless.ts         # 'ZfResync' headless 任务(入口 index.js 注册)
 │  │  └─ lib/labels.ts       # 展示文案
-│  ├─ modules/zf-update/     # 应用内更新(FileProvider 安装器)
-│  ├─ modules/zf-alarm/      # 每日刷新器 + Headless 服务(Kotlin)
+│  ├─ modules/zf-update/     # 应用内更新(FileProvider 安装器,Android)
+│  ├─ modules/zf-alarm/      # 每日刷新器 + Headless 服务(Kotlin,Android)
+│  ├─ modules/zf-alarm-ios/  # iOS 网关(Swift):AlarmKit 26+ / UNUserNotificationCenter 降级
+│  ├─ ios/                   # 已提交的 prebuild;splits 无;Podfile.lock 一并提交(Pods/build 忽略)
 │  ├─ android/               # 已提交的 prebuild;splits.abi 三 ABI;debug 用 release 签名
 │  └─ index.js               # 自定义入口:注册 headless 后再挂 expo-router
 ├─ design/index.html         # 交互设计稿 v0.3(light-dark() + lucide + 内嵌同语义引擎)
@@ -54,6 +57,13 @@ zhouerfuqi/
 - **Java/Gradle**:`JAVA_HOME=.tools/jdk-17.0.21+9/Contents/Home`、`GRADLE_USER_HOME=.tools/gradle`、`ANDROID_HOME=~/Library/Android/sdk`、`HOME=.tools/home`(防 ~/.expo EPERM)
 - **Metro(开发)**:`cd apps/mobile && node ../../node_modules/expo/bin/cli start --dev-client --port 8081`
   (不要设 CI=1,否则热重载被禁);真机同 WiFi 或 `adb reverse tcp:8081 tcp:8081`
+- **iOS 构建/运行**:`cd apps/mobile/ios && LANG=en_US.UTF-8 pod install`(locale 必带,见坑清单);
+  `xcodebuild -workspace app.xcworkspace -scheme app -configuration Debug -sdk iphonesimulator \
+  -destination 'id=<sim-UDID>' -derivedDataPath build/dd build`
+  (destination 用 UDID,别用 name=——有 CoreSimulator 状态竞态);产物 `build/dd/Build/Products/Debug-iphonesimulator/app.app`
+- **iOS 模拟器联调**:`xcrun simctl install booted <app>` 后
+  `xcrun simctl launch booted app.zhouerfuqi.mobile --initialUrl "http://localhost:8081"`
+  ——dev-launcher 的启动参数,直连 Metro;不要用 `openurl`(会弹系统确认框且无辅助功能权限点不掉)
 - **设计稿预览**:`python3 design/serve.py`(no-cache)→ http://127.0.0.1:8375/
 
 ## 4. 构建与发布
@@ -101,6 +111,15 @@ cd apps/mobile/android
 | RN 空占位格无宽度 → 月历整月左移 | 空白格复用 `styles.day`(同宽);已修 |
 | 大小周语义 | 奇偶只作用于锚点星期几;周一~五每周响(core 已改,设计稿已同步) |
 | Metro 端口被占/CI 模式 | 旧进程 kill 后重启;绝不带 CI=1 起 dev Metro |
+| 本机 brew CocoaPods 报 Unicode Normalization ASCII-8BIT | shell 必须带 `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` 再 `pod install` |
+| xcodebuild `name:iPhone 17 Pro` 解析失败(设备明明 booted) | CoreSimulator 状态竞态;destination 改用 `-destination 'id=<UDID>'` |
+| Xcode 26 产物代码在 `app.debug.dylib` 不在 `app` 主二进制 | 查符号/链接用 `otool -L app.debug.dylib`;AlarmKit weak 链接验证同样看 dylib |
+| iOS 上 import Android-only expo 模块即崩 | `requireNativeModule` 必须懒加载 + Platform 守卫(zf-alarm/zf-update/zf-alarm-ios 三处 TS 侧均已处理) |
+| dev-launcher 卡「Searching for development servers…」 | 用 `simctl launch booted <bundle> --initialUrl "http://localhost:8081"` 直连;`openurl` 会弹确认框,osascript 无权限点不掉 |
+| `UNAuthorizationOptions` 没有 `.timeSensitive` | 时间敏感是 `UNNotificationInterruptionLevel`,不是授权选项 |
+| AlarmKit iOS 26.1 起 `stopButton` 已废弃 | 26.1+ 用 `AlarmPresentation.Alert(title:)`(系统自带停止按钮);26.0 走 deprecated 构造 |
+| release-apk.yml 的 workflow 取自 tag 所在 commit | 打 tag 前确保修复已在 main;旧 tag 上的 workflow 不会用 main 的新逻辑 |
+| pnpm shim 的 `exec` 子命令没走内置 node | 直接 `node ../../node_modules/typescript/bin/tsc --noEmit` 等价替代 |
 
 ## 7. 待办与下一步
 
@@ -111,15 +130,26 @@ cd apps/mobile/android
 4. **应用内更新 0.1.2→0.1.3**:真机上「设置 → 检查更新」(链路已验,这次是真实升级)
 5. **R8/minify**(可选):dex 再省 ~5MB,需回归(反射库风险)
 
-## 8. iOS(M2)推进计划
+## 8. iOS(M2)进展
 
-环境已就绪:本机 **Xcode 26.6** + iPhone 17 Pro 模拟器。
+**已完成(2026-11-16,模拟器闭环)**:
 
-1. `expo prebuild -p ios` 生成 ios/(首次)
-2. `modules/zf-alarm-ios`(Swift):AlarmKit 授权请求 + one-shot 调度 + 自续期;
-   TS 网关复用 `src/scheduler/*`(引擎无平台差)
-3. UI 层无需重写(Expo RN 双端);先 iPhone 17 Pro 模拟器验证渲染与降级路径
-4. AlarmKit 真机验收需要:**你的 iPhone(iOS 26+)+ 开发者签名**(免费账号 7 天签名可跑)
-5. 分发:TestFlight(需付费账号)或本地 ad-hoc
+1. ✅ `expo prebuild -p ios` 生成 ios/ 并**已提交**(与 android 同策略;.gitignore 已放开)
+2. ✅ `modules/zf-alarm-ios`(Swift/Expo Modules):
+   - 主路径 AlarmKit(iOS 26+):授权(`requestAuthorization`)、`schedule(id:configuration:)` 一次性 `.fixed(Date)` 响铃、UUID 映射存 UserDefaults、取消双后端兜底
+   - 降级路径 UNUserNotificationCenter time-interval 触发器(interruptionLevel = timeSensitive;iOS 只保留最近 64 条 pending,自动裁最远,恰好是想要的语义)
+   - AlarmKit 弱链接(podspec `weak_frameworks`),iOS 16.4+ 可装,旧系统运行时自动降级
+   - API 签名全部对照 Xcode 26.6 SDK swiftinterface 核实(不是凭记忆)
+3. ✅ TS 网关 `src/gateway/alarmKit.ts` + 平台装配;引擎/物化/registry 层零改动复用
+4. ✅ 模拟器验证(iPhone 17 Pro / iOS 26.5):五屏渲染 ✓、`zhouerfuqi://calendar` 深链 ✓、
+   AlarmKit 授权通过 ✓、**44 枚物化响铃全部落 AlarmKit(零降级)** ✓、大周/小周锚点渲染 ✓
+5. ✅ iOS 无 MIUI 式 7 天钳制 → 不需要每日刷新器;`scheduleRefresher` 在 iOS 为 no-op
 
-> 建议节奏:先在 Android 上把保活/刷新跑稳一周,再开 iOS(M2 一周内可出可装包)。
+**剩余(真机阶段)**:
+
+1. 你的 iPhone(iOS 26+)+ 开发者签名(免费账号 7 天)装包,真机验收 AlarmKit 响铃 UI/声音
+2. 通知降级路径的点击路由:降级通知是原生 UN 直连,未接 notify-kit 事件路由(点按仅打开 app,不跳响铃页)——如需跳转,在 ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate 或改走 notify-kit
+3. iOS CI 打包(release 构建 + 签名)与 TestFlight 分发(需付费开发者账号)或本地 ad-hoc
+4. 设置页「试响」在 iOS 走 AlarmKit(90 秒后系统闹钟 UI);锁屏场景真机确认
+
+> Android 侧仍建议先真机跑稳一周(见 §7 待办)。

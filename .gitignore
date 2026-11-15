@@ -11,7 +11,7 @@ build/
 .tools/
 .npm-cache/
 apps/mobile/.expo/
-apps/mobile/ios/
+# ios/ 与 android/ 同策略:提交 prebuild 产物(Pods/、build/ 由 ios/.gitignore 排除)
 apps/mobile/android/build/
 apps/mobile/android/app/build/
 apps/mobile/android/.gradle/

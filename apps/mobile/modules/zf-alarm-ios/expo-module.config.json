@@ -1,0 +1,7 @@
+{
+  "platforms": ["ios"],
+  "ios": {
+    "podspecPath": "./ZfAlarmIos.podspec",
+    "modules": ["ZfAlarmIosModule"]
+  }
+}
