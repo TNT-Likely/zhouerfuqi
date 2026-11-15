@@ -200,11 +200,10 @@ jobs:
             '<key>destination</key><string>export</string>' \
             '<key>teamID</key><string>JS3KDL8437</string>' \
             '<key>signingStyle</key><string>manual</string>' \
+            "<key>signingCertificate</key><string>$SIGNING_IDENTITY</string>" \
+            "<key>provisioningProfiles</key><dict><key>com.tntlikely.zhouerfuqi</key><string>$PROFILE_NAME</string></dict>" \
             '<key>uploadSymbols</key><true/>' \
             '</dict></plist>' > /tmp/export.plist
-          plutil -insert signingCertificate -string "$SIGNING_IDENTITY" /tmp/export.plist
-          plutil -insert provisioningProfiles -dict \
-            -key com.tntlikely.zhouerfuqi -string "$PROFILE_NAME" /tmp/export.plist
           xcodebuild -exportArchive -archivePath build/app-signed.xcarchive \
             -exportOptionsPlist /tmp/export.plist -exportPath build
 
