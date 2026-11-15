@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   unsigned-ipa:
-    # unsigned 包:开源用户可自行签名;签名上传 TestFlight 的流水线后续单独加 job
+    # unsigned 包:开源用户可自行签名;TestFlight 签名上传见 testflight job
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -47,14 +47,10 @@ jobs:
           echo "version_code=$VC" >> "$GITHUB_OUTPUT"
           echo "version: $VN ($VC)"
 
-      - name: Select Xcode (iOS 26+ SDK for AlarmKit)
+      - name: Xcode / SDK info
         run: |
           xcodebuild -version
-          for d in /Applications/Xcode_26*.app /Applications/Xcode_27*.app; do
-            if [ -d "$d" ]; then sudo xcode-select -s "$d"; break; fi
-          done
-          xcodebuild -version
-          xcodebuild -showsdks | grep -E "iphoneos"
+          xcodebuild -showsdks | grep iphoneos || true
 
       - name: Install pods
         working-directory: apps/mobile/ios
@@ -98,3 +94,118 @@ jobs:
         with:
           name: zhouerfuqi-unsigned-ipa
           path: apps/mobile/ios/build/zhouerfuqi-*-unsigned.ipa
+
+  testflight:
+    # 签名构建并直传 TestFlight(与本地验证过的流程一致)
+    # secrets 命名遵循 ~/Documents/apple/README.md 账号级材料惯例
+    if: github.ref_type == 'tag'
+    runs-on: macos-26
+    environment: ios-release
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compute version
+        id: ver
+        run: |
+          VN="${GITHUB_REF_NAME#v}"
+          VC=$(date +%s)
+          echo "version_name=$VN" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VC" >> "$GITHUB_OUTPUT"
+          echo "TestFlight build: $VN ($VC)"
+
+      - name: Xcode / SDK info
+        run: xcodebuild -version && xcodebuild -showsdks | grep iphoneos || true
+
+      - name: Install pods
+        working-directory: apps/mobile/ios
+        env:
+          LANG: en_US.UTF-8
+          LC_ALL: en_US.UTF-8
+        run: pod install
+
+      - name: Import signing material into temp keychain
+        env:
+          P12_B64: ${{ secrets.APPLE_CERTIFICATE_P12 }}
+          P12_PASS: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          echo "$P12_B64" | base64 -d > /tmp/dist.p12
+          KC_PASS=$(openssl rand -hex 16)
+          security create-keychain -p "$KC_PASS" build.keychain
+          security unlock-keychain -p "$KC_PASS" build.keychain
+          security import /tmp/dist.p12 -k build.keychain -P "$P12_PASS" -T /usr/bin/codesign
+          # WWDR 中间证书(Xcode 自带;账号证书链到 G3/2030 续期版)
+          WWDR=$(ls /Applications/Xcode*.app/Contents/SharedFrameworks/DVTFoundation.framework/Versions/A/Resources/AppleWWDRCA-2030.cer 2>/dev/null | head -1)
+          if [ -n "$WWDR" ]; then security import "$WWDR" -k build.keychain; else
+            security import /Applications/Xcode.app/Contents/SharedFrameworks/DVTFoundation.framework/Versions/A/Resources/AppleWWDRCAG6.cer -k build.keychain; fi
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KC_PASS" build.keychain >/dev/null
+          security list-keychains -d user -s ~/Library/Keychains/build.keychain-db $(security list-keychains -d user | tr -d ' ' | grep -v build.keychain)
+          security find-identity -v -p codesigning build.keychain
+          echo "SIGNING_IDENTITY=$(security find-identity -v -p codesigning build.keychain | awk -F'"' '/valid/{print $2; exit}')" >> "$GITHUB_ENV"
+          rm -f /tmp/dist.p12
+
+      - name: Install provisioning profile
+        env:
+          PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+        run: |
+          echo "$PROFILE" > /tmp/zf.mobileprovision
+          UUID=$(security cms -D -i /tmp/zf.mobileprovision | plutil -extract UUID raw -o - -)
+          PROFILE_NAME=$(security cms -D -i /tmp/zf.mobileprovision | plutil -extract Name raw -o - -)
+          echo "profile: $PROFILE_NAME ($UUID)"
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp /tmp/zf.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
+          echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
+          rm -f /tmp/zf.mobileprovision
+
+      - name: Signed archive
+        working-directory: apps/mobile/ios
+        run: |
+          xcodebuild archive -workspace app.xcworkspace -scheme app -configuration Release \
+            -destination 'generic/platform=iOS' -archivePath build/app-signed.xcarchive \
+            CODE_SIGN_STYLE=Manual "CODE_SIGN_IDENTITY=${{ env.SIGNING_IDENTITY }}" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ env.PROFILE_NAME }}" \
+            COMPILER_INDEX_STORE_ENABLE=NO \
+            MARKETING_VERSION="${{ steps.ver.outputs.version_name }}" \
+            CURRENT_PROJECT_VERSION="${{ steps.ver.outputs.version_code }}"
+
+      - name: Export and upload to TestFlight
+        working-directory: apps/mobile/ios
+        env:
+          API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          API_ISSUER: ${{ secrets.APPLE_API_ISSUER_ID }}
+          API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+        run: |
+          mkdir -p ~/private_keys
+          printf '%s' "$API_KEY_CONTENT" > ~/private_keys/AuthKey_${API_KEY_ID}.p8
+          cat > /tmp/export.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key><string>app-store</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>JS3KDL8437</string>
+            <key>signingStyle</key><string>manual</string>
+            <key>uploadSymbols</key><true/>
+          </dict>
+          </plist>
+          plutil -insert signingCertificate -string "${{ env.SIGNING_IDENTITY }}" /tmp/export.plist
+          plutil -insert provisioningProfiles -dict \
+            -key com.tntlikely.zhouerfuqi -string "${{ env.PROFILE_NAME }}" /tmp/export.plist
+          xcodebuild -exportArchive -archivePath build/app-signed.xcarchive \
+            -exportOptionsPlist /tmp/export.plist \
+            -authenticationKeyPath ~/private_keys/AuthKey_${API_KEY_ID}.p8 \
+            -authenticationKeyID "$API_KEY_ID" \
+            -authenticationKeyIssuer "$API_ISSUER"

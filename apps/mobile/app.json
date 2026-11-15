@@ -12,10 +12,11 @@
       "android"
     ],
     "ios": {
-      "bundleIdentifier": "app.zhouerfuqi.mobile",
+      "bundleIdentifier": "com.tntlikely.zhouerfuqi",
       "supportsTablet": false,
       "infoPlist": {
-        "NSAlarmKitUsageDescription": "周而复起需要系统闹钟权限,在排班设定的时刻用系统闹钟响铃。"
+        "NSAlarmKitUsageDescription": "周而复起需要系统闹钟权限,在排班设定的时刻用系统闹钟响铃。",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {

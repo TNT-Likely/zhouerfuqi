@@ -5,7 +5,7 @@ import os
 import ExpoModulesCore
 import AlarmKit
 
-private let logger = Logger(subsystem: "app.zhouerfuqi.mobile", category: "ZfAlarmIos")
+private let logger = Logger(subsystem: "com.tntlikely.zhouerfuqi", category: "ZfAlarmIos")
 
 /// AlarmKit 要求的元数据载体(AlarmMetadata = Codable + Hashable + Sendable)。
 /// 物化注册表的字符串 id 借它透传,系统告警 UI 侧可还原关联关系。
