@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>周而复起 · 交互设计原型 v0.3</title>
-<style>:root{color-scheme:light dark;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:light-dark(#fff,#151617);color:light-dark(#292c30,#f2f3f4)}*{box-sizing:border-box}body{margin:20px auto;max-width:980px;padding:0 16px 40px}button,input,select,textarea{font:inherit}button,a,select{cursor:pointer}svg{display:inline-block;vertical-align:middle}a{color:inherit}.zf-controls select{max-width:100%;padding:9px 12px;border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;background:light-dark(#fff,#25272b);color:inherit;font-size:12px}.zf-stage{background-image:radial-gradient(light-dark(#dcdfe3,#373b41) .7px,transparent .7px);background-size:16px 16px}button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #5595eb;outline-offset:3px}.zf-brand{display:flex;align-items:center;gap:14px;padding:10px 2px 14px;flex-wrap:wrap}.zf-brand svg.zf-mark{width:44px;height:44px;border-radius:12px}.zf-brand h1{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}.zf-brand h1 small{font-size:11px;color:light-dark(#777c82,#a4a6a9);letter-spacing:2px;font-weight:500;margin-left:8px}.zf-brand .zf-slogan{font-size:12px;color:light-dark(#777c82,#a4a6a9)}.zf-controls{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap}.zf-seg{display:flex;background:light-dark(#f0f1f2,#25272b);border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;padding:3px;gap:2px}.zf-seg button{appearance:none;border:0;background:transparent;color:light-dark(#777c82,#a4a6a9);padding:7px 13px;border-radius:9px;font-size:12px}.zf-seg button[aria-pressed="true"]{background:light-dark(#25282c,#f0f1f2);color:light-dark(#fff,#151617);font-weight:600}.zf-section{margin:26px 0 8px;font-size:12px;color:light-dark(#777c82,#a4a6a9);letter-spacing:1px}.zf-note{font-size:12px;color:light-dark(#777c82,#a4a6a9);line-height:1.8;margin:8px 2px 0;max-width:900px}.zf-note b{color:light-dark(#292c30,#f2f3f4)}.zf-tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px}.zf-token{border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:14px;overflow:hidden;background:light-dark(#fff,#25272b)}.zf-token .c{height:52px}.zf-token p{margin:0;padding:9px 12px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9)}.zf-token p b{display:block;color:inherit;font-size:12px;color:light-dark(#292c30,#f2f3f4)}footer{margin-top:40px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9);text-align:center}</style>
+<style>:root{color-scheme:light dark;--zf-accent-light:#3C8FD6;--zf-accent-dark:#62B3F2;--zf-accent:light-dark(var(--zf-accent-light),var(--zf-accent-dark));font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:light-dark(#fff,#151617);color:light-dark(#292c30,#f2f3f4)}*{box-sizing:border-box}body{margin:20px auto;max-width:980px;padding:0 16px 40px}button,input,select,textarea{font:inherit}button,a,select{cursor:pointer}svg{display:inline-block;vertical-align:middle}a{color:inherit}.zf-colors{display:flex;gap:7px;align-items:center}.zf-colors .zf-color{width:22px;height:22px;border-radius:999px;border:2px solid transparent;cursor:pointer;padding:0}.zf-colors .zf-color[aria-pressed="true"]{border-color:light-dark(#292c30,#f2f3f4);box-shadow:0 0 0 2px light-dark(#fff,#151617) inset}.zf-controls select{max-width:100%;padding:9px 12px;border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;background:light-dark(#fff,#25272b);color:inherit;font-size:12px}.zf-stage{background-image:radial-gradient(light-dark(#dcdfe3,#373b41) .7px,transparent .7px);background-size:16px 16px}button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #5595eb;outline-offset:3px}.zf-brand{display:flex;align-items:center;gap:14px;padding:10px 2px 14px;flex-wrap:wrap}.zf-brand svg.zf-mark{width:44px;height:44px;border-radius:12px}.zf-brand h1{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}.zf-brand h1 small{font-size:11px;color:light-dark(#777c82,#a4a6a9);letter-spacing:2px;font-weight:500;margin-left:8px}.zf-brand .zf-slogan{font-size:12px;color:light-dark(#777c82,#a4a6a9)}.zf-controls{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap}.zf-seg{display:flex;background:light-dark(#f0f1f2,#25272b);border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;padding:3px;gap:2px}.zf-seg button{appearance:none;border:0;background:transparent;color:light-dark(#777c82,#a4a6a9);padding:7px 13px;border-radius:9px;font-size:12px}.zf-seg button[aria-pressed="true"]{background:light-dark(#25282c,#f0f1f2);color:light-dark(#fff,#151617);font-weight:600}.zf-section{margin:26px 0 8px;font-size:12px;color:light-dark(#777c82,#a4a6a9);letter-spacing:1px}.zf-note{font-size:12px;color:light-dark(#777c82,#a4a6a9);line-height:1.8;margin:8px 2px 0;max-width:900px}.zf-note b{color:light-dark(#292c30,#f2f3f4)}.zf-tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px}.zf-token{border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:14px;overflow:hidden;background:light-dark(#fff,#25272b)}.zf-token .c{height:52px}.zf-token p{margin:0;padding:9px 12px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9)}.zf-token p b{display:block;color:inherit;font-size:12px;color:light-dark(#292c30,#f2f3f4)}footer{margin-top:40px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9);text-align:center}</style>
 <script src="vendor/lucide.min.js"></script>
 </head>
 <body>
@@ -18,9 +18,8 @@
   --zf-ink:light-dark(#25282c,#f0f1ed);
   --zf-muted:light-dark(#777c82,rgba(255,255,255,.62));
   --zf-soft:light-dark(#f3f4f5,#2c2c2e);
-  --zf-line:light-dark(#eceeef,rgba(127,176,220,.30));
-  --zf-accent:light-dark(#4A7DB5,#7FB0DC);
-  --zf-accent-soft:light-dark(rgba(74,125,181,.10),rgba(127,176,220,.16));
+  --zf-line:light-dark(#eceeef,color-mix(in srgb,var(--zf-accent) 30%,transparent));
+  --zf-accent-soft:light-dark(color-mix(in srgb,var(--zf-accent) 10%,transparent),color-mix(in srgb,var(--zf-accent) 16%,transparent));
   --zf-accent-ink:#ffffff;
   --zf-green:light-dark(#22c55e,#34d399);
   --zf-red:light-dark(#ef4444,#f87171);
@@ -197,7 +196,7 @@
 <body>
 <div id="zf-suite">
   <div class="zf-brand">
-    <svg class="zf-mark" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16233A"/><stop offset="1" stop-color="#0B1220"/></linearGradient></defs><rect width="120" height="120" rx="28" fill="url(#lg)"/><g fill="none" stroke="#31476B" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/></g><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="#7FB0DC" stroke-width="9" stroke-linecap="round"/><g transform="translate(33.6,33) scale(2.2)" fill="#F4F7FC"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" fill="#7FB0DC"/></svg>
+    <svg class="zf-mark" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16233A"/><stop offset="1" stop-color="#0B1220"/></linearGradient></defs><rect width="120" height="120" rx="28" fill="url(#lg)"/><g fill="none" stroke="#31476B" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/></g><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="var(--zf-accent)" stroke-width="9" stroke-linecap="round"/><g transform="translate(33.6,33) scale(2.2)" fill="#F4F7FC"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" style="fill:var(--zf-accent)"/></svg>
     <div>
       <h1>周而复起 <small>ZHOUERFUQI</small></h1>
       <div class="zf-slogan">闹钟周而复起,班表从不掉链子 · 交互原型 v0.3</div>
@@ -397,7 +396,7 @@
 
   <div class="zf-section">设计令牌 · DESIGN TOKENS(三主色 + 中性层;方案 D 暗色)</div>
   <div class="zf-tokens">
-    <div class="zf-token"><div class="c" style="background:#7FB0DC"></div><p><b>1 晨空蓝 / 主色</b>主操作 · 选中 · 排班日 · 大周</p></div>
+    <div class="zf-token"><div class="c" style="background:#7FB0DC"></div><p><b>1 主题色</b>主操作 · 选中 · 排班日 · 大周</p></div>
     <div class="zf-token"><div class="c" style="background:#22C55E"></div><p><b>2 放行绿 / 成功</b>调休补班 · 成功状态</p></div>
     <div class="zf-token"><div class="c" style="background:#EF4444"></div><p><b>3 警示红 / 假日</b>法定假日 · 删除 · 错误</p></div>
     <div class="zf-token"><div class="c" style="background:#000000;outline:1px solid rgba(61,139,255,.3)"></div><p><b>暗 bg / 纯黑</b>#000000(OLED)</p></div>
@@ -776,6 +775,26 @@ document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click'
   document.documentElement.style.colorScheme = m === 'auto' ? '' : m;
   document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
 }));
+
+/* 主题色候选:点选即全站生效(含 Logo 弧线与呼吸点) */
+const ACCENTS = [
+  { n: '晴空', l: '#3C8FD6', d: '#62B3F2' },
+  { n: '靛蓝', l: '#4C63D2', d: '#8C9EF5' },
+  { n: '雾蓝', l: '#4A7DB5', d: '#7FB0DC' },
+  { n: '青碧', l: '#2FA8C9', d: '#54C8E4' },
+];
+function renderColors() {
+  $('zfColors').innerHTML = ACCENTS.map((c, i) =>
+    `<button class="zf-color" data-i="${i}" style="background:light-dark(${c.l},${c.d})" aria-pressed="${i === (window.__accentIdx ?? 0)}" title="${c.n}"></button>`).join('');
+  $('zfColors').querySelectorAll('.zf-color').forEach(el => el.addEventListener('click', () => {
+    const c = ACCENTS[+el.dataset.i];
+    window.__accentIdx = +el.dataset.i;
+    document.documentElement.style.setProperty('--zf-accent-light', c.l);
+    document.documentElement.style.setProperty('--zf-accent-dark', c.d);
+    renderColors();
+  }));
+}
+renderColors();
 
 /* 编辑页固定交互 */
 document.querySelectorAll('#ruleSeg button').forEach(b => b.addEventListener('click', () => {
