@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>周而复起 · 交互设计原型 v0.3</title>
-<style>:root{color-scheme:light dark;--zf-accent-light:#3C8FD6;--zf-accent-dark:#62B3F2;--zf-accent:light-dark(var(--zf-accent-light),var(--zf-accent-dark));font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:light-dark(#fff,#151617);color:light-dark(#292c30,#f2f3f4)}*{box-sizing:border-box}body{margin:20px auto;max-width:980px;padding:0 16px 40px}button,input,select,textarea{font:inherit}button,a,select{cursor:pointer}svg{display:inline-block;vertical-align:middle}a{color:inherit}.zf-colors{display:flex;gap:7px;align-items:center}.zf-colors{margin-left:4px}.zf-colors .zf-color{width:26px;height:26px;border-radius:999px;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 0 1px light-dark(#e6e8eb,#3c3f43)}.zf-colors .zf-color[aria-pressed="true"]{border-color:light-dark(#292c30,#f2f3f4);box-shadow:0 0 0 2px light-dark(#fff,#151617) inset}.zf-controls select{max-width:100%;padding:9px 12px;border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;background:light-dark(#fff,#25272b);color:inherit;font-size:12px}.zf-stage{background-image:radial-gradient(light-dark(#dcdfe3,#373b41) .7px,transparent .7px);background-size:16px 16px}button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #5595eb;outline-offset:3px}.zf-brand{display:flex;align-items:center;gap:14px;padding:10px 2px 14px;flex-wrap:wrap}.zf-brand svg.zf-mark{width:44px;height:44px;border-radius:12px}.zf-brand h1{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}.zf-brand h1 small{font-size:11px;color:light-dark(#777c82,#a4a6a9);letter-spacing:2px;font-weight:500;margin-left:8px}.zf-brand .zf-slogan{font-size:12px;color:light-dark(#777c82,#a4a6a9)}.zf-controls{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap}.zf-seg{display:flex;background:light-dark(#f0f1f2,#25272b);border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;padding:3px;gap:2px}.zf-seg button{appearance:none;border:0;background:transparent;color:light-dark(#777c82,#a4a6a9);padding:7px 13px;border-radius:9px;font-size:12px}.zf-seg button[aria-pressed="true"]{background:light-dark(#25282c,#f0f1f2);color:light-dark(#fff,#151617);font-weight:600}.zf-section{margin:26px 0 8px;font-size:12px;color:light-dark(#777c82,#a4a6a9);letter-spacing:1px}.zf-note{font-size:12px;color:light-dark(#777c82,#a4a6a9);line-height:1.8;margin:8px 2px 0;max-width:900px}.zf-note b{color:light-dark(#292c30,#f2f3f4)}.zf-tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px}.zf-token{border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:14px;overflow:hidden;background:light-dark(#fff,#25272b)}.zf-token .c{height:52px}.zf-token p{margin:0;padding:9px 12px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9)}.zf-token p b{display:block;color:inherit;font-size:12px;color:light-dark(#292c30,#f2f3f4)}footer{margin-top:40px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9);text-align:center}</style>
+<style>:root{color-scheme:light dark;--zf-accent-light:#1677FF;--zf-accent-dark:#4096FF;--zf-accent:light-dark(var(--zf-accent-light),var(--zf-accent-dark));font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:light-dark(#fff,#151617);color:light-dark(#292c30,#f2f3f4)}*{box-sizing:border-box}body{margin:20px auto;max-width:980px;padding:0 16px 40px}button,input,select,textarea{font:inherit}button,a,select{cursor:pointer}svg{display:inline-block;vertical-align:middle}a{color:inherit}.zf-colors{display:flex;gap:7px;align-items:center}.zf-colors{margin-left:4px}.zf-colors .zf-color{width:26px;height:26px;border-radius:999px;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 0 1px light-dark(#e6e8eb,#3c3f43)}.zf-colors .zf-color[aria-pressed="true"]{border-color:light-dark(#292c30,#f2f3f4);box-shadow:0 0 0 2px light-dark(#fff,#151617) inset}.zf-controls select{max-width:100%;padding:9px 12px;border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;background:light-dark(#fff,#25272b);color:inherit;font-size:12px}.zf-stage{background-image:radial-gradient(light-dark(#dcdfe3,#373b41) .7px,transparent .7px);background-size:16px 16px}button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #5595eb;outline-offset:3px}.zf-brand{display:flex;align-items:center;gap:14px;padding:10px 2px 14px;flex-wrap:wrap}.zf-brand svg.zf-mark{width:44px;height:44px;border-radius:12px}.zf-brand h1{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}.zf-brand h1 small{font-size:11px;color:light-dark(#777c82,#a4a6a9);letter-spacing:2px;font-weight:500;margin-left:8px}.zf-brand .zf-slogan{font-size:12px;color:light-dark(#777c82,#a4a6a9)}.zf-controls{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap}.zf-seg{display:flex;background:light-dark(#f0f1f2,#25272b);border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;padding:3px;gap:2px}.zf-seg button{appearance:none;border:0;background:transparent;color:light-dark(#777c82,#a4a6a9);padding:7px 13px;border-radius:9px;font-size:12px}.zf-seg button[aria-pressed="true"]{background:light-dark(#25282c,#f0f1f2);color:light-dark(#fff,#151617);font-weight:600}.zf-section{margin:26px 0 8px;font-size:12px;color:light-dark(#777c82,#a4a6a9);letter-spacing:1px}.zf-note{font-size:12px;color:light-dark(#777c82,#a4a6a9);line-height:1.8;margin:8px 2px 0;max-width:900px}.zf-note b{color:light-dark(#292c30,#f2f3f4)}.zf-tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px}.zf-token{border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:14px;overflow:hidden;background:light-dark(#fff,#25272b)}.zf-token .c{height:52px}.zf-token p{margin:0;padding:9px 12px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9)}.zf-token p b{display:block;color:inherit;font-size:12px;color:light-dark(#292c30,#f2f3f4)}footer{margin-top:40px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9);text-align:center}</style>
 <script src="vendor/lucide.min.js"></script>
 </head>
 <body>
@@ -56,8 +56,15 @@
 #zf-suite .zf-scroll{flex:1;overflow-y:auto;padding:0 23px 96px;scrollbar-width:none}
 #zf-suite .zf-scroll::-webkit-scrollbar{display:none}
 /* 首页 hero */
-#zf-suite .zf-summary{border-radius:var(--zf-radius);background:var(--zf-paper);border:1px solid var(--zf-line);padding:16px 19px 15px;margin-top:6px}
-#zf-suite .zf-summary-label{font-size:11px;color:var(--zf-muted);letter-spacing:1.5px}
+#zf-suite .zf-summary{border-radius:var(--zf-radius);background:light-dark(color-mix(in srgb,var(--zf-accent) 9%,var(--zf-paper)),color-mix(in srgb,var(--zf-accent) 14%,#1c1c1e));border:1px solid light-dark(color-mix(in srgb,var(--zf-accent) 24%,transparent),color-mix(in srgb,var(--zf-accent) 34%,transparent));padding:16px 19px 15px;margin-top:6px}
+#zf-suite .zf-summary-label{font-size:11px;color:var(--zf-accent);letter-spacing:1.5px;font-weight:600}
+#zf-suite .zf-summary .zf-big-time{color:var(--zf-ink)}
+#zf-suite .zf-summary .zf-big-date{color:var(--zf-muted)}
+#zf-suite .zf-summary .zf-chip{background:var(--zf-paper);border-color:var(--zf-line);color:var(--zf-muted)}
+#zf-suite .zf-summary .zf-chip.hot{background:var(--zf-accent-soft);border-color:transparent;color:var(--zf-accent);font-weight:600}
+#zf-suite .zf-summary .zf-chip.green{background:transparent;border-color:var(--zf-green);color:var(--zf-green)}
+#zf-suite .zf-summary .zf-chip.red{background:transparent;border-color:var(--zf-red);color:var(--zf-red)}
+#zf-suite .zf-summary .zf-countdown{color:var(--zf-muted)}
 #zf-suite .zf-big-time{font-size:44px;line-height:1.2;font-weight:650;letter-spacing:-1.6px;margin:2px 0 0;white-space:nowrap}
 #zf-suite .zf-big-time sup{font-size:20px;color:var(--zf-accent);font-weight:650;margin-left:6px;letter-spacing:0}
 #zf-suite .zf-big-date{font-size:13px;color:var(--zf-muted);margin-top:3px}
@@ -112,17 +119,20 @@
 #zf-suite .zf-toggle-row{display:flex;align-items:center;gap:12px}
 #zf-suite .zf-toggle-row .zf-tx b{font-size:14px;font-weight:600;display:block}
 #zf-suite .zf-toggle-row .zf-tx p{font-size:11px;color:zf-muted;color:var(--zf-muted);margin-top:3px}
-#zf-suite .zf-primary{width:100%;background:var(--zf-accent);color:#fff;font-weight:650;border-radius:16px;padding:14px;font-size:14px;letter-spacing:2px;text-align:center;margin-top:4px}
+#zf-suite .zf-primary{width:100%;background:var(--zf-accent);color:#fff;font-weight:650;border-radius:16px;padding:14px;font-size:14px;letter-spacing:2px;text-align:center;margin-top:4px;box-shadow:0 8px 20px color-mix(in srgb,var(--zf-accent) 35%,transparent)}
 #zf-suite .zf-primary.disabled{opacity:.4;pointer-events:none}
 /* 日历 */
 #zf-suite .zf-cal{border-radius:var(--zf-radius);background:var(--zf-paper);border:1px solid var(--zf-line);padding:12px;margin-top:6px}
 #zf-suite .zf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
 #zf-suite .zf-dow{font-size:10px;color:var(--zf-muted);text-align:center;padding:4px 0}
-#zf-suite .zf-day{height:46px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;cursor:pointer;user-select:none}
-#zf-suite .zf-day.sel{background:var(--zf-paper);outline:1.5px solid var(--zf-accent);outline-offset:1px}
+#zf-suite .zf-day{height:48px;border-radius:12px;background:var(--zf-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;cursor:pointer;user-select:none}
+#zf-suite .zf-day.sel{background:var(--zf-accent)}
+#zf-suite .zf-day.sel .n{color:#fff;font-weight:700}
+#zf-suite .zf-day.picked{box-shadow:inset 0 0 0 2px var(--zf-accent)}
 #zf-suite .zf-day.big{background:var(--zf-accent-soft)}
 #zf-suite .zf-day.big .n{color:var(--zf-accent);font-weight:800}
 #zf-suite .zf-day .n{font-size:13px;font-weight:600;color:var(--zf-ink)}
+#zf-suite .zf-day.rest{background:transparent}
 #zf-suite .zf-day.rest .n{color:var(--zf-muted)}
 #zf-suite .zf-day .dots{display:flex;gap:2px}
 #zf-suite .zf-day .dots i{width:4px;height:4px;border-radius:999px;background:var(--zf-accent)}
@@ -214,6 +224,8 @@
         <button data-mode="dark" title="深色"><i data-lucide="moon"></i></button>
         <button data-mode="light" title="日间"><i data-lucide="sun"></i></button>
       </div>
+        <span style="font-size:12px;color:light-dark(#777c82,#a4a6a9)">主题色</span>
+        <div class="zf-colors" id="zfColors" title="主题色"></div>
     </div>
   </div>
 
@@ -539,13 +551,6 @@ function renderHome() {
         </div>
         <div class="zf-switch${state.groupOn ? '' : ' off'}" id="groupSwitch" role="switch" aria-checked="${state.groupOn}" tabindex="0"></div>
       </div>
-      <div class="zf-chips">
-        <span class="zf-chip hot">${{weekly:'每周几',everyNWeeks:`每 ${state.n} 周`,everyNDays:`每 ${state.nD} 天`,customDates:'月历点选'}[state.ruleKind]}</span>
-        ${rule().weekdays ? `<span class="zf-chip">${wdLabel(rule().weekdays)}</span>` : ''}
-        ${state.ruleKind === 'everyNWeeks' ? `<span class="zf-chip">锚点 ${state.anchor.slice(5)}</span>` : ''}
-        ${state.ruleKind === 'customDates' ? `<span class="zf-chip">点选 ${state.customDates.size} 天</span>` : ''}
-        <span class="zf-chip ${state.holidayOn ? 'blue' : ''}">节假日${state.holidayOn ? '联动' : '忽略'}</span>
-      </div>
       <div class="zf-rows">
         ${state.times.map(x => `
           <div class="zf-rowitem">
@@ -778,9 +783,9 @@ document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click'
 
 /* 主题色候选:点选即全站生效(含 Logo 弧线与呼吸点) */
 const ACCENTS = [
+  { n: '钉钉蓝', l: '#1677FF', d: '#4096FF' },
   { n: '晴空', l: '#3C8FD6', d: '#62B3F2' },
   { n: '靛蓝', l: '#4C63D2', d: '#8C9EF5' },
-  { n: '雾蓝', l: '#4A7DB5', d: '#7FB0DC' },
   { n: '青碧', l: '#2FA8C9', d: '#54C8E4' },
 ];
 function renderColors() {
