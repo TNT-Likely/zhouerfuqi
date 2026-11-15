@@ -709,7 +709,7 @@ $('calMode').querySelectorAll('button').forEach(b => b.addEventListener('click',
     const { days } = monthMeta(state.calY, state.calM);
     for (let d = 1; d <= days; d++) {
       const date = `${state.calY}-${pad(state.calM)}-${pad(d)}`;
-      if (evalDay(rule(), date, state.holidayOn).ring) state.customDates.add(date);
+      if (date >= TODAY && evalDay(rule(), date, state.holidayOn).ring) state.customDates.add(date);
     }
     state.ruleKind = 'customDates';
   }
