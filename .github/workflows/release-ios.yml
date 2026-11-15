@@ -163,7 +163,8 @@ jobs:
         env:
           PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
         run: |
-          echo "$PROFILE" > /tmp/zf.mobileprovision
+          # secret 是 base64(GitHub secret 只收 UTF-8,二进制 profile 必须转存)
+          echo "$PROFILE" | base64 -d > /tmp/zf.mobileprovision
           UUID=$(security cms -D -i /tmp/zf.mobileprovision | plutil -extract UUID raw -o - -)
           PROFILE_NAME=$(security cms -D -i /tmp/zf.mobileprovision | plutil -extract Name raw -o - -)
           echo "profile: $PROFILE_NAME ($UUID)"
