@@ -156,18 +156,30 @@ cd apps/mobile/android
 | 描述文件 | `zhouerfuqi-appstore`(profileId M5RWDRDU58,UUID 75e59c34-…,到期随证书 2027-10-30) |
 | GitHub Secrets | `APPLE_API_ISSUER_ID` / `APPLE_API_KEY_ID` / `APPLE_API_KEY_CONTENT` / `APPLE_CERTIFICATE_P12`(base64)/ `APPLE_CERTIFICATE_PASSWORD` / `APPLE_PROVISIONING_PROFILE`——命名对齐 `~/Documents/apple/README.md` 惯例 |
 
-**CI(`release-ios.yml`,与 release-apk 同源 tag v* 触发)**:
+**CI(`release-ios.yml`,与 release-apk 同源 tag v* 触发)——已于 v0.2.0 全绿验证**:
 
-- `unsigned-ipa` job:macos-26 runner,Release 归档(CODE_SIGNING_ALLOWED=NO)→ Payload 打包 → tag 时挂 GitHub Release / 手动跑出 artifact
-- `testflight` job(仅 tag):临时钥匙串导入 `APPLE_CERTIFICATE_P12`(**注意 set-keychain-settings 禁 5 分钟自动锁,否则归档中途 errSecInternalComponent**)→ Manual 签名归档 → `xcodebuild -exportArchive -exportOptionsPlist destination=upload` + API key 认证直传 TestFlight
+- `unsigned-ipa` job ✅:macos-26 runner,Release 归档(CODE_SIGNING_ALLOWED=NO)→ Payload 打包 → tag 时挂 GitHub Release / 手动跑出 artifact
+- `testflight` job ✅(仅 tag):临时钥匙串导入 `APPLE_CERTIFICATE_P12`(**必须 set-keychain-settings 禁 5 分钟自动锁,否则归档中途 errSecInternalComponent**)→ Manual 签名归档 → printf 生成 export.plist → `xcodebuild -exportArchive` 出 ipa → `altool --upload-app` + API key 直传 TestFlight
+- v0.2.0 实测:ASC 两枚构建全 VALID(CI 1794765885 + 本地验证 1794758803)
 - **版本号**:Expo 把 CFBundleShortVersionString/CFBundleVersion 写死在 Info.plist,CLI build settings 压不过 → CI 归档前 `plutil -replace` 直改(build 号 = 时间戳,与 Android versionCode 同策略)
+
+**iOS 发布链路调试坑(每条都真踩过)**:
+
+| 坑 | 结论 |
+| --- | --- |
+| GitHub secret 只收 UTF-8 | 二进制 .mobileprovision 直接 `gh secret set < file` 会让 workflow **startup_failure**(1 秒红);必须 base64 存、CI 解码 |
+| YAML 块内 heredoc | `run: \|` 里 `<<'EOF'` 的结束标记带缩进 bash 不认 → 后续命令全被吞进文档内容,**步骤假绿无产物**;用 `printf '%s\n'` 逐行生成替代 |
+| runner 的 plutil | macOS runner plutil 不支持 `-insert key -dict -key …` 嵌套;嵌套 dict 直接写进 printf 的 XML 行 |
+| find-identity 提取身份名 | `/valid/` 会匹配到摘要行;用 `sed -n 's/.*"\(.*\)".*/\1/p'` |
+| Xcode 26 exportArchive | 不再支持 `-authenticationKey*` 参数(本地验证过才发的 CI);上传走 altool 两步法 |
+| method 名 | `app-store` 已弃用 → `app-store-connect` |
+| Chrome 136+ | 默认 user-data-dir 上 `--remote-debugging-port` 被静默忽略(端口不起);CDP 要么复制 profile 要么新 profile |
 
 **剩余(真机阶段)**:
 
-1. 你的 iPhone(iOS 26+)+ TestFlight 安装,真机验收 AlarmKit 响铃 UI/声音
-2. 发正式 tag(v0.2.0)验证双流水线全绿 + TestFlight 构建处理完成后通知
-3. 通知降级路径的点击路由:降级通知是原生 UN 直连,未接 notify-kit 事件路由(点按仅打开 app,不跳响铃页)——如需跳转,在 ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate 或改走 notify-kit
-4. 设置页「试响」在 iOS 走 AlarmKit(90 秒后系统闹钟 UI);锁屏场景真机确认
-5. ASC App Store 页面资料(截图/描述/审核信息)仅上架 App Store 时需要;TestFlight 不需要
+1. 你的 iPhone 装 **TestFlight**(App Store 搜 TestFlight,登录同一 Apple ID)→ 加入周而复起内部测试 → 验收 AlarmKit 响铃 UI/声音(0.2.0 两枚构建已在 TestFlight)
+2. 通知降级路径的点击路由:降级通知是原生 UN 直连,未接 notify-kit 事件路由(点按仅打开 app,不跳响铃页)——如需跳转,在 ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate 或改走 notify-kit
+3. 设置页「试响」在 iOS 走 AlarmKit(90 秒后系统闹钟 UI);锁屏场景真机确认
+4. ASC App Store 页面资料(截图/描述/审核信息)仅上架 App Store 时需要;TestFlight 不需要
 
 > Android 侧仍建议先真机跑稳一周(见 §7 待办)。
