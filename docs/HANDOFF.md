@@ -97,6 +97,18 @@ cd apps/mobile/android
   包名在创建应用时即锁定 `com.tntlikely.zhouerfuqi`(新版表单带可用性检查)
 - **轨道**:`internal`(内部测试);上传 = Play Developer API edits 流
   (insert edit → bundle upload → tracks.update → commit),脚本内嵌 workflow
+- **⚠️ 首次发布必须走 Console UI**:全新 app(无任何发布记录)调 API `edits.insert`
+  一律 403 PERMISSION_DENIED(与 SA 权限无关,家族其他 app 同 key 全通,授权后 4h+ 仍 403)——
+  已查证是 Play 对新 app 的封锁规则。首次版本用本地 AAB 在 Play Console「内部测试 → 修改发布
+  版本」人工上传(2026-11-17 进行中,代理上行慢 ~14KB/s,自愈脚本反复重传),之后 API/CI 通道即开
+- **商品详情 + 11 项声明全部完成**(2026-11-17,CDP 自动化填写):
+  - 商品详情:应用名称/简短说明(30 字)/完整说明(425 字)/图标 512(design/logo.svg 渲染)/
+    置顶大图 1024×500(Chrome SVG 渲染产图)/手机截图 ×2(真机 adb 截图,裁状态栏,9:16)
+  - 声明:隐私政策(仓库 `docs/privacy.md`)/无广告/无需登录/IARC 分级(全「所有人」)/
+    目标受众(13+/非儿童)/数据安全(不收集不分享)/无广告 ID/非政府/无金融/无健康功能/
+    交易者身份沿用账号
+  - 资产源:`/tmp/zf-assets/`(临时!正式产物已进仓库:icon-1024=app.json icon + iOS appiconset;
+    launcher webp 已重产;特图与截图只在 Play 后台,如需再产出 design/ 有源文件)
 - **手动触发**:workflow_dispatch,`upload=true` 才上传(默认只验构建 + 产 AAB artifact)
 - **⚠️ 上架正式版前的产品级待办**:`REQUEST_INSTALL_PACKAGES` 权限(自更新安装器用)
   在 Play 分发属于敏感权限,自更新 APK 安装与 Play 政策冲突——上架前需
@@ -146,6 +158,11 @@ cd apps/mobile/android
 | Play Console 新版「创建应用」直接填包名 | 带「检查可用性」,创建即锁定;不再靠首个 AAB 定包名 |
 | Play Console Angular UI 自动化 | DOM 选择器常绕不进 overlay;`Input.dispatchMouseEvent` 按**截图 CSS 像素坐标**点击最稳(截图=视口坐标,无需除 DPR) |
 | Play 上传 SA 是按 app 授权,非账号级 | 新 app 必须手动「用户和权限 → SA → 添加应用」;材料库 googleplay/README 有完整 checklist |
+| **expo 没配 icon 字段的连锁坑** | iOS appiconset 是全白图、Android launcher 是 Expo 机器人——prebuild 兜底不报错;修法:`app.json` 加 `icon` + 手动替换 appiconset 1024 PNG + 重产 mipmap webp(cwebp),已做 |
+| **shell 环境变量带分号的坑** | `VAR=x; cmd` 不会把 VAR 传给 cmd(是 shell 本地变量);必须 `VAR=x cmd` 同行或 export——CDP_PORT=9224 那次差点全部打到 9223 |
+| SVG→PNG 无 rsvg/magick 时的产图法 | 专用 Chrome 打开自包含 HTML(内联 SVG)→ `Emulation.setDeviceMetricsOverride` + `Page.captureScreenshot{clip}` 像素级截取;轮询 `document.title===RENDER_READY_m` 防止截在注入前 |
+| Play Console 资源库上传 | 每个字段「添加资源」开右侧面板;文件塞 `input[type=file]` 后**必须手动 dispatchEvent change**(CDP setFileInputFiles 不触发 Angular);资源入库后点缩略图选中 → 底部「添加」;截图上传在手机字段面板里会**自动挂到字段** |
+| IARC/目标受众向导自动化 | radiogroup 枚举 → 无 checked 的组点 `input[1]`(注意选项顺序不定,先枚举 label 再点);下一步按钮 disabled 可能是旧引用,scrollTo 后重取 |
 
 ## 7. 待办与下一步
 
