@@ -78,12 +78,29 @@ cd apps/mobile/android
 ./gradlew assembleDebug -PappVersionName=x.y.z-dev -PappVersionCode=<必须大于已装版本>
 ```
 
-- **发布 = 推 tag**(`git tag vX.Y.Z && git push origin vX.Y.Z`)→ release-apk.yml 自动出
-  三 ABI APK + update.json(指向 arm64)并回写 `updates/update.json` 到 main
+- **发布 = 推 tag**(`git tag vX.Y.Z && git push origin vX.Y.Z`)→ **三条流水线并行触发**:
+  - release-apk.yml:三 ABI APK + update.json(指向 arm64)→ GitHub Release,回写 `updates/update.json` 到 main
+  - release-ios.yml:unsigned IPA(GitHub Release)+ TestFlight 签名直传
+  - release-play.yml:签名 AAB → **Google Play internal(内部测试)轨道**(SA 上传,secret 未配时只产 AAB artifact)
 - **versionCode = `date +%s`**:任何本地构建想覆盖安装到真机,versionCode 必须大于
   真机当前值(dumpsys package 可查);debug 默认 versionCode=1 会被 MIUI 拒(降级)
 - **签名**:`zhouerfuqi.keystore`(密码 zhouerfuqi2026/alias zhouerfuqi,公开是有意为之,
   见 README);debug 构建也用该签名 → dev 版可直接覆盖 release 版保留数据
+
+### 4.1 Google Play 流水线(release-play.yml)
+
+- **凭据**:SA `github-actions-upload@beecount-481512.iam.gserviceaccount.com`,
+  JSON 放 `~/Documents/googleplay/`(账号级材料库,含新 app 授权 checklist),
+  仓库 secret `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`(JSON 原文,非 base64)
+- **授权**(2026-11-16 完成):Play Console → 用户和权限 → SA → 应用权限「添加应用」→
+  周而复起 → **管理员(所有权限)**;app 记录 ID `4972685046500351852`,
+  包名在创建应用时即锁定 `com.tntlikely.zhouerfuqi`(新版表单带可用性检查)
+- **轨道**:`internal`(内部测试);上传 = Play Developer API edits 流
+  (insert edit → bundle upload → tracks.update → commit),脚本内嵌 workflow
+- **手动触发**:workflow_dispatch,`upload=true` 才上传(默认只验构建 + 产 AAB artifact)
+- **⚠️ 上架正式版前的产品级待办**:`REQUEST_INSTALL_PACKAGES` 权限(自更新安装器用)
+  在 Play 分发属于敏感权限,自更新 APK 安装与 Play 政策冲突——上架前需
+  给 zf-update 加 Play 构建开关(运行时 flag 或 flavor)并从 manifest 移除该权限,见 §7
 
 ## 5. 真机调试(MIUI/HyperOS 流程)
 
@@ -124,6 +141,11 @@ cd apps/mobile/android
 | iOS 增量构建可能跳过 RN 打包阶段 | main.jsbundle 时间戳不更新、改动"看起来没生效";`rm -rf build/dd/Build/Products/Release-iphonesimulator/app.app build/dd/Build/Intermediates.noindex` 强制重打 |
 | 模拟器点击忽然失效 | 别的窗口盖到了最前——`osascript activate Simulator` 后再 cliclick;AX 内容区坐标(1694,342,440×956)需重读确认 |
 | HyperOS 拦 adb 合成手势解锁 | 锁屏滑动用 input swipe 无效(安全策略);首次解锁只能靠人,BOOT 重排验收等解锁后取数 |
+| 自动化 Chrome 登 Google 被拒「此浏览器或应用可能不安全」 | chrome-devtools-mcp 的 Chrome 带 `--enable-automation` 风控必拦;起独立 profile 的普通 headed Chrome(`--user-data-dir=~/.cache/zf-play-chrome-profile --remote-debugging-port=9223`,无自动化标记),人工登录一次后 CDP 全程接管 |
+| Node undici WebSocket 连 Chrome CDP 握手即挂(1006/TypeError) | 用 `ws` 包(repo hoisted node_modules 里现成)+ node20;HTTP 面(/json/list、/json/new、/json/close)fetch 就够 |
+| Play Console 新版「创建应用」直接填包名 | 带「检查可用性」,创建即锁定;不再靠首个 AAB 定包名 |
+| Play Console Angular UI 自动化 | DOM 选择器常绕不进 overlay;`Input.dispatchMouseEvent` 按**截图 CSS 像素坐标**点击最稳(截图=视口坐标,无需除 DPR) |
+| Play 上传 SA 是按 app 授权,非账号级 | 新 app 必须手动「用户和权限 → SA → 添加应用」;材料库 googleplay/README 有完整 checklist |
 
 ## 7. 待办与下一步
 
@@ -136,6 +158,17 @@ cd apps/mobile/android
 3. **真机 7 天锁屏过夜**:装 0.1.3 → 保活向导 → 连续观察(真正的产品验收)
 4. **应用内更新 0.1.2→0.1.3**:真机上「设置 → 检查更新」(链路已验,这次是真实升级)
 5. **R8/minify**(可选):dex 再省 ~5MB,需回归(反射库风险)
+6. **Google Play 收尾**(2026-11-16 CI 链路已通,上传 internal 成功后继续):
+   - **`REQUEST_INSTALL_PACKAGES` Play 合规**:自更新安装器与 Play 政策冲突——上架前
+     加构建开关(Android only + Play flag,如 `app.json` extra 或 gradle 属性),Play 构建
+     移除该权限 + 关掉应用内更新入口(GitHub Release 通道保留)
+   - Play Console 待填:商品详情(名称/简介/描述/图标 512/置顶大图/手机截图×2+)、
+     内容分级问卷、目标受众、隐私政策 URL(可指 GitHub 仓库)、数据安全表单
+     (本地优先应用:大部分「否」;闹钟权限用途写清)
+   - internal 轨道验收:装 internal 测试版 → 响铃/保活向导在真机复测一遍
+7. **Google Play CI 链路**(2026-11-16 大部分已通,最后一步验证中):
+   release-play.yml 构建阶段 24min 绿 ✅、SA 授权完成 ✅、internal 轨道上传 ⏳ 跑 CI 中
+   (run 43854299069);凭据沉淀 `~/Documents/googleplay/`
 
 ## 8. iOS(M2)进展
 
