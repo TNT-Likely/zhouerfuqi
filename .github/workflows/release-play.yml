@@ -1,0 +1,140 @@
+name: Release Play
+
+# Google Play 流水线:tag 推送或手动触发,与 release-apk / release-ios 三个 workflow 并行
+# 前置条件(材料库约定见 ~/Documents/googleplay/README.md):
+#   1. Play Console 已创建应用(包名 com.tntlikely.zhouerfuqi)
+#   2. 服务账号已在「用户和权限」授权本 App(至少「发布到测试轨道」)
+#   3. 仓库 secret GOOGLE_PLAY_SERVICE_ACCOUNT_JSON = SA JSON 原文(非 base64)
+# secret 未配时只产出 AAB artifact,不阻塞构建验证
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'versionName(留空则取 app.json 版本)'
+        required: false
+        default: ''
+      upload:
+        description: '上传 Play(手动触发时生效;tag 推送恒上传)'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  play:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Compute version
+        id: ver
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ -n "$TAG" ] && [ "${{ github.ref_type }}" = "tag" ]; then
+            VN="$TAG"
+          else
+            VN="${{ inputs.version_name }}"
+            if [ -z "$VN" ]; then VN=$(node -p "require('./apps/mobile/app.json').expo.version"); fi
+          fi
+          VC=$(date +%s)   # 单调递增,与 release-apk 同策略
+          echo "version_name=$VN" >> "$GITHUB_OUTPUT"
+          echo "version_code=$VC" >> "$GITHUB_OUTPUT"
+          echo "version: $VN ($VC)"
+
+      - name: Ensure NDK/CMake
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;28.2.13676358" "cmake;3.22.1" > /dev/null
+
+      - name: Build signed release AAB
+        working-directory: apps/mobile/android
+        run: ./gradlew bundleRelease --console=plain -PappVersionName="${{ steps.ver.outputs.version_name }}" -PappVersionCode="${{ steps.ver.outputs.version_code }}"
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhouerfuqi-aab-${{ steps.ver.outputs.version_name }}
+          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload to Google Play (internal track)
+        if: github.ref_type == 'tag' || inputs.upload == 'true'
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          VN: ${{ steps.ver.outputs.version_name }}
+          AAB: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+        run: |
+          if [ -z "${GOOGLE_PLAY_SERVICE_ACCOUNT_JSON:-}" ]; then
+            echo "::warning::GOOGLE_PLAY_SERVICE_ACCOUNT_JSON 未配置,跳过 Play 上传(仅产出 AAB artifact)"
+            exit 0
+          fi
+          echo "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > /tmp/service-account.json
+          python3 -m pip install --quiet google-auth google-api-python-client
+          # 注意:heredoc 正文与结束标记必须与本行同列(YAML 块标量会剥掉基础缩进,
+          # 结束标记缩进后 bash 不认,会把后续命令吞进文件——release-ios.yml 已踩过)
+          cat > /tmp/upload_to_play.py << 'UPLOAD_SCRIPT'
+          import os, sys
+          from google.oauth2 import service_account
+          from googleapiclient.discovery import build
+          from googleapiclient.http import MediaFileUpload
+
+          PACKAGE_NAME = 'com.tntlikely.zhouerfuqi'
+          AAB_FILE = sys.argv[1]
+          RELEASE_NAME = sys.argv[2]
+          TRACK = os.environ.get('PLAY_TRACK', 'internal')
+
+          credentials = service_account.Credentials.from_service_account_file(
+              '/tmp/service-account.json',
+              scopes=['https://www.googleapis.com/auth/androidpublisher'])
+
+          service = build('androidpublisher', 'v3', credentials=credentials)
+
+          try:
+              edit = service.edits().insert(body={}, packageName=PACKAGE_NAME).execute()
+              edit_id = edit['id']
+              print(f"edit created: {edit_id}")
+
+              media = MediaFileUpload(AAB_FILE, mimetype='application/octet-stream', resumable=True)
+              bundle = service.edits().bundles().upload(
+                  packageName=PACKAGE_NAME, editId=edit_id, media_body=media).execute()
+              version_code = bundle['versionCode']
+              print(f"AAB uploaded, version code: {version_code}")
+
+              service.edits().tracks().update(
+                  packageName=PACKAGE_NAME, editId=edit_id, track=TRACK,
+                  body={'releases': [{'name': RELEASE_NAME, 'versionCodes': [version_code], 'status': 'completed'}]}
+              ).execute()
+              print(f"assigned to {TRACK} track as {RELEASE_NAME}")
+
+              service.edits().commit(packageName=PACKAGE_NAME, editId=edit_id).execute()
+              print("changes committed to Google Play")
+          except Exception as e:
+              print(f"Upload failed: {e}")
+              print("排查:1) App 已在 Play Console 创建? 2) 服务账号已在「用户和权限」授权本 App?")
+              print("     3) GOOGLE_PLAY_SERVICE_ACCOUNT_JSON 是当前有效 key? 4) versionCode 未倒退?")
+              sys.exit(1)
+          UPLOAD_SCRIPT
+          python3 /tmp/upload_to_play.py "$AAB" "$VN"
+          rm -f /tmp/service-account.json /tmp/upload_to_play.py
