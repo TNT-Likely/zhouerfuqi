@@ -14,7 +14,7 @@
 | A4 | 闹钟注册(新语义) | PASS | dumpsys:44→54 条 setAlarmClock,含大周 11-21 |
 | A5 | 排班月历语义 | PASS | 截图 acc-02-calendar.png + pw-04/05(手动排班播种/填充/跨月) |
 | A6 | 每日刷新器注册 | PASS | dumpsys:RTC_WAKEUP 2026-11-16 03:30(setAlarmClock,policy_permission) |
-| A7 | 刷新触发链(receiver→Headless JS) | PARTIAL | receiver 已注册;adb 无法向 non-exported receiver 投递(Android 12+ 安全语义);真实触发=明早 03:30 自动发生,logcat 关键字 `resync task starting` |
+| A7 | 刷新触发链(receiver→Headless JS) | PASS | 2026-11-16 03:30:00.020 真机实测:logcat `[xiaomi_power]sending alarm … *walarm*:expo.modules.zfalarm.REFRESHER`;触发后自续期(次日 03:30 已挂)+ 14 天 horizon 响铃滚动重排在位(最远 2026-11-18 06:40) |
 | A8 | 数据持久化 | PASS | 手动排班 22 天跨 4 次覆盖安装保留(MMKV);force-stop 清空闹钟=系统语义,依赖打开/boot 重排 |
 | A9 | 设备重启 → BOOT 重排 | NOT_RUN | 模拟器重启耗时,留待下次(代码已含 BOOT_COMPLETED 接收器) |
 
@@ -37,6 +37,6 @@
 
 ## 遗留
 
-- 明早 03:30 后复查 logcat(`resync task starting`)+ 闹钟滚动重排证据。
+- ~~明早 03:30 后复查 logcat~~ → 已收(A7,PASS,2026-11-16 真机 logcat)。
 - 设备重启 → BOOT 重排验收(A9)。
 - App 端「关于」行版本动态读取已修,未在截图流程中复验(低风险)。

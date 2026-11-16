@@ -123,8 +123,9 @@ cd apps/mobile/android
 
 ## 7. 待办与下一步
 
-1. **明早 03:30**:查 `adb logcat -d | grep ZfAlarm`(`resync task starting`)+
-   闹钟滚动重排证据 → 补进验收报告 A7
+1. ~~明早 03:30 刷新器首跑~~ ✅ **已收**(2026-11-16 03:30:00.020 真机 logcat
+   `*walarm*:expo.modules.zfalarm.REFRESHER` 触发;次日 03:30 自续期 + horizon 响铃滚动重排在位;
+   A7 → PASS,见 `.docs/acceptance-20261115.md`)
 2. **设备重启验收**(A9):`adb reboot` 后确认 BOOT_COMPLETED → 重排
 3. **真机 7 天锁屏过夜**:装 0.1.3 → 保活向导 → 连续观察(真正的产品验收)
 4. **应用内更新 0.1.2→0.1.3**:真机上「设置 → 检查更新」(链路已验,这次是真实升级)
