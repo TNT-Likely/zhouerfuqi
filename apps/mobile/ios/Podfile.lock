@@ -126,6 +126,8 @@ PODS:
     - Yoga
   - ExpoAsset (58.0.21):
     - ExpoModulesCore
+  - ExpoDocumentPicker (58.0.5):
+    - ExpoModulesCore
   - ExpoDomWebView (58.0.2):
     - ExpoModulesCore
   - ExpoFileSystem (58.0.13):
@@ -179,6 +181,8 @@ PODS:
   - ExpoRouter (58.0.31):
     - ExpoModulesCore
     - RNScreens
+  - ExpoSharing (58.0.23):
+    - ExpoModulesCore
   - ExpoStatusBar (58.0.5):
     - ExpoModulesCore
   - EXUpdatesInterface (58.0.1):
@@ -2383,6 +2387,7 @@ DEPENDENCIES:
   - expo-dev-menu (from `../../../node_modules/expo-dev-menu`)
   - expo-dev-menu-interface (from `../../../node_modules/expo-dev-menu-interface/ios`)
   - ExpoAsset (from `../../../node_modules/expo-asset/ios`)
+  - ExpoDocumentPicker (from `../../../node_modules/expo-document-picker/ios`)
   - "ExpoDomWebView (from `../../../node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../../../node_modules/expo-file-system/ios/ExpoFileSystem.podspec`)
   - ExpoFont (from `../../../node_modules/expo-font/ios/ExpoFont.podspec`)
@@ -2395,6 +2400,7 @@ DEPENDENCIES:
   - ExpoModulesWorklets (from `../../../node_modules/expo-modules-core/ExpoModulesWorklets.podspec`)
   - ExpoModulesWorkletsAdapter (from `../../../node_modules/expo-modules-core`)
   - ExpoRouter (from `../../../node_modules/expo-router/ios`)
+  - ExpoSharing (from `../../../node_modules/expo-sharing/ios`)
   - ExpoStatusBar (from `../../../node_modules/expo-status-bar/ios`)
   - EXUpdatesInterface (from `../../../node_modules/expo-updates-interface/ios`)
   - fast_float (from `build/rndeps-facades/fast_float`)
@@ -2520,6 +2526,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/expo-dev-menu-interface/ios"
   ExpoAsset:
     :path: "../../../node_modules/expo-asset/ios"
+  ExpoDocumentPicker:
+    :path: "../../../node_modules/expo-document-picker/ios"
   ExpoDomWebView:
     :path: "../../../node_modules/@expo/dom-webview/ios"
   ExpoFileSystem:
@@ -2544,6 +2552,8 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/expo-modules-core"
   ExpoRouter:
     :path: "../../../node_modules/expo-router/ios"
+  ExpoSharing:
+    :path: "../../../node_modules/expo-sharing/ios"
   ExpoStatusBar:
     :path: "../../../node_modules/expo-status-bar/ios"
   EXUpdatesInterface:
@@ -2750,6 +2760,7 @@ SPEC CHECKSUMS:
   expo-dev-menu: 00a1108ee5f998295013524ae8d132801433075e
   expo-dev-menu-interface: a0ae020737b9f6de39689628181ffd572881cca9
   ExpoAsset: eda9e4844b55b78d4e71a0e2de767a038f3a0806
+  ExpoDocumentPicker: 3e8fdb323db3ad2f7c8bbd21fdad3b982f1cf178
   ExpoDomWebView: b2a6d681b9d34c23b1f584321386ca8da1d36afb
   ExpoFileSystem: b619d80b490c53117a9a9c976021a4ce5a9da440
   ExpoFont: daea737a2e3742f9a946f2884518e70dd37011f3
@@ -2762,6 +2773,7 @@ SPEC CHECKSUMS:
   ExpoModulesWorklets: 03d171c0296cdffc054e9570e9393a7655ef360d
   ExpoModulesWorkletsAdapter: b395e6ebac830751dbaa6f3db74a4039f598d475
   ExpoRouter: 7c96a57464b14a338bef360493bcfe7190bcc5eb
+  ExpoSharing: 4831940284e0dd904b0522e027e85cd286e563d2
   ExpoStatusBar: 38eff05a54229c9a388cb56cef29117b8dc77eb1
   EXUpdatesInterface: 1c6a522d0eb0485f4de3fa55d0316288763b3f10
   fast_float: 7c925d1cebf8328d4018d061f49377e9f887e3b4

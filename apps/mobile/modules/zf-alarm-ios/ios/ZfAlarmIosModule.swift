@@ -14,6 +14,46 @@ struct ZfAlarmMetadata: AlarmMetadata {
   let alarmKey: String
 }
 
+/// 降级通知(UNUserNotificationCenter)的前台展示 + 点击路由。
+/// 点击:JS 已监听 → sendEvent 即时路由;JS 未就绪(冷启动)→ 落 UserDefaults,
+/// 由 consumeLastNotificationTap 在 JS 挂载后消费,两条路都不丢。
+final class ZfNotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
+  static let shared = ZfNotificationDelegate()
+  weak var module: ZfAlarmIosModule?
+  private static let tapKey = "zf.alarm.tap.v1"
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification
+  ) async -> UNNotificationPresentationOptions {
+    // 没有这个实现,设置了 delegate 后前台反而吞横幅——显式保留横幅+声音
+    return [.banner, .sound]
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse
+  ) async {
+    let content = response.notification.request.content
+    let tap: [String: String] = [
+      "id": response.notification.request.identifier,
+      "timeLabel": (content.userInfo["zfTimeLabel"] as? String) ?? "",
+      "title": content.title,
+    ]
+    // 单一事实源:先落盘,再敲门。JS 在就绪时消费并清除,未就绪由挂载后 consume 兜底,
+    // 两条路径都走「consume 才路由」,天然不会重复跳页。
+    UserDefaults.standard.set(tap, forKey: Self.tapKey)
+    module?.sendEvent("zfNotificationTap", tap)
+  }
+
+  /// JS 挂载后取走冷启动期间落下的点击(取走即清,防重复路由)
+  static func consumePendingTap() -> [String: String]? {
+    let v = UserDefaults.standard.dictionary(forKey: tapKey) as? [String: String]
+    if v != nil { UserDefaults.standard.removeObject(forKey: tapKey) }
+    return v
+  }
+}
+
 /// iOS 闹钟网关:
 /// 主路径 AlarmKit(iOS 26+,系统级闹钟 UI,与系统时钟同源);
 /// 降级路径 UNUserNotificationCenter time-interval 触发器(时间敏感级)。
@@ -29,6 +69,17 @@ public class ZfAlarmIosModule: Module {
 
   public func definition() -> ModuleDefinition {
     Name("ZfAlarmIos")
+    Events("zfNotificationTap")
+
+    OnCreate {
+      ZfNotificationDelegate.shared.module = self
+      UNUserNotificationCenter.current().delegate = ZfNotificationDelegate.shared
+    }
+
+    /// 冷启动期间落下的降级通知点击({id, timeLabel, title}),取走即清;无则 null
+    Function("consumeLastNotificationTap") { () -> [String: String]? in
+      ZfNotificationDelegate.consumePendingTap()
+    }
 
     /// AlarmKit 是否在本机可用(iOS 26+)
     Function("isAlarmKitAvailable") { () -> Bool in
@@ -145,6 +196,10 @@ public class ZfAlarmIosModule: Module {
     content.body = body
     content.sound = .default
     content.interruptionLevel = .timeSensitive
+    // 点击路由用:响铃页直接显示计划时刻(HH:mm)
+    let fmt = DateFormatter()
+    fmt.dateFormat = "HH:mm"
+    content.userInfo["zfTimeLabel"] = fmt.string(from: date)
 
     let trigger = UNTimeIntervalNotificationTrigger(timeInterval: date.timeIntervalSinceNow, repeats: false)
     try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: id, content: content, trigger: trigger))

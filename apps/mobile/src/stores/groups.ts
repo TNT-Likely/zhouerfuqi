@@ -40,6 +40,7 @@ interface GroupsState {
   upsert: (group: AlarmGroup) => void;
   remove: (id: string) => void;
   setEnabled: (id: string, on: boolean) => void;
+  replaceAll: (groups: AlarmGroup[]) => void;
 }
 
 export const useGroups = create<GroupsState>((set, get) => {
@@ -59,6 +60,10 @@ export const useGroups = create<GroupsState>((set, get) => {
     },
     setEnabled: (id, on) => {
       const groups = get().groups.map((g) => (g.id === id ? { ...g, enabled: on } : g));
+      persist(groups);
+      set({ groups });
+    },
+    replaceAll: (groups) => {
       persist(groups);
       set({ groups });
     },

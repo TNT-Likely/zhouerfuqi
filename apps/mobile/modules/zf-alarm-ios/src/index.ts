@@ -9,12 +9,20 @@ import { Platform } from 'react-native';
 export type ZfAlarmBackend = 'alarmkit' | 'notification' | 'skipped';
 export type ZfAlarmPermissionStatus = { notifications: boolean; exactAlarms: boolean };
 
+export interface ZfNotificationTap {
+  id: string;
+  timeLabel: string;
+  title: string;
+}
+
 interface ZfAlarmIosNative {
   isAlarmKitAvailable(): boolean;
   requestPermissions(): Promise<ZfAlarmPermissionStatus>;
   status(): Promise<ZfAlarmPermissionStatus>;
   scheduleAlarm(id: string, epochMs: number, title: string, body: string): Promise<ZfAlarmBackend>;
   cancelAlarm(id: string): Promise<boolean>;
+  consumeLastNotificationTap(): ZfNotificationTap | null;
+  addListener(eventName: 'zfNotificationTap', listener: (tap: ZfNotificationTap) => void): { remove: () => void };
 }
 
 let cached: ZfAlarmIosNative | null | undefined;
@@ -60,4 +68,20 @@ export function cancelAlarm(id: string): Promise<boolean> {
   const n = native();
   if (!n) return Promise.resolve(false);
   return n.cancelAlarm(id);
+}
+
+/**
+ * 降级通知点击路由([M2 补])。
+ * 冷启动:delegate 落 UserDefaults,JS 挂载后 consume;热路径:addListener 即时收。
+ */
+export function consumeLastNotificationTap(): ZfNotificationTap | null {
+  const n = native();
+  return n ? n.consumeLastNotificationTap() : null;
+}
+
+export function onNotificationTap(listener: (tap: ZfNotificationTap) => void): () => void {
+  const n = native();
+  if (!n) return () => {};
+  const sub = n.addListener('zfNotificationTap', listener);
+  return () => sub.remove();
 }

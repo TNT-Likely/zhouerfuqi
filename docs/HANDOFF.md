@@ -120,13 +120,19 @@ cd apps/mobile/android
 | AlarmKit iOS 26.1 起 `stopButton` 已废弃 | 26.1+ 用 `AlarmPresentation.Alert(title:)`(系统自带停止按钮);26.0 走 deprecated 构造 |
 | release-apk.yml 的 workflow 取自 tag 所在 commit | 打 tag 前确保修复已在 main;旧 tag 上的 workflow 不会用 main 的新逻辑 |
 | pnpm shim 的 `exec` 子命令没走内置 node | 直接 `node ../../node_modules/typescript/bin/tsc --noEmit` 等价替代 |
+| pnpm 11 要 node:sqlite(Node 22.13+) | PATH 漂到 nvm node 20 时 shim 直接崩(`ERR_UNKNOWN_BUILTIN_MODULE`);用 DSH node24 显式跑:`~/.dsh/.../node/bin/node ~/.dsh/.../pnpm.mjs add pkg@ver`(add 必须带 `name@ver`,裸版本号会被当包名) |
+| iOS 增量构建可能跳过 RN 打包阶段 | main.jsbundle 时间戳不更新、改动"看起来没生效";`rm -rf build/dd/Build/Products/Release-iphonesimulator/app.app build/dd/Build/Intermediates.noindex` 强制重打 |
+| 模拟器点击忽然失效 | 别的窗口盖到了最前——`osascript activate Simulator` 后再 cliclick;AX 内容区坐标(1694,342,440×956)需重读确认 |
+| HyperOS 拦 adb 合成手势解锁 | 锁屏滑动用 input swipe 无效(安全策略);首次解锁只能靠人,BOOT 重排验收等解锁后取数 |
 
 ## 7. 待办与下一步
 
 1. ~~明早 03:30 刷新器首跑~~ ✅ **已收**(2026-11-16 03:30:00.020 真机 logcat
    `*walarm*:expo.modules.zfalarm.REFRESHER` 触发;次日 03:30 自续期 + horizon 响铃滚动重排在位;
    A7 → PASS,见 `.docs/acceptance-20261115.md`)
-2. **设备重启验收**(A9):`adb reboot` 后确认 BOOT_COMPLETED → 重排
+2. **设备重启验收**(A9):`adb reboot` 已执行(2026-11-16,手机休眠中电量 100%);
+   HyperOS 拦 adb 合成滑动解锁(锁屏停在圆环页)→ BOOT 广播等**首次解锁**才放行,
+   解锁后查 `adb shell "dumpsys alarm | grep -c 'com.tntlikely.zhouerfuqi}'"`(应 44+)+ logcat resync 即收尾
 3. **真机 7 天锁屏过夜**:装 0.1.3 → 保活向导 → 连续观察(真正的产品验收)
 4. **应用内更新 0.1.2→0.1.3**:真机上「设置 → 检查更新」(链路已验,这次是真实升级)
 5. **R8/minify**(可选):dex 再省 ~5MB,需回归(反射库风险)
@@ -183,7 +189,7 @@ cd apps/mobile/android
 **剩余(真机阶段)**:
 
 1. 你的 iPhone 装 **TestFlight**(App Store 搜 TestFlight,登录同一 Apple ID)→ 加入周而复起内部测试 → 验收 AlarmKit 响铃 UI/声音(0.2.0 两枚构建已在 TestFlight)
-2. 通知降级路径的点击路由:降级通知是原生 UN 直连,未接 notify-kit 事件路由(点按仅打开 app,不跳响铃页)——如需跳转,在 ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate 或改走 notify-kit
+2. ~~通知降级路径的点击路由~~ ✅ **已完成并模拟器端到端验证**(2026-11-16):ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate(前台 willPresent 保留横幅+声音;点击落 UserDefaults 单一事实源 + sendEvent 敲门,JS 两条路径都「consume 才路由」不重复跳页);simctl push 横幅点击 → 响铃页实测通过
 3. 设置页「试响」在 iOS 走 AlarmKit(90 秒后系统闹钟 UI);锁屏场景真机确认
 4. **App Store 上架资料(2026-11-16 已备齐至「随时可提交」)**:商店文案(描述 390 字/关键词/推广文本/support URL=仓库)✅、版本号 0.2.0+版权 ✅、CI build 1794765885 已挂到商店版本 ✅、年龄问卷全 NONE(4+)✅、审核备注(闹钟测试说明)✅、6.9" 截图×3(首页/月历/设置,模拟器 Release 构建 + cliclick 点击授权弹窗后截图,API 上传)✅。**剩余只有你能做的**:① ASC 网页「定价与销售范围」选免费+销售范围(API 不开放此段;若上中国大陆需 ICP 备案号,175 地区列表里没有 CN,大陆是单独开关);② 审核联系人(姓名/电话/邮箱,`appStoreReviewDetails` 已建只差联系人);③ 点「提交以供审核」
 5. 模拟器上发现:设置页「权限状态」显示 `通知 ✗ · 精确闹钟 需检查`(模拟器上权限弹窗点过一轮后 UN/AlarmKit 都停在拒绝态,simctl push 能弹 banner 但不算数)——真机 TestFlight 首启会重新弹授权,验收时顺带核对该行是否与系统一致
