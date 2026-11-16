@@ -4,6 +4,7 @@
     "slug": "zhouerfuqi",
     "version": "0.2.0",
     "scheme": "zhouerfuqi",
+    "icon": "./assets/icon.png",
     "orientation": "portrait",
     "newArchEnabled": true,
     "userInterfaceStyle": "automatic",
