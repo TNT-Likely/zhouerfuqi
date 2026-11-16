@@ -175,12 +175,17 @@ cd apps/mobile/android
 | Xcode 26 exportArchive | 不再支持 `-authenticationKey*` 参数(本地验证过才发的 CI);上传走 altool 两步法 |
 | method 名 | `app-store` 已弃用 → `app-store-connect` |
 | Chrome 136+ | 默认 user-data-dir 上 `--remote-debugging-port` 被静默忽略(端口不起);CDP 要么复制 profile 要么新 profile |
+| ASC API 问卷/截图上传 | 年龄问卷 PATCH `/v1/ageRatingDeclarations/{id}`(挂在 appInfos 子路径上报 method 错);字段混型:多数枚举 NONE,但 `messagingAndChat/socialMedia/gambling/lootBox/advertising` 等是 **boolean**,`kidsAgeBand` 只接受 FIVE_AND_UNDER+ 不传即 NONE;首版 `whatsNew` 不可编辑(409) |
+| ASC 截图 API | displayType 无 6.9 档,`APP_IPHONE_67` 收纳 1320×2868;uploadOperations 的 requestHeaders 是 `[{name,value}]` 列表;commit 只 PATCH `uploaded:true`(sourceFileHash 不是该资源属性);审核详情 `appStoreReviewDetails` 挂 **appStoreVersion** 关系,不是 app |
+| ASC 定价/销售范围 | API 完全不开放(`/v1/appAvailabilities`、`/v1/appPrices` 都 404),只能网页端点 |
+| 模拟器截图自动化 | 辅助功能权限可用时:`osascript` 读 Simulator AX 树拿到内容区(pos/size 即设备点尺寸),`cliclick`(brew)按 PNG 坐标÷3 换算点击;iOS 系统弹窗对 Return 键无响应,必须真点击;`simctl openurl` 自定义 scheme 每次弹确认框且会排队叠加 |
 
 **剩余(真机阶段)**:
 
 1. 你的 iPhone 装 **TestFlight**(App Store 搜 TestFlight,登录同一 Apple ID)→ 加入周而复起内部测试 → 验收 AlarmKit 响铃 UI/声音(0.2.0 两枚构建已在 TestFlight)
 2. 通知降级路径的点击路由:降级通知是原生 UN 直连,未接 notify-kit 事件路由(点按仅打开 app,不跳响铃页)——如需跳转,在 ZfAlarmIosModule 实现 UNUserNotificationCenterDelegate 或改走 notify-kit
 3. 设置页「试响」在 iOS 走 AlarmKit(90 秒后系统闹钟 UI);锁屏场景真机确认
-4. ASC App Store 页面资料(截图/描述/审核信息)仅上架 App Store 时需要;TestFlight 不需要
+4. **App Store 上架资料(2026-11-16 已备齐至「随时可提交」)**:商店文案(描述 390 字/关键词/推广文本/support URL=仓库)✅、版本号 0.2.0+版权 ✅、CI build 1794765885 已挂到商店版本 ✅、年龄问卷全 NONE(4+)✅、审核备注(闹钟测试说明)✅、6.9" 截图×3(首页/月历/设置,模拟器 Release 构建 + cliclick 点击授权弹窗后截图,API 上传)✅。**剩余只有你能做的**:① ASC 网页「定价与销售范围」选免费+销售范围(API 不开放此段;若上中国大陆需 ICP 备案号,175 地区列表里没有 CN,大陆是单独开关);② 审核联系人(姓名/电话/邮箱,`appStoreReviewDetails` 已建只差联系人);③ 点「提交以供审核」
+5. 模拟器上发现:设置页「权限状态」显示 `通知 ✗ · 精确闹钟 需检查`(模拟器上权限弹窗点过一轮后 UN/AlarmKit 都停在拒绝态,simctl push 能弹 banner 但不算数)——真机 TestFlight 首启会重新弹授权,验收时顺带核对该行是否与系统一致
 
 > Android 侧仍建议先真机跑稳一周(见 §7 待办)。
