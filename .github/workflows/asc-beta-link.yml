@@ -93,7 +93,7 @@ jobs:
                           'publicLinkEnabled': True,
                           'publicLinkLimitEnabled': True,
                           'publicLinkLimit': 10000},
-                          'relationships': {'app': {'data': {'id': app_id}}}}})
+                          'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
                   gid = g['data']['id']
                   print(f'CREATED group {gid}')
               # 开启公开链接(若关闭则打开)
