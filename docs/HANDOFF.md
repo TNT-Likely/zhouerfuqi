@@ -95,12 +95,15 @@ cd apps/mobile/android
 - **授权**(2026-11-16 完成):Play Console → 用户和权限 → SA → 应用权限「添加应用」→
   周而复起 → **管理员(所有权限)**;app 记录 ID `4972685046500351852`,
   包名在创建应用时即锁定 `com.tntlikely.zhouerfuqi`(新版表单带可用性检查)
-- **轨道**:`internal`(内部测试);上传 = Play Developer API edits 流
-  (insert edit → bundle upload → tracks.update → commit),脚本内嵌 workflow
+- **轨道**:`alpha`(封闭测试,2026-11-17 由 internal 改入——个人新账号必须完成
+  **12 名测试人员参与 × 14 天**的封闭测试才能申请正式上架);上传 = Play Developer API
+  edits 流(insert edit → bundle upload → tracks.update → commit),脚本内嵌 workflow
 - **⚠️ 首次发布必须走 Console UI**:全新 app(无任何发布记录)调 API `edits.insert`
   一律 403 PERMISSION_DENIED(与 SA 权限无关,家族其他 app 同 key 全通,授权后 4h+ 仍 403)——
-  已查证是 Play 对新 app 的封锁规则。首次版本用本地 AAB 在 Play Console「内部测试 → 修改发布
-  版本」人工上传(2026-11-17 进行中,代理上行慢 ~14KB/s,自愈脚本反复重传),之后 API/CI 通道即开
+  已查证是 Play 对新 app 的封锁规则。首个 AAB 于 2026-11-17 经 Play Console UI 上传到
+  封闭测试(alpha)轨道,之后 API/CI 通道即开
+- **封闭测试轨道路径**:测试 → 封闭式测试 → 管理轨道 → 创建新的发布版本;
+  track ID `4698989483075961257`(Alpha);传完存草稿后需选测试人员(邮箱名单)再发布
 - **商品详情 + 11 项声明全部完成**(2026-11-17,CDP 自动化填写):
   - 商品详情:应用名称/简短说明(30 字)/完整说明(425 字)/图标 512(design/logo.svg 渲染)/
     置顶大图 1024×500(Chrome SVG 渲染产图)/手机截图 ×2(真机 adb 截图,裁状态栏,9:16)
@@ -163,6 +166,9 @@ cd apps/mobile/android
 | SVG→PNG 无 rsvg/magick 时的产图法 | 专用 Chrome 打开自包含 HTML(内联 SVG)→ `Emulation.setDeviceMetricsOverride` + `Page.captureScreenshot{clip}` 像素级截取;轮询 `document.title===RENDER_READY_m` 防止截在注入前 |
 | Play Console 资源库上传 | 每个字段「添加资源」开右侧面板;文件塞 `input[type=file]` 后**必须手动 dispatchEvent change**(CDP setFileInputFiles 不触发 Angular);资源入库后点缩略图选中 → 底部「添加」;截图上传在手机字段面板里会**自动挂到字段** |
 | IARC/目标受众向导自动化 | radiogroup 枚举 → 无 checked 的组点 `input[1]`(注意选项顺序不定,先枚举 label 再点);下一步按钮 disabled 可能是旧引用,scrollTo 后重取 |
+| **`google.play` 直连坑(大坑)** | 未登录访问 play.google.com/console 会重定向到 `google.play/business` 营销页;`google.play` 不在路由器 mihomo 的 geosite-google 规则里,落 Final→Direct 被墙 → Chrome 报 ERR_CONNECTION_CLOSED,表象极像「节点坏了/ECH/PQ 握手」,实则换任何节点都挂。排障:`curl 192.168.3.202:9090/logs?level=debug` 看 mihomo 实时日志(9090 无鉴权,PUT /proxies/<组> 可切节点)。规避:登录后再进 console |
+| Play Console SPA 陈旧视图 | URL 换了 app ID 但视图残留上一个 app(BeeDNS 页面配周而复起的 URL)——**document.title 才是真上下文**;先进 app-dashboard 等标题正确再深链,别信 innerText |
+| Chrome 大文件上传卡 0 B | Play Console 传 64MB AAB 可能卡 `0 B of 63.9 MB`(死 socket);取消后**立刻重传大概率就动**(新 socket)。监控进度用 `\s*` 匹配——数字与单位间是不换行空格 U+202F,普通空格正则永远不中 |
 
 ## 7. 待办与下一步
 
@@ -175,17 +181,17 @@ cd apps/mobile/android
 3. **真机 7 天锁屏过夜**:装 0.1.3 → 保活向导 → 连续观察(真正的产品验收)
 4. **应用内更新 0.1.2→0.1.3**:真机上「设置 → 检查更新」(链路已验,这次是真实升级)
 5. **R8/minify**(可选):dex 再省 ~5MB,需回归(反射库风险)
-6. **Google Play 收尾**(2026-11-16 CI 链路已通,上传 internal 成功后继续):
+6. **Google Play 收尾**:
    - **`REQUEST_INSTALL_PACKAGES` Play 合规**:自更新安装器与 Play 政策冲突——上架前
      加构建开关(Android only + Play flag,如 `app.json` extra 或 gradle 属性),Play 构建
      移除该权限 + 关掉应用内更新入口(GitHub Release 通道保留)
-   - Play Console 待填:商品详情(名称/简介/描述/图标 512/置顶大图/手机截图×2+)、
-     内容分级问卷、目标受众、隐私政策 URL(可指 GitHub 仓库)、数据安全表单
-     (本地优先应用:大部分「否」;闹钟权限用途写清)
-   - internal 轨道验收:装 internal 测试版 → 响铃/保活向导在真机复测一遍
-7. **Google Play CI 链路**(2026-11-16 大部分已通,最后一步验证中):
-   release-play.yml 构建阶段 24min 绿 ✅、SA 授权完成 ✅、internal 轨道上传 ⏳ 跑 CI 中
-   (run 43854299069);凭据沉淀 `~/Documents/googleplay/`
+   - ~~商品详情 + 11 项声明~~(2026-11-17 已全部完成 ✅,见 §4.1)
+   - **封闭测试启动**:发布 alpha 版本 + 测试人员名单(≥12 人 opt-in,持续 14 天)→
+     期满申请正式上架;alpha 轨道验收:测试人员装包 → 响铃/保活向导真机复测
+7. **Google Play CI 链路**(2026-11-17):
+   release-play.yml 构建阶段 24min 绿 ✅、SA 授权完成 ✅、默认轨道已改 alpha ✅、
+   首个 AAB 经 Console UI 上传封闭测试轨道 ⏳(自愈监控中)、API 通道待首传后复验;
+   凭据沉淀 `~/Documents/googleplay/`
 
 ## 8. iOS(M2)进展
 
