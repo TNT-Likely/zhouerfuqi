@@ -69,6 +69,15 @@ jobs:
               print('NO_READY_BUILD')
           build_id = ready[0]['id'] if ready else None
 
+          # Beta App Review 状态:公开链接必须等首个外测构建过审
+          if build_id:
+              sub = req('GET', f'/v1/betaAppReviewSubmissions?filter[build]={build_id}')['data']
+              if sub:
+                  print('BETA_REVIEW %s (build v%s)' % (
+                      sub[0]['attributes']['state'], ready[0]['attributes']['version']))
+              else:
+                  print('BETA_REVIEW NONE (尚无外测送审记录)')
+
           groups = req('GET', f'/v1/betaGroups?filter[app]={app_id}')['data']
           ext = [g for g in groups if not g['attributes']['isInternalGroup']]
           for g in groups:
