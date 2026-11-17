@@ -38,7 +38,8 @@ jobs:
                'aud': 'appstoreconnect-v1'},
               KEY, algorithm='ES256', headers={'kid': KID})
           H = {'Authorization': 'Bearer ' + token}
-          B = 'https://api.appstoreconnect.com'
+          B = 'https://api.appstoreconnect.apple.com'
+          # 2026-11 起 Apple 已退役老域名 api.appstoreconnect.com(NXDOMAIN,CI 与公共 DNS 均验证)
 
           def req(method, path, **kw):
               r = requests.request(method, B + path, headers=H, timeout=30, **kw)
