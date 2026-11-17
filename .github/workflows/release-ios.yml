@@ -192,6 +192,8 @@ jobs:
         # 注意:这里不能用 heredoc——YAML 块内缩进的结束标记 bash 不认,
         # 会把后续命令吞进 plist 内容(假绿、无产物)
         run: |
+          # ITSAppUsesNonExemptEncryption=false:只用系统 HTTPS(标准加密豁免),
+          # 不声明会卡「Missing Compliance」挡住 Beta 审核
           printf '%s\n' \
             '<?xml version="1.0" encoding="UTF-8"?>' \
             '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">' \
@@ -203,6 +205,7 @@ jobs:
             "<key>signingCertificate</key><string>$SIGNING_IDENTITY</string>" \
             "<key>provisioningProfiles</key><dict><key>com.tntlikely.zhouerfuqi</key><string>$PROFILE_NAME</string></dict>" \
             '<key>uploadSymbols</key><true/>' \
+            '<key>ITSAppUsesNonExemptEncryption</key><false/>' \
             '</dict></plist>' > /tmp/export.plist
           xcodebuild -exportArchive -archivePath build/app-signed.xcarchive \
             -exportOptionsPlist /tmp/export.plist -exportPath build
