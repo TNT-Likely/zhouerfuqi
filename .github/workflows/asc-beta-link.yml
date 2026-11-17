@@ -191,6 +191,13 @@ jobs:
                               'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'},
                               'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
                       print(f'BETA_DESC created for primary locale {prim}')
+              # 外测必填 feedbackEmail,全部本地化补齐
+              for l in req('GET', f'/v1/apps/{app_id}/betaAppLocalizations')['data']:
+                  if not l['attributes'].get('feedbackEmail'):
+                      req('PATCH', f'/v1/betaAppLocalizations/{l["id"]}', json={
+                          'data': {'type': 'betaAppLocalizations', 'id': l['id'],
+                                   'attributes': {'feedbackEmail': 'sunxiao53283713@gmail.com'}}})
+              print('FEEDBACK_EMAIL filled')
               # 显式送 Beta App Review(公开链接必须过审)
               sub = req('POST', '/v1/betaAppReviewSubmissions', json={
                   'data': {'type': 'betaAppReviewSubmissions', 'attributes': {},
