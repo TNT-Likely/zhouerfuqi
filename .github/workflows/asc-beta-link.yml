@@ -25,7 +25,7 @@ jobs:
           python3 -m pip install --quiet pyjwt cryptography requests
           # 注意:heredoc 结束标记必须与正文同列(YAML 块标量剥基础缩进,见 release-ios 教训)
           cat > /tmp/asc.py << 'ASC_SCRIPT'
-          import jwt, time, os, sys, requests
+          import jwt, time, os, sys, json, requests
 
           KEY = os.environ['APPLE_API_KEY_CONTENT']
           KID = os.environ['APPLE_API_KEY_ID']
@@ -71,6 +71,13 @@ jobs:
 
           # Beta App Review 状态:公开链接必须等首个外测构建过审
           if build_id:
+              full = req('GET', '/v1/builds/' + build_id +
+                         '?fields[builds]=usesNonExemptEncryption,processingState,betaAppReviewSubmission')['data']
+              print('BUILD_DETAIL', json.dumps(full['attributes'], ensure_ascii=False))
+              locs = req('GET', f'/v1/apps/{app_id}/betaAppLocalizations')['data']
+              for l in locs:
+                  print('LOC_DETAIL', l['attributes']['locale'],
+                        json.dumps(l['attributes'], ensure_ascii=False)[:500])
               sub = req('GET', f'/v1/betaAppReviewSubmissions?filter[build]={build_id}')['data']
               if sub:
                   print('BETA_REVIEW %s (build v%s)' % (
