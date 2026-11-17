@@ -48,6 +48,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Strip REQUEST_INSTALL_PACKAGES (Play 合规)
+        run: |
+          # Play 政策不允许"应用内自更新"类使用该权限;GitHub Release(APK)渠道保留,
+          # 仅 Play 渠道剥离(此工作区是 ephemeral 的,不影响 release-apk.yml)
+          sed -i '/android.permission.REQUEST_INSTALL_PACKAGES/d' \
+            apps/mobile/android/app/src/main/AndroidManifest.xml
+          ! grep -q REQUEST_INSTALL_PACKAGES apps/mobile/android/app/src/main/AndroidManifest.xml
+
       - name: Compute version
         id: ver
         run: |
