@@ -80,8 +80,8 @@ jobs:
                         json.dumps(l['attributes'], ensure_ascii=False)[:500])
               sub = req('GET', f'/v1/betaAppReviewSubmissions?filter[build]={build_id}')['data']
               if sub:
-                  print('BETA_REVIEW %s (build v%s)' % (
-                      sub[0]['attributes']['state'], ready[0]['attributes']['version']))
+                  print('BETA_REVIEW', json.dumps(sub[0]['attributes'], ensure_ascii=False),
+                        '(build v%s)' % ready[0]['attributes']['version'])
               else:
                   print('BETA_REVIEW NONE (尚无外测送审记录)')
 
