@@ -127,26 +127,20 @@ jobs:
                          'No account, no ads, no data collection; all data stays on device. '
                          'Features: schedule rules, holiday auto-skip, backup/export.')
               locs = req('GET', f'/v1/apps/{app_id}/betaAppLocalizations')['data']
-              CONTACT = {'firstName': 'Xiao', 'lastName': 'Sun',
-                         'email': 'sunxiao53283713@gmail.com'}
               if locs:
                   lid = locs[0]['id']
-                  attrs = {'locale': locs[0]['attributes']['locale'],
-                           'description': desc_en,
-                           'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'}
-                  attrs.update(CONTACT)
                   req('PATCH', f'/v1/betaAppLocalizations/{lid}', json={
                       'data': {'type': 'betaAppLocalizations', 'id': lid,
-                               'attributes': attrs}})
+                               'attributes': {'locale': locs[0]['attributes']['locale'],
+                                              'description': desc_en,
+                                              'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'}}})
                   print('BETA_DESC updated')
               else:
-                  attrs = {'locale': 'en-US', 'description': desc_en,
-                           'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'}
-                  attrs.update(CONTACT)
-                  g = req('POST', '/v1/betaAppLocalizations', json={
-                      'data': {'type': 'betaAppLocalizations', 'attributes': attrs,
+                  req('POST', '/v1/betaAppLocalizations', json={
+                      'data': {'type': 'betaAppLocalizations', 'attributes': {
+                          'locale': 'en-US', 'description': desc_en,
+                          'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'},
                           'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
-                  lid = g['data']['id']
                   print('BETA_DESC created')
               # 审核联系人(顶级端点创建,嵌套路径 404)
               try:
