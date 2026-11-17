@@ -46,7 +46,8 @@ jobs:
               if r.status_code >= 400:
                   print(f'!! {method} {path} -> {r.status_code}: {r.text[:400]}')
                   r.raise_for_status()
-              return r.json()
+              # 204 No Content(挂构建成功就是空响应)不解析
+              return r.json() if r.text.strip() else {}
 
           apps = req('GET', f'/v1/apps?filter[bundleId]={BUNDLE}')['data']
           if not apps:
