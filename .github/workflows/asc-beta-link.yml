@@ -121,6 +121,36 @@ jobs:
                   print('COMPLIANCE set')
               except Exception as e:
                   print('COMPLIANCE skip:', str(e)[:120])
+              # 外测送审前置:Beta App 描述(本地化)+ 审核联系人
+              desc_en = ('Zhouerfuqi is a local-first shift-scheduling alarm app '
+                         'for rotating shifts (big/small week, custom shift calendars). '
+                         'No account, no ads, no data collection; all data stays on device. '
+                         'Features: schedule rules, holiday auto-skip, backup/export.')
+              locs = req('GET', f'/v1/apps/{app_id}/betaAppLocalizations')['data']
+              if locs:
+                  lid = locs[0]['id']
+                  req('PATCH', f'/v1/betaAppLocalizations/{lid}', json={
+                      'data': {'type': 'betaAppLocalizations', 'id': lid,
+                               'attributes': {'locale': locs[0]['attributes']['locale'],
+                                              'description': desc_en,
+                                              'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'}}})
+                  print('BETA_DESC updated')
+              else:
+                  req('POST', f'/v1/apps/{app_id}/betaAppLocalizations', json={
+                      'data': {'type': 'betaAppLocalizations', 'attributes': {
+                          'locale': 'en-US', 'description': desc_en,
+                          'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'},
+                          'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
+                  print('BETA_DESC created')
+              try:
+                  req('PATCH', f'/v1/apps/{app_id}/betaAppReviewDetails', json={
+                      'data': {'type': 'betaAppReviewDetails', 'attributes': {
+                          'contactFirstName': 'Xiao', 'contactLastName': 'Sun',
+                          'contactEmail': 'sunxiao53283713@gmail.com'},
+                          'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
+                  print('REVIEW_CONTACT set')
+              except Exception as e:
+                  print('REVIEW_CONTACT skip:', str(e)[:150])
               # 显式送 Beta App Review(公开链接必须过审)
               sub = req('POST', '/v1/betaAppReviewSubmissions', json={
                   'data': {'type': 'betaAppReviewSubmissions', 'attributes': {},
