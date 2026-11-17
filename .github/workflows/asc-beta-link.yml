@@ -136,7 +136,7 @@ jobs:
                                               'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'}}})
                   print('BETA_DESC updated')
               else:
-                  req('POST', f'/v1/apps/{app_id}/betaAppLocalizations', json={
+                  req('POST', '/v1/betaAppLocalizations', json={
                       'data': {'type': 'betaAppLocalizations', 'attributes': {
                           'locale': 'en-US', 'description': desc_en,
                           'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'},
