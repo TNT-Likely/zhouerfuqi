@@ -1,0 +1,45 @@
+name: Play API Probe
+# 验证 Play Developer API 对本 App 的可用性(新 App 首发前的 403 封锁证据/解锁后的 200 证明)
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - name: Probe edits.insert
+        run: |
+          if [ -z "${GOOGLE_PLAY_SERVICE_ACCOUNT_JSON:-}" ]; then
+            echo "::warning::secret 未配置"; exit 1
+          fi
+          echo "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > /tmp/sa.json
+          python3 -m pip install --quiet pyjwt cryptography requests
+          cat > /tmp/probe.py << 'PROBE'
+          import json, jwt, time, requests, sys
+
+          SA = json.load(open('/tmp/sa.json'))
+          token = jwt.encode({
+              'iss': SA['client_email'],
+              'scope': 'https://www.googleapis.com/auth/androidpublisher',
+              'aud': 'https://oauth2.googleapis.com/token',
+              'iat': int(time.time()), 'exp': int(time.time()) + 3600
+          }, SA['private_key'], algorithm='RS256')
+          t = requests.post('https://oauth2.googleapis.com/token',
+                            data={'grant_type': 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                                  'assertion': token}, timeout=30).json()['access_token']
+          print('SA auth: OK')
+          r = requests.post(
+              'https://androidpublisher.googleapis.com/androidpublisher/v3/applications/com.tntlikely.zhouerfuqi/edits',
+              headers={'Authorization': 'Bearer ' + t}, json={}, timeout=30)
+          print('edits.insert status:', r.status_code)
+          print(r.text[:600])
+          if r.status_code == 200:
+              print('API_OPEN — CI 可以接管上传!')
+          else:
+              print('API_STILL_BLOCKED — 需要 Console UI 完成首次发布')
+              sys.exit(1)
+          PROBE
+          python3 /tmp/probe.py
+          rm -f /tmp/sa.json /tmp/probe.py
