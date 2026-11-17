@@ -149,7 +149,8 @@ jobs:
                           'data': {'type': 'betaAppReviewDetails', 'id': det[0]['id'],
                                    'attributes': {'contactFirstName': 'Xiao',
                                                   'contactLastName': 'Sun',
-                                                  'contactEmail': 'sunxiao53283713@gmail.com'}}})
+                                                  'contactEmail': 'sunxiao53283713@gmail.com',
+                                                  'contactPhone': '+8615394288037'}}})
                       print('REVIEW_CONTACT updated')
                   else:
                       print('REVIEW_CONTACT none found')
