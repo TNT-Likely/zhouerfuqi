@@ -131,8 +131,7 @@ jobs:
                   lid = locs[0]['id']
                   req('PATCH', f'/v1/betaAppLocalizations/{lid}', json={
                       'data': {'type': 'betaAppLocalizations', 'id': lid,
-                               'attributes': {'locale': locs[0]['attributes']['locale'],
-                                              'description': desc_en,
+                               'attributes': {'description': desc_en,
                                               'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'}}})
                   print('BETA_DESC updated')
               else:
