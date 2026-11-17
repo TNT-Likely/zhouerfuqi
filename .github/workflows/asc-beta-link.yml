@@ -113,10 +113,14 @@ jobs:
               # 挂上最新构建(external 组会自动送 Beta App Review)
               req('POST', f'/v1/betaGroups/{gid}/relationships/builds', json={
                   'data': [{'type': 'builds', 'id': build_id}]})
-              # 补加密合规声明(不声明卡 Missing Compliance,审核不启动)
-              req('PATCH', f'/v1/builds/{build_id}', json={
-                  'data': {'type': 'builds', 'id': build_id,
-                           'attributes': {'usesNonExemptEncryption': False}}})
+              # 补加密合规声明(已设过会 409「already set」,忽略即可)
+              try:
+                  req('PATCH', f'/v1/builds/{build_id}', json={
+                      'data': {'type': 'builds', 'id': build_id,
+                               'attributes': {'usesNonExemptEncryption': False}}})
+                  print('COMPLIANCE set')
+              except Exception as e:
+                  print('COMPLIANCE skip:', str(e)[:120])
               # 显式送 Beta App Review(公开链接必须过审)
               sub = req('POST', '/v1/betaAppReviewSubmissions', json={
                   'data': {'type': 'betaAppReviewSubmissions', 'attributes': {},
