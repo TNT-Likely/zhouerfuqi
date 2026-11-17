@@ -141,16 +141,48 @@ jobs:
                           'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'},
                           'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
                   print('BETA_DESC created')
-              # 审核联系人(顶级端点创建,嵌套路径 404)
+              # 审核联系人:资源随 app 自动创建,只能 GET+PATCH,不能 CREATE
               try:
-                  req('POST', '/v1/betaAppReviewDetails', json={
-                      'data': {'type': 'betaAppReviewDetails', 'attributes': {
-                          'contactFirstName': 'Xiao', 'contactLastName': 'Sun',
-                          'contactEmail': 'sunxiao53283713@gmail.com'},
-                          'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
-                  print('REVIEW_CONTACT set')
+                  det = req('GET', f'/v1/betaAppReviewDetails?filter[app]={app_id}')['data']
+                  if det:
+                      req('PATCH', f'/v1/betaAppReviewDetails/{det[0]["id"]}', json={
+                          'data': {'type': 'betaAppReviewDetails', 'id': det[0]['id'],
+                                   'attributes': {'contactFirstName': 'Xiao',
+                                                  'contactLastName': 'Sun',
+                                                  'contactEmail': 'sunxiao53283713@gmail.com'}}})
+                      print('REVIEW_CONTACT updated')
+                  else:
+                      print('REVIEW_CONTACT none found')
               except Exception as e:
                   print('REVIEW_CONTACT skip:', str(e)[:150])
+              # 送审要求主语言的 betaAppLocalization 必须存在
+              infos = req('GET', f'/v1/apps/{app_id}/appInfos?include=appInfoLocalizations')['data']
+              prim = None
+              try:
+                  inc = req('GET', f'/v1/apps/{app_id}/appInfos')['included']
+                  prim = next((i['attributes']['locale'] for i in inc
+                               if i['type'] == 'appInfoLocalizations'
+                               and i['attributes'].get('locale')), None)
+              except Exception:
+                  pass
+              # 兜底:取 appInfoLocalizations 的第一项
+              if not prim:
+                  try:
+                      il = req('GET', f'/v1/appInfos/{infos[0]["id"]}/appInfoLocalizations')['data']
+                      prim = il[0]['attributes']['locale'] if il else None
+                  except Exception:
+                      pass
+              print('PRIMARY_LOCALE', prim)
+              if prim:
+                  locs = req('GET', f'/v1/apps/{app_id}/betaAppLocalizations')['data']
+                  have = {l['attributes']['locale'] for l in locs}
+                  if prim not in have:
+                      req('POST', '/v1/betaAppLocalizations', json={
+                          'data': {'type': 'betaAppLocalizations', 'attributes': {
+                              'locale': prim, 'description': desc_en,
+                              'privacyPolicyUrl': 'https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md'},
+                              'relationships': {'app': {'data': {'id': app_id, 'type': 'apps'}}}}})
+                      print(f'BETA_DESC created for primary locale {prim}')
               # 显式送 Beta App Review(公开链接必须过审)
               sub = req('POST', '/v1/betaAppReviewSubmissions', json={
                   'data': {'type': 'betaAppReviewSubmissions', 'attributes': {},
