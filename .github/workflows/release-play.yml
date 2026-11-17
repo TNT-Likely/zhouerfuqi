@@ -79,7 +79,7 @@ jobs:
           path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
-      - name: Upload to Google Play (internal track)
+      - name: Upload to Google Play (closed testing track)
         if: github.ref_type == 'tag' || inputs.upload == 'true'
         env:
           GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -103,7 +103,8 @@ jobs:
           PACKAGE_NAME = 'com.tntlikely.zhouerfuqi'
           AAB_FILE = sys.argv[1]
           RELEASE_NAME = sys.argv[2]
-          TRACK = os.environ.get('PLAY_TRACK', 'internal')
+          # 封闭测试(alpha):个人新账号必须走 12 名测试人员 × 14 天的封闭测试,完成后才能申请正式上架
+          TRACK = os.environ.get('PLAY_TRACK', 'alpha')
 
           credentials = service_account.Credentials.from_service_account_file(
               '/tmp/service-account.json',
