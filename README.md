@@ -4,6 +4,15 @@
 
 开源、本地优先的「任意班制」闹钟 App,为**大小周、轮班倒班、自定义月历排班**而生。
 
+## 参与内测
+
+- 🍎 **iOS · TestFlight**:装好 [TestFlight](https://apps.apple.com/app/testflight/id899247664)
+  后点公开链接加入 → **https://testflight.apple.com/join/9vNcHgha**(限 10,000 人)
+- 🤖 **Android · Google Play 封闭测试**:需要邮箱白名单,去
+  [内测招募 issue](https://github.com/TNT-Likely/zhouerfuqi/issues/1) 留邮箱即可
+- 📦 **Android · APK 直装**:不装 Play 的直接从
+  [GitHub Releases](https://github.com/TNT-Likely/zhouerfuqi/releases) 下载 APK 安装
+
 ## 为什么做这个
 
 - 国产手机自带的「智能工作日」只懂法定节假日,不懂**大小周**;
