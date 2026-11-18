@@ -224,6 +224,13 @@ cd apps/mobile/android
 - `unsigned-ipa` job ✅:macos-26 runner,Release 归档(CODE_SIGNING_ALLOWED=NO)→ Payload 打包 → tag 时挂 GitHub Release / 手动跑出 artifact
 - `testflight` job ✅(仅 tag):临时钥匙串导入 `APPLE_CERTIFICATE_P12`(**必须 set-keychain-settings 禁 5 分钟自动锁,否则归档中途 errSecInternalComponent**)→ Manual 签名归档 → printf 生成 export.plist → `xcodebuild -exportArchive` 出 ipa → `altool --upload-app` + API key 直传 TestFlight
 - v0.2.0 实测:ASC 两枚构建全 VALID(CI 1794765885 + 本地验证 1794758803)
+- **外测公开链接(2026-11-18 Apple Beta 审核 APPROVED,已生效)**:
+  https://testflight.apple.com/join/9vNcHgha(外测组「公开内测 Public Beta」,限 1 万人)。
+  注意送审前置坑:Beta App 描述(betaAppLocalizations,双语)+ 反馈邮箱 + 审核联系人
+  (含电话)必须齐,加密合规值已设时 PATCH 会 409 忽略即可;全部操作可走
+  `asc-beta-link.yml` 工作流(本地连不上 ASC API 时用它)
+- **⚠️ ASC API 域名已迁移**:api.appstoreconnect.com 全局 NXDOMAIN(CI 也解析不了),
+  现用 **api.appstoreconnect.apple.com**
 - **版本号**:Expo 把 CFBundleShortVersionString/CFBundleVersion 写死在 Info.plist,CLI build settings 压不过 → CI 归档前 `plutil -replace` 直改(build 号 = 时间戳,与 Android versionCode 同策略)
 
 **iOS 发布链路调试坑(每条都真踩过)**:
