@@ -169,6 +169,13 @@ cd apps/mobile/android
 | **`google.play` 直连坑(大坑)** | 未登录访问 play.google.com/console 会重定向到 `google.play/business` 营销页;`google.play` 不在路由器 mihomo 的 geosite-google 规则里,落 Final→Direct 被墙 → Chrome 报 ERR_CONNECTION_CLOSED,表象极像「节点坏了/ECH/PQ 握手」,实则换任何节点都挂。排障:`curl 192.168.3.202:9090/logs?level=debug` 看 mihomo 实时日志(9090 无鉴权,PUT /proxies/<组> 可切节点)。规避:登录后再进 console |
 | Play Console SPA 陈旧视图 | URL 换了 app ID 但视图残留上一个 app(BeeDNS 页面配周而复起的 URL)——**document.title 才是真上下文**;先进 app-dashboard 等标题正确再深链,别信 innerText |
 | Chrome 大文件上传卡 0 B | Play Console 传 64MB AAB 可能卡 `0 B of 63.9 MB`(死 socket);取消后**立刻重传大概率就动**(新 socket)。监控进度用 `\s*` 匹配——数字与单位间是不换行空格 U+202F,普通空格正则永远不中 |
+| **gateway 解锁策略(核心)** | 新 App API 403 封锁的绕行:先造 **6KB 占位包**(同包名同签名,versionCode 1,targetSdk **必须 ≥36**——35 会被新规拦)传 Console → 发布解锁 API → CI 传真包替换。占位包上传**秒级**(64MB 真包传输层在家宽环境基本必死)。占位构建工程可复用:`/tmp/zf-gateway`(会丢,重建 10 分钟) |
+| 「卡 0 B」其实是传完了 | 报错「已有版本使用了版本代码 N」= **服务器已收到**(UI 进度条从不刷新);查证方式:刷新 prepare 页 → 从内容库添加 → 看库里版本号。**查库时刷新页面会掐死在传的上传**——先确认无 UI 上传行再刷新 |
+| 商品详情是两步流程 | 资源 → 评价(AI 资源声明)。最后一步不点完(选「不为资源添加标签」),信息中心「设置商品详情」任务永远不打勾 |
+| 敏感权限声明两表单 | 全屏 intent + 精确闹钟(2025+ 闹钟类必填):核心功能选「闹钟」,全屏 intent 的「安装时预授权」选「是」;表单入口在**发布审核页的错误条目**里(「前往声明表单」),不在应用内容页 |
+| 送审流程(2026 新版) | 发布审核页保存后 → 弹「要前往发布概览吗」→ 转到概览 → **「提交 N 项更改以供审核」**(蓝按钮)→ 确认 → 「正在审核中的更改」。审核通过上线后 API 才解锁(提交即解锁 ❌,探针验证过) |
+| 本地 Gradle 构建 RN 断网方案 | Maven Central 大文件传输必死:①手动下载 aar(sha1 校验)注入 `~/.gradle/caches/modules-2/files-2.1/<group>/<module>/<ver>/<sha1>/` ②init script(`--init-script`)全仓库挂 **maven.aliyun.com/repository/{central,google}**(google 仓库里才有 aapt2)③本地 maven 仓库喂 react-android(三件套 aar+pom+module)。react-android 0.88.1 = **171MB**(阿里云直连 12 秒) |
+| Chrome 会话持久化 | pkill TERM 后 cookie 大概率丢;登录后立刻 `sqlite3 Default/Network/Cookies ".backup …/Cookies.bak"` 快照到材料库 `~/Documents/googleplay/chrome-session-backup/`(同机钥匙串密钥可解密,恢复=关 Chrome→cp 回→启动);守卫等待期间每 2h 轮询会话快照是否过期 |
 
 ## 7. 待办与下一步
 
@@ -182,16 +189,17 @@ cd apps/mobile/android
 4. **应用内更新 0.1.2→0.1.3**:真机上「设置 → 检查更新」(链路已验,这次是真实升级)
 5. **R8/minify**(可选):dex 再省 ~5MB,需回归(反射库风险)
 6. **Google Play 收尾**:
-   - **`REQUEST_INSTALL_PACKAGES` Play 合规**:自更新安装器与 Play 政策冲突——上架前
-     加构建开关(Android only + Play flag,如 `app.json` extra 或 gradle 属性),Play 构建
-     移除该权限 + 关掉应用内更新入口(GitHub Release 通道保留)
-   - ~~商品详情 + 11 项声明~~(2026-11-17 已全部完成 ✅,见 §4.1)
-   - **封闭测试启动**:发布 alpha 版本 + 测试人员名单(≥12 人 opt-in,持续 14 天)→
-     期满申请正式上架;alpha 轨道验收:测试人员装包 → 响铃/保活向导真机复测
-7. **Google Play CI 链路**(2026-11-17):
-   release-play.yml 构建阶段 24min 绿 ✅、SA 授权完成 ✅、默认轨道已改 alpha ✅、
-   首个 AAB 经 Console UI 上传封闭测试轨道 ⏳(自愈监控中)、API 通道待首传后复验;
-   凭据沉淀 `~/Documents/googleplay/`
+   - ~~`REQUEST_INSTALL_PACKAGES` Play 合规~~ ✅(2026-11-18)release-play.yml 已加
+     「Strip REQUEST_INSTALL_PACKAGES」步骤(Play 构建剥权限,APK 渠道保留);
+     本地出合规包的方法:`sed -i '/REQUEST_INSTALL_PACKAGES/d' app/src/main/AndroidManifest.xml` 后构建
+   - ~~商品详情 + 11 项声明~~ ✅(2026-11-17,见 §4.1)
+   - **封闭测试启动**:2026-11-18 已提交 Google 审核(gateway 0.0.1 + 全部商店设置共 16 项更改,
+     发布概览页可见「正在审核中的更改」)→ 审核通过即上线,14 天倒计时开始;
+     审核通过后 API 解锁(探针 workflow `play-api-probe.yml` 验证)→ CI 传 0.2.0 正式包
+7. **Google Play CI 链路**:
+   release-play.yml 构建 24min 绿 ✅、SA 授权 ✅、alpha 轨道 ✅、合规剥离 ✅;
+   **API 解锁前最后一步 = gateway 审核通过**(0.0.1 占位包已送审 ⏳);
+   凭据沉淀 `~/Documents/googleplay/`(含 chrome-session-backup 会话快照)
 
 ## 8. iOS(M2)进展
 
