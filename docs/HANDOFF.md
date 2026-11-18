@@ -98,10 +98,12 @@ cd apps/mobile/android
 - **轨道**:`alpha`(封闭测试,2026-11-17 由 internal 改入——个人新账号必须完成
   **12 名测试人员参与 × 14 天**的封闭测试才能申请正式上架);上传 = Play Developer API
   edits 流(insert edit → bundle upload → tracks.update → commit),脚本内嵌 workflow
-- **⚠️ 首次发布必须走 Console UI**:全新 app(无任何发布记录)调 API `edits.insert`
-  一律 403 PERMISSION_DENIED(与 SA 权限无关,家族其他 app 同 key 全通,授权后 4h+ 仍 403)——
-  已查证是 Play 对新 app 的封锁规则。首个 AAB 于 2026-11-17 经 Play Console UI 上传到
-  封闭测试(alpha)轨道,之后 API/CI 通道即开
+- **⚠️ API 403 的真正根因(2026-11-18 定案)**:SA 的**应用权限没加全**——「用户和权限 →
+  SA → 应用权限」里周而复起没在授权列表(曾误诊为「新 App 首发封锁」,实测 6KB gateway
+  发布上线后依旧 403,直到在 UI 补上该 App 的应用权限,`edits.insert` 立即 200)。
+  教训:新 App 授权后**必须回 UI 逐项核对应用权限列表**,别只看账号权限页有效
+- **gateway 解锁策略**:64MB 真包 Console 传输必死时,先造 6KB 占位包(同包名同签名,
+  targetSdk ≥36)走 UI 发布解锁通道;正式包随后由 CI 经 API 替换(versionCode 时间戳必更大)
 - **封闭测试轨道路径**:测试 → 封闭式测试 → 管理轨道 → 创建新的发布版本;
   track ID `4698989483075961257`(Alpha);传完存草稿后需选测试人员(邮箱名单)再发布
 - **商品详情 + 11 项声明全部完成**(2026-11-17,CDP 自动化填写):
