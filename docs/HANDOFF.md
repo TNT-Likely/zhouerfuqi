@@ -198,9 +198,10 @@ cd apps/mobile/android
    - **封闭测试启动**:2026-11-18 已提交 Google 审核(gateway 0.0.1 + 全部商店设置共 16 项更改,
      发布概览页可见「正在审核中的更改」)→ 审核通过即上线,14 天倒计时开始;
      审核通过后 API 解锁(探针 workflow `play-api-probe.yml` 验证)→ CI 传 0.2.0 正式包
-7. **Google Play CI 链路**:
-   release-play.yml 构建 24min 绿 ✅、SA 授权 ✅、alpha 轨道 ✅、合规剥离 ✅;
-   **API 解锁前最后一步 = gateway 审核通过**(0.0.1 占位包已送审 ⏳);
+7. **Google Play CI 链路 — ✅ 全流程走通(2026-11-18)**:
+   run 44332543038 全绿:构建 → SA API 上传(versionCode 1795014646)→ alpha 轨道发布 →
+   commit。此后发版 = 打 tag/手动触发 `upload=true`,**全程 CI,不再碰 Console UI**。
+   用户真机(已装 gateway 占位包)会在 Play 测试通道收到 0.2.0 更新。
    凭据沉淀 `~/Documents/googleplay/`(含 chrome-session-backup 会话快照)
 
 ## 8. iOS(M2)进展
