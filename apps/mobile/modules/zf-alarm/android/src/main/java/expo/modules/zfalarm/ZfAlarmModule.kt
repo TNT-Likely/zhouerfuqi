@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import com.facebook.react.HeadlessJsTaskService
@@ -69,6 +70,110 @@ class ZfAlarmModule : Module() {
       scheduleRefresherAt(context, hour, minute)
       true
     }
+
+    /**
+     * 原生闹钟调度:setAlarmClock(operation = AlarmActivity 直达)。
+     * 与系统时钟同源:状态栏出现闹钟图标、Doze/OEM 豁免、全屏响铃不依赖通知渠道。
+     * requestCode = epochMs/1000(确定性,取消可重算);id→epochMs 存 SharedPreferences。
+     */
+    Function("scheduleAlarms") { alarms: List<Map<String, Any?>>, accent: String ->
+      val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
+      val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+      val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+      var count = 0
+      for (a in alarms) {
+        val id = a["id"] as? String ?: continue
+        val epochMs = (a["epochMs"] as? Double)?.toLong() ?: continue
+        val title = a["title"] as? String ?: "闹钟"
+        val body = a["body"] as? String ?: ""
+        val groupId = a["groupId"] as? String ?: ""
+        val timeId = a["timeId"] as? String ?: ""
+        val timeLabel = a["timeLabel"] as? String ?: ""
+        val requestCode = (epochMs / 1000).toInt()
+
+        prefs.edit()
+          .putLong(id, epochMs)
+          .putString("$id:title", title)
+          .putString("$id:body", body)
+          .putString("$id:group", groupId)
+          .putString("$id:timeId", timeId)
+          .putString("$id:timeLabel", timeLabel)
+          .putString("$id:accent", accent)
+          .apply()
+
+        val fire = Intent(context, ZfAlarmFireReceiver::class.java).apply {
+          putExtra(AlarmActivity.EXTRA_ID, id)
+          putExtra(AlarmActivity.EXTRA_EPOCH, epochMs)
+          putExtra(AlarmActivity.EXTRA_TITLE, title)
+          putExtra(AlarmActivity.EXTRA_BODY, body)
+          putExtra(AlarmActivity.EXTRA_GROUP, groupId)
+          putExtra(AlarmActivity.EXTRA_TIME_ID, timeId)
+          putExtra(AlarmActivity.EXTRA_TIME_LABEL, timeLabel)
+          putExtra(AlarmActivity.EXTRA_ACCENT, accent)
+        }
+        val firePi = PendingIntent.getBroadcast(
+          context, requestCode, fire,
+          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        val openPi = PendingIntent.getActivity(
+          context, requestCode + 1,
+          context.packageManager.getLaunchIntentForPackage(context.packageName),
+          PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+        am.setAlarmClock(AlarmManager.AlarmClockInfo(epochMs, openPi), firePi)
+        count++
+      }
+      Log.i(TAG, "scheduleAlarms: $count scheduled")
+      true
+    }
+
+    Function("cancelAlarms") { ids: List<String> ->
+      val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
+      val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+      val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+      var count = 0
+      for (id in ids) {
+        val epochMs = prefs.getLong(id, 0L)
+        if (epochMs == 0L) continue
+        val requestCode = (epochMs / 1000).toInt()
+        am.cancel(
+          PendingIntent.getBroadcast(
+            context, requestCode,
+            Intent(context, ZfAlarmFireReceiver::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+          )
+        )
+        prefs.edit().remove(id).remove("$id:title").remove("$id:body").remove("$id:group")
+          .remove("$id:timeId").remove("$id:timeLabel").remove("$id:accent").apply()
+        count++
+      }
+      Log.i(TAG, "cancelAlarms: $count cancelled")
+      true
+    }
+
+    Function("isIgnoringBatteryOptimizations") {
+      val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
+      val pm = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+      pm.isIgnoringBatteryOptimizations(context.packageName)
+    }
+
+    /** 拉起「忽略电池优化」系统确认框(闹钟类应用的合规豁免申请) */
+    Function("requestIgnoreBatteryOptimization") {
+      val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
+      val pm = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+      if (pm.isIgnoringBatteryOptimizations(context.packageName)) return@Function true
+      val i = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+        .setData(Uri.parse("package:${context.packageName}"))
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      context.startActivity(i)
+      true
+    }
+
+    Function("areNotificationsEnabled") {
+      val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
+      val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) nm.areNotificationsEnabled() else true
+    }
   }
 
   companion object {
@@ -96,5 +201,7 @@ class ZfAlarmModule : Module() {
       am.setAlarmClock(info, pi)
       Log.i(TAG, "refresher scheduled at ${cal.time} (setAlarmClock)")
     }
+
+    const val PREFS = "zf_alarm_native"
   }
 }

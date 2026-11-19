@@ -4,6 +4,10 @@
     <receiver
       android:name="expo.modules.zfalarm.ZfAlarmReceiver"
       android:exported="false" />
+    <!-- 闹钟到点触发器:setAlarmClock 落在这里 → 发全屏意图通知 -->
+    <receiver
+      android:name="expo.modules.zfalarm.ZfAlarmFireReceiver"
+      android:exported="false" />
     <!-- Headless JS:app 被杀后仍可执行 syncAll -->
     <service
       android:name="expo.modules.zfalarm.ZfResyncService"

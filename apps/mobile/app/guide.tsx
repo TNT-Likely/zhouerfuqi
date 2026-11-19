@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useGuide } from '@/stores/guide';
 import { useTheme } from '@/theme';
 import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
+import { isIgnoringBatteryOptimizations, requestIgnoreBatteryOptimization } from '@/services/battery';
 
 const STEPS = [
   {
@@ -30,10 +31,20 @@ export default function GuideScreen() {
   const doneCount = steps.filter(Boolean).length;
   // 实时权限卡:自动检测、一键拉系统弹窗,授权后自动置绿——不依赖手动标记
   const [permOk, setPermOk] = useState<boolean | null>(null);
+  const [batteryIgnored, setBatteryIgnored] = useState<boolean>(isIgnoringBatteryOptimizations());
 
   useEffect(() => {
     void checkNotificationPermission().then(setPermOk);
+    setBatteryIgnored(isIgnoringBatteryOptimizations());
   }, []);
+
+  // 从系统设置回来时刷新状态
+  useFocusEffect(
+    useCallback(() => {
+      setBatteryIgnored(isIgnoringBatteryOptimizations());
+      void checkNotificationPermission().then(setPermOk);
+    }, []),
+  );
 
   const requestPerm = () => {
     void requestNotificationPermission().then((ok) => setPermOk(ok));
@@ -80,32 +91,52 @@ export default function GuideScreen() {
         ) : null}
       </View>
 
-      {STEPS.map((s, i) => (
-        <Pressable
-          key={i}
-          onPress={() => toggle(i)}
-          style={[styles.step, { backgroundColor: t.surface, borderColor: t.line, opacity: steps[i] ? 0.55 : 1 }]}
-        >
-          <View style={[styles.no, { backgroundColor: steps[i] ? 'rgba(62,207,142,0.15)' : 'rgba(77,157,255,0.15)' }]}>
-            <Text style={{ color: steps[i] ? t.green : t.primary, fontWeight: '800', fontSize: 13 }}>{steps[i] ? '✓' : i + 1}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontSize: 14, fontWeight: '700' }}>{s.title}</Text>
-            <Text style={[styles.path, { backgroundColor: t.surface2, borderColor: t.line, color: t.text2 }]}>{s.path}</Text>
-            <Text style={{ color: t.text3, fontSize: 11.5, marginTop: 6, lineHeight: 18 }}>{s.desc}</Text>
-          </View>
-        </Pressable>
-      ))}
+      {STEPS.map((s, i) => {
+        // 步骤 2(忽略电池优化)实时检测 + 主动申请,不再手动标记
+        const isBattery = s.title.includes('电池优化');
+        const batteryDone = isBattery && batteryIgnored;
+        const done = isBattery ? batteryDone : steps[i];
+        return (
+          <Pressable
+            key={i}
+            onPress={() => { if (!isBattery) toggle(i); }}
+            style={[styles.step, { backgroundColor: t.surface, borderColor: t.line, opacity: done ? 0.55 : 1 }]}
+          >
+            <View style={[styles.no, { backgroundColor: done ? 'rgba(62,207,142,0.15)' : 'rgba(77,157,255,0.15)' }]}>
+              <Text style={{ color: done ? t.green : t.primary, fontWeight: '800', fontSize: 13 }}>{done ? '✓' : i + 1}</Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.text, fontSize: 14, fontWeight: '700' }}>{s.title}</Text>
+              <Text style={[styles.path, { backgroundColor: t.surface2, borderColor: t.line, color: t.text2 }]}>{s.path}</Text>
+              <Text style={{ color: t.text3, fontSize: 11.5, marginTop: 6, lineHeight: 18 }}>
+                {isBattery
+                  ? (batteryIgnored
+                    ? '✓ 已豁免电池优化,后台不会被系统杀。'
+                    : '未豁免:点「去申请」拉起系统确认框,选「允许」即可自动完成。')
+                  : s.desc}
+              </Text>
+            </View>
+            {isBattery && !batteryIgnored ? (
+              <Pressable onPress={requestIgnoreBatteryOptimization} style={[styles.permBtn, { backgroundColor: t.primary }]}>
+                <Text style={{ color: t.onPrimary, fontSize: 12, fontWeight: '800' }}>去申请</Text>
+              </Pressable>
+            ) : null}
+          </Pressable>
+        );
+      })}
 
       <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center' }}>
-        {[0, 1, 2].map((i) => (
-          <View key={i} style={{ width: i < doneCount ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: i < doneCount ? t.primary : t.line }} />
-        ))}
+        {[0, 1, 2].map((i) => {
+          const done = i === 1 ? batteryIgnored : steps[i];
+          return (
+            <View key={i} style={{ width: done ? 18 : 6, height: 6, borderRadius: 3, backgroundColor: done ? t.primary : t.line }} />
+          );
+        })}
       </View>
 
       <Pressable
         onPress={() => Alert.alert('已保存', '保活配置已记录。闹钟火力全开 🔥')}
-        style={[styles.primaryBtn, { backgroundColor: t.primary, opacity: doneCount === 3 ? 1 : 0.4 }]}
+        style={[styles.primaryBtn, { backgroundColor: t.primary, opacity: doneCount === 3 && batteryIgnored ? 1 : 0.4 }]}
       >
         <Text style={{ color: t.onPrimary, fontWeight: '800', letterSpacing: 1 }}>已完成,开始使用</Text>
       </Pressable>

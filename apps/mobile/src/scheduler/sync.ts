@@ -6,22 +6,25 @@ import { useGroups } from '../stores/groups';
 /**
  * 统一重排入口。触发点:规则变更 / 闹钟触发 / 关闭响铃 /
  * BOOT_COMPLETED / TIME_SET / TIMEZONE_CHANGED / App 回前台 / 每日 03:30。
+ *
+ * ⚠️ 强制全量重排:App 更新/重装会清空系统闹钟,而注册表(mmkv)无感——
+ * 若按 diff 增量,「registry 说有、系统里没有」的洞永远填不上。
+ * 原生 setAlarmClock 用 FLAG_UPDATE_CURRENT + 确定性 requestCode,
+ * 同 id 同时刻原地更新(无重复),所以全量重排是幂等且便宜的。
  */
 export async function syncAll(): Promise<void> {
   const groups = useGroups.getState().groups;
   const desired = materialize(groups, todayISO(), HORIZON_DAYS);
   const current = registry.get();
+
+  // 全量重排:desired 原地更新(幂等),registry 里多余的取消
+  if (desired.length) await gateway.schedule(desired);
   const desiredIds = new Set(desired.map((a) => a.id));
-
-  const toAdd = desired.filter((a) => !current[a.id] || current[a.id].epochMs !== a.epochMs);
   const toCancel = Object.keys(current).filter((id) => !desiredIds.has(id));
-
   if (toCancel.length) await gateway.cancel(toCancel);
-  if (toAdd.length) await gateway.schedule(toAdd);
 
-  const map = { ...current };
-  for (const id of toCancel) delete map[id];
-  for (const a of toAdd) map[a.id] = { epochMs: a.epochMs, title: a.title };
+  const map: Record<string, { epochMs: number; title: string }> = {};
+  for (const a of desired) map[a.id] = { epochMs: a.epochMs, title: a.title };
   registry.set(map);
 }
 
@@ -39,7 +42,7 @@ export async function snooze(minutes: number, title: string): Promise<void> {
   };
   await gateway.schedule([alarm]);
   const map = registry.get();
-  map[alarm.id] = { epochMs, title: alarm.title };
+  map[alarm.id] = { epochMs: alarm.epochMs, title: alarm.title };
   registry.set(map);
 }
 
@@ -57,6 +60,6 @@ export async function scheduleTestRing(): Promise<void> {
   };
   await gateway.schedule([alarm]);
   const map = registry.get();
-  map[alarm.id] = { epochMs, title: alarm.title };
+  map[alarm.id] = { epochMs: alarm.epochMs, title: alarm.title };
   registry.set(map);
 }

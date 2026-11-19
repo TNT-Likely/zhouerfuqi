@@ -10,6 +10,7 @@
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WAKE_LOCK"/>
   <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+  <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion"/>
   <queries>
     <intent>
@@ -36,5 +37,7 @@
         <data android:scheme="exp+zhouerfuqi"/>
       </intent-filter>
     </activity>
+    <!-- 原生全屏响铃:锁屏接管 + 亮屏(由 setAlarmClock operation 直达,不依赖通知渠道) -->
+    <activity android:name="expo.modules.zfalarm.AlarmActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:launchMode="singleTop" android:taskAffinity="" android:excludeFromRecents="true" android:configChanges="orientation|screenSize"/>
   </application>
 </manifest>
