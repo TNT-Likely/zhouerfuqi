@@ -7,7 +7,7 @@ import { syncAll } from '@/scheduler/sync';
 import { todayISO } from '@/scheduler/materialize';
 import { cnDate, WD } from '@/lib/labels';
 import { useTheme, type Tokens } from '@/theme';
-import { TimeWheelPicker } from '@/components/TimeWheel';
+import { TimeGridPicker } from '@/components/TimeWheel';
 
 const KINDS = [
   { k: 'weekly', label: '每周几' },
@@ -321,7 +321,7 @@ function CustomTimeAdder({
 
   return (
     <View style={{ marginTop: 14 }}>
-      <TimeWheelPicker
+      <TimeGridPicker
         t={t}
         hour={pending.hour}
         minute={pending.minute}

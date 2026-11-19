@@ -3,856 +3,2549 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>周而复起 · 交互设计原型 v0.3</title>
-<style>:root{color-scheme:light dark;--zf-accent-light:#1677FF;--zf-accent-dark:#4096FF;--zf-accent:light-dark(var(--zf-accent-light),var(--zf-accent-dark));font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:light-dark(#fff,#151617);color:light-dark(#292c30,#f2f3f4)}*{box-sizing:border-box}body{margin:20px auto;max-width:980px;padding:0 16px 40px}button,input,select,textarea{font:inherit}button,a,select{cursor:pointer}svg{display:inline-block;vertical-align:middle}a{color:inherit}.zf-colors{display:flex;gap:7px;align-items:center}.zf-colors{margin-left:4px}.zf-colors .zf-color{width:26px;height:26px;border-radius:999px;border:2px solid transparent;cursor:pointer;padding:0;box-shadow:0 0 0 1px light-dark(#e6e8eb,#3c3f43)}.zf-colors .zf-color[aria-pressed="true"]{border-color:light-dark(#292c30,#f2f3f4);box-shadow:0 0 0 2px light-dark(#fff,#151617) inset}.zf-controls select{max-width:100%;padding:9px 12px;border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;background:light-dark(#fff,#25272b);color:inherit;font-size:12px}.zf-stage{background-image:radial-gradient(light-dark(#dcdfe3,#373b41) .7px,transparent .7px);background-size:16px 16px}button:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:2px solid #5595eb;outline-offset:3px}.zf-brand{display:flex;align-items:center;gap:14px;padding:10px 2px 14px;flex-wrap:wrap}.zf-brand svg.zf-mark{width:44px;height:44px;border-radius:12px}.zf-brand h1{font-size:20px;font-weight:700;letter-spacing:-.3px;margin:0}.zf-brand h1 small{font-size:11px;color:light-dark(#777c82,#a4a6a9);letter-spacing:2px;font-weight:500;margin-left:8px}.zf-brand .zf-slogan{font-size:12px;color:light-dark(#777c82,#a4a6a9)}.zf-controls{display:flex;gap:10px;align-items:center;margin-left:auto;flex-wrap:wrap}.zf-seg{display:flex;background:light-dark(#f0f1f2,#25272b);border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:12px;padding:3px;gap:2px}.zf-seg button{appearance:none;border:0;background:transparent;color:light-dark(#777c82,#a4a6a9);padding:7px 13px;border-radius:9px;font-size:12px}.zf-seg button[aria-pressed="true"]{background:light-dark(#25282c,#f0f1f2);color:light-dark(#fff,#151617);font-weight:600}.zf-section{margin:26px 0 8px;font-size:12px;color:light-dark(#777c82,#a4a6a9);letter-spacing:1px}.zf-note{font-size:12px;color:light-dark(#777c82,#a4a6a9);line-height:1.8;margin:8px 2px 0;max-width:900px}.zf-note b{color:light-dark(#292c30,#f2f3f4)}.zf-tokens{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-top:14px}.zf-token{border:1px solid light-dark(#e6e8eb,#3c3f43);border-radius:14px;overflow:hidden;background:light-dark(#fff,#25272b)}.zf-token .c{height:52px}.zf-token p{margin:0;padding:9px 12px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9)}.zf-token p b{display:block;color:inherit;font-size:12px;color:light-dark(#292c30,#f2f3f4)}footer{margin-top:40px;font-size:11.5px;color:light-dark(#777c82,#a4a6a9);text-align:center}</style>
-<script src="vendor/lucide.min.js"></script>
+<title>周而复起 · 破晓时计 UI 设计稿 v2.0</title>
+<style>
+  /* 宿主/独立浏览双兼容变量底座(不覆盖 T3 注入的 :root 变量) */
+  :where(:root) {
+    color-scheme: light dark;
+    --foreground: light-dark(#18181b, #f4f4f5);
+    --muted: light-dark(#f4f4f5, #27272a);
+    --muted-foreground: light-dark(#71717a, #a1a1aa);
+    --card: light-dark(#ffffff, #18181b);
+    --card-foreground: light-dark(#18181b, #f4f4f5);
+    --secondary: light-dark(#f4f4f5, #27272a);
+    --secondary-foreground: light-dark(#27272a, #e4e4e7);
+    --border: light-dark(#e4e4e7, #2e2e32);
+    --primary: light-dark(#ea580c, #fb923c);
+    --primary-foreground: #ffffff;
+    --radius: 16px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --font-mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  /* 严格遵循无外层背景/无 vh/自适应高度规范 */
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-sans);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, input, select {
+    font: inherit;
+    color: inherit;
+  }
+
+  .zf-wrap {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* 顶部设计工作台控制栏 */
+  .zf-toolbar {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .zf-toolbar-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .zf-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .zf-logo-mark {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.14);
+  }
+
+  .zf-brand-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .zf-badge-ver {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--secondary);
+    color: var(--muted-foreground);
+    letter-spacing: 0.5px;
+  }
+
+  .zf-brand-sub {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin: 2px 0 0;
+  }
+
+  .zf-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .zf-seg {
+    display: inline-flex;
+    background: var(--secondary);
+    padding: 3px;
+    border-radius: 11px;
+    gap: 2px;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .zf-seg::-webkit-scrollbar { display: none; }
+
+  .zf-seg button {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+    padding: 6px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.16s, color 0.16s;
+  }
+
+  .zf-seg button[aria-pressed="true"] {
+    background: var(--card);
+    color: var(--foreground);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .zf-palette-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .zf-swatches {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .zf-swatch {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s;
+  }
+  .zf-swatch:hover { transform: scale(1.08); }
+  .zf-swatch[aria-pressed="true"] {
+    border-color: var(--foreground);
+    box-shadow: 0 0 0 2px var(--card) inset;
+  }
+
+  /* 舞台区:左手机交互 + 右侧设计亮点说明(窄屏自动单列) */
+  .zf-stage {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    justify-items: center;
+  }
+
+  @media (min-width: 860px) {
+    .zf-stage.mode-single {
+      grid-template-columns: 400px minmax(0, 1fr);
+      align-items: start;
+      padding: 28px;
+    }
+  }
+
+  /* 六屏画板总览模式 */
+  .zf-gallery {
+    width: 100%;
+    display: none;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 20px;
+    justify-items: center;
+  }
+  .zf-stage.mode-gallery .zf-single-pane,
+  .zf-stage.mode-gallery .zf-side-notes {
+    display: none;
+  }
+  .zf-stage.mode-gallery .zf-gallery {
+    display: grid;
+  }
+
+  .zf-gallery-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .zf-gallery-cap {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    letter-spacing: 0.4px;
+  }
+
+  /* 右侧设计升级导览 */
+  .zf-side-notes {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .zf-spec-card {
+    background: var(--secondary);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .zf-spec-card h3 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.1px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .zf-spec-card p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--muted-foreground);
+  }
+
+  .zf-token-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .zf-token-chip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .zf-token-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    border: 1px solid rgba(128, 128, 128, 0.2);
+  }
+
+  .zf-token-meta {
+    min-width: 0;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+  .zf-token-meta b {
+    display: block;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .zf-token-meta span {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted-foreground);
+  }
+
+  /* =========================================================
+     手机样机与 App 设计令牌系统 (Dawn Chronometer v2.0)
+     ========================================================= */
+  .zf-phone {
+    /* 默认暗色:曜石石墨 + 1px 微高光边缘(告别刺眼 30% 蓝框) */
+    --p-bg: #0c0d10;
+    --p-surface: #16181d;
+    --p-surface-2: #20232b;
+    --p-surface-3: #2a2e38;
+    --p-border: rgba(255, 255, 255, 0.075);
+    --p-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    --p-ink: #f5f5f4;
+    --p-ink-2: rgba(245, 245, 244, 0.66);
+    --p-ink-3: rgba(245, 245, 244, 0.40);
+    --p-accent: var(--theme-dark, #fb923c);
+    --p-accent-ink: #ffffff;
+    --p-accent-soft: color-mix(in srgb, var(--p-accent) 15%, transparent);
+    --p-accent-border: color-mix(in srgb, var(--p-accent) 32%, transparent);
+    --p-green: #34d399;
+    --p-green-soft: rgba(52, 211, 153, 0.14);
+    --p-red: #fb7185;
+    --p-red-soft: rgba(251, 113, 133, 0.14);
+    --p-nav-bg: rgba(22, 24, 29, 0.84);
+    --p-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    --p-bezel: #22252c;
+
+    width: 100%;
+    max-width: 382px;
+    height: 796px;
+    border-radius: 44px;
+    background: var(--p-bg);
+    color: var(--p-ink);
+    border: 6px solid var(--p-bezel);
+    box-shadow:
+      0 0 0 1px rgba(128, 128, 128, 0.22),
+      0 22px 48px -12px rgba(0, 0, 0, 0.36);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    user-select: none;
+    isolation: isolate;
+  }
+
+  /* 浅色暖纸模式:温润羊皮暖灰底 + 纯白瓷感卡片 */
+  .zf-phone[data-appearance="light"] {
+    --p-bg: #f6f4ef;
+    --p-surface: #ffffff;
+    --p-surface-2: #efede7;
+    --p-surface-3: #e5e2da;
+    --p-border: rgba(28, 25, 23, 0.075);
+    --p-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    --p-ink: #1c1917;
+    --p-ink-2: #57534e;
+    --p-ink-3: #a8a29e;
+    --p-accent: var(--theme-light, #ea580c);
+    --p-accent-ink: #ffffff;
+    --p-accent-soft: color-mix(in srgb, var(--p-accent) 11%, transparent);
+    --p-accent-border: color-mix(in srgb, var(--p-accent) 24%, transparent);
+    --p-green: #059669;
+    --p-green-soft: rgba(5, 150, 105, 0.10);
+    --p-red: #e11d48;
+    --p-red-soft: rgba(225, 29, 72, 0.09);
+    --p-nav-bg: rgba(255, 255, 255, 0.86);
+    --p-card-shadow: 0 4px 16px rgba(28, 25, 23, 0.045);
+    --p-bezel: #dcd9d0;
+  }
+
+  /* 画板总览中的缩略手机尺寸微调 */
+  .zf-phone.is-mini {
+    max-width: 332px;
+    height: 690px;
+    border-radius: 38px;
+    border-width: 5px;
+  }
+
+  @media (max-width: 420px) {
+    .zf-stage { padding: 12px 8px; }
+    .zf-phone {
+      max-width: 356px;
+      height: 756px;
+      border-radius: 38px;
+      border-width: 4px;
+    }
+  }
+
+  .zf-phone :where(button) {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .zf-num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .zf-ico {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor;
+    stroke-width: 1.85;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    flex-shrink: 0;
+  }
+
+  /* 状态栏 + 灵动岛 */
+  .p-statusbar {
+    height: 44px;
+    padding: 12px 24px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+    font-weight: 650;
+    position: relative;
+    z-index: 5;
+    flex-shrink: 0;
+  }
+
+  .p-island {
+    width: 92px;
+    height: 24px;
+    border-radius: 999px;
+    background: #050507;
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 9px;
+  }
+  .p-island::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--p-accent);
+    opacity: 0.85;
+  }
+
+  .p-status-icons {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .p-status-icons .zf-ico { width: 14px; height: 14px; stroke-width: 2.1; }
+
+  /* 页面容器 */
+  .p-viewport {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .p-screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+  }
+  .p-screen.active { display: flex; }
+
+  .p-topbar {
+    height: 52px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .p-app-title {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 19px;
+    font-weight: 750;
+    letter-spacing: -0.5px;
+  }
+
+  .p-mini-dial {
+    width: 24px;
+    height: 24px;
+    border-radius: 7px;
+    background: var(--p-accent-soft);
+    border: 1px solid var(--p-accent-border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--p-accent);
+  }
+
+  .p-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .p-icon-btn {
+    height: 34px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    box-shadow: var(--p-highlight);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--p-ink-2);
+    transition: transform 0.12s, border-color 0.15s;
+  }
+  .p-icon-btn:hover {
+    border-color: var(--p-accent-border);
+    color: var(--p-ink);
+  }
+  .p-icon-btn .zf-ico { width: 14px; height: 14px; }
+
+  .p-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 18px 92px;
+    scrollbar-width: none;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+  }
+  .p-scroll > * { flex-shrink: 0; }
+  .p-scroll::-webkit-scrollbar { display: none; }
+
+  /* ============ 1. 首页:破晓时计 Hero 卡 ============ */
+  .p-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    box-shadow: var(--p-highlight), var(--p-card-shadow);
+    padding: 16px;
+  }
+
+  /* 柔和破晓辉光(仅在右上角做 14% 氛围晕染,绝不糊满全卡) */
+  .p-hero::before {
+    content: "";
+    position: absolute;
+    width: 210px;
+    height: 210px;
+    right: -55px;
+    top: -75px;
+    border-radius: 999px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--p-accent) 24%, transparent) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .p-hero-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    position: relative;
+  }
+
+  .p-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--p-accent);
+    background: var(--p-accent-soft);
+    padding: 4px 10px;
+    border-radius: 999px;
+  }
+
+  .p-live-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--p-accent);
+    box-shadow: 0 0 8px var(--p-accent);
+  }
+
+  .p-holiday-tag {
+    font-size: 10.5px;
+    color: var(--p-ink-3);
+    font-weight: 500;
+  }
+
+  .p-hero-main {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-top: 10px;
+    position: relative;
+  }
+
+  .p-hero-time {
+    font-size: 48px;
+    line-height: 1;
+    font-weight: 750;
+    letter-spacing: -2.2px;
+    color: var(--p-ink);
+  }
+
+  .p-hero-sub {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--p-ink-2);
+    font-weight: 500;
+  }
+
+  .p-tag {
+    font-size: 10.5px;
+    font-weight: 650;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--p-surface-2);
+    color: var(--p-ink-2);
+  }
+  .p-tag.accent {
+    background: var(--p-accent-soft);
+    color: var(--p-accent);
+  }
+  .p-tag.green {
+    background: var(--p-green-soft);
+    color: var(--p-green);
+  }
+  .p-tag.red {
+    background: var(--p-red-soft);
+    color: var(--p-red);
+  }
+
+  /* 右侧 7 段周循环时计环 */
+  .p-cycle-ring {
+    width: 58px;
+    height: 58px;
+    flex-shrink: 0;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p-cycle-ring svg { width: 58px; height: 58px; }
+  .p-cycle-center {
+    position: absolute;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--p-ink-2);
+    text-align: center;
+    line-height: 1.1;
+  }
+
+  /* 近 7 日节律横条:一眼看清大小周/休假/补班 */
+  .p-week-strip {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--p-border);
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .p-ws-cell {
+    border-radius: 10px;
+    padding: 6px 2px 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: var(--p-surface-2);
+    border: 1px solid transparent;
+    transition: background 0.15s;
+  }
+  .p-ws-cell.is-next {
+    background: var(--p-accent-soft);
+    border-color: var(--p-accent-border);
+  }
+  .p-ws-cell.is-off {
+    background: transparent;
+    opacity: 0.58;
+  }
+  .p-ws-wd {
+    font-size: 9.5px;
+    color: var(--p-ink-3);
+    font-weight: 600;
+  }
+  .p-ws-cell.is-next .p-ws-wd { color: var(--p-accent); }
+  .p-ws-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--p-ink);
+  }
+  .p-ws-badge {
+    font-size: 8.5px;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 700;
+    color: var(--p-ink-3);
+  }
+  .p-ws-badge.ring {
+    color: var(--p-accent);
+  }
+  .p-ws-badge.hol {
+    color: var(--p-red);
+  }
+  .p-ws-badge.swap {
+    color: var(--p-green);
+  }
+
+  /* 分区标题 */
+  .p-sec-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 2px 0;
+    font-size: 11.5px;
+    font-weight: 650;
+    color: var(--p-ink-3);
+    letter-spacing: 0.5px;
+  }
+
+  /* 班组卡片:紧凑双列连环时间胶囊,告别冗长重复列表 */
+  .p-group-card {
+    border-radius: 22px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    box-shadow: var(--p-highlight), var(--p-card-shadow);
+    padding: 14px;
+    transition: opacity 0.2s;
+  }
+  .p-group-card.is-muted {
+    opacity: 0.62;
+  }
+
+  .p-group-top {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .p-group-ico {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: var(--p-accent-soft);
+    color: var(--p-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .p-group-card.is-muted .p-group-ico {
+    background: var(--p-surface-2);
+    color: var(--p-ink-3);
+  }
+
+  .p-group-info {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+  }
+
+  .p-group-name {
+    font-size: 14.5px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .p-group-rule {
+    font-size: 11.5px;
+    color: var(--p-ink-2);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 拟物机械感拨动开关 */
+  .p-switch {
+    width: 44px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--p-accent);
+    padding: 3px;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.18s;
+  }
+  .p-switch::after {
+    content: "";
+    display: block;
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.28);
+    transform: translateX(18px);
+    transition: transform 0.18s cubic-bezier(0.2, 0.85, 0.32, 1.1);
+  }
+  .p-switch.off {
+    background: var(--p-surface-3);
+  }
+  .p-switch.off::after {
+    transform: translateX(0);
+  }
+
+  /* 连环闹钟时间胶囊网格 */
+  .p-cascade-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    margin-top: 12px;
+  }
+
+  .p-time-pill {
+    background: var(--p-surface-2);
+    border-radius: 12px;
+    padding: 8px 11px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 6px;
+    border: 1px solid transparent;
+  }
+  .p-time-pill.first {
+    border-color: var(--p-accent-border);
+    background: color-mix(in srgb, var(--p-accent) 8%, var(--p-surface-2));
+  }
+  .p-tp-clock {
+    font-size: 15.5px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    color: var(--p-ink);
+  }
+  .p-tp-label {
+    font-size: 10.5px;
+    color: var(--p-ink-2);
+    font-weight: 500;
+  }
+  .p-time-pill.first .p-tp-label {
+    color: var(--p-accent);
+    font-weight: 650;
+  }
+
+  .p-group-foot {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid var(--p-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--p-ink-3);
+    cursor: pointer;
+  }
+  .p-group-foot span.hi {
+    color: var(--p-ink-2);
+    font-weight: 600;
+  }
+
+  .p-add-btn {
+    width: 100%;
+    padding: 13px;
+    border-radius: 16px;
+    border: 1px dashed var(--p-ink-3);
+    color: var(--p-ink-2);
+    font-size: 12.5px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+  }
+  .p-add-btn:hover {
+    border-color: var(--p-accent);
+    color: var(--p-accent);
+    background: var(--p-accent-soft);
+  }
+
+  /* ============ 2. 排班月历:带大小周左栏行标 ============ */
+  .p-seg-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--p-surface-2);
+    padding: 3px;
+    border-radius: 13px;
+    gap: 3px;
+  }
+  .p-seg-bar button {
+    padding: 7px 6px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--p-ink-2);
+  }
+  .p-seg-bar button[aria-pressed="true"] {
+    background: var(--p-surface);
+    color: var(--p-ink);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+
+  .p-cal-card {
+    border-radius: 22px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    box-shadow: var(--p-highlight), var(--p-card-shadow);
+    padding: 13px;
+  }
+
+  .p-cal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .p-cal-month {
+    font-size: 15.5px;
+    font-weight: 750;
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .p-cal-navs {
+    display: flex;
+    gap: 5px;
+  }
+  .p-cal-navs button {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--p-surface-2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--p-ink-2);
+  }
+
+  /* 8 列网格:第 1 列为周属性(大/小),后 7 列为周一至周日 */
+  .p-cal-grid {
+    display: grid;
+    grid-template-columns: 24px repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    align-items: center;
+  }
+
+  .p-cal-dow {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--p-ink-3);
+    text-align: center;
+    padding-bottom: 4px;
+  }
+
+  .p-wk-tag {
+    font-size: 9.5px;
+    font-weight: 750;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--p-surface-2);
+    color: var(--p-ink-3);
+  }
+  .p-wk-tag.big {
+    background: var(--p-accent-soft);
+    color: var(--p-accent);
+  }
+
+  .p-day {
+    height: 44px;
+    border-radius: 11px;
+    background: var(--p-surface-2);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1px;
+    position: relative;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: transform 0.1s;
+  }
+  .p-day:active { transform: scale(0.95); }
+  .p-day.rest {
+    background: transparent;
+  }
+  .p-day.rest .d-num {
+    color: var(--p-ink-3);
+    font-weight: 500;
+  }
+  .p-day.big-sat {
+    background: var(--p-accent-soft);
+    border-color: var(--p-accent-border);
+  }
+  .p-day.swap-day {
+    background: var(--p-green-soft);
+  }
+  .p-day.hol-day {
+    background: var(--p-red-soft);
+  }
+  .p-day.selected {
+    border-color: var(--p-accent);
+    box-shadow: 0 0 0 1px var(--p-accent) inset;
+  }
+  .p-day.today .d-num {
+    text-decoration: underline;
+    text-decoration-color: var(--p-accent);
+    text-underline-offset: 2px;
+  }
+
+  .d-num {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--p-ink);
+    line-height: 1.1;
+  }
+  .d-sub {
+    font-size: 8.5px;
+    font-weight: 650;
+    color: var(--p-ink-3);
+    line-height: 1;
+  }
+  .p-day.big-sat .d-sub { color: var(--p-accent); }
+  .p-day.swap-day .d-sub { color: var(--p-green); }
+  .p-day.hol-day .d-sub { color: var(--p-red); }
+  .p-day.work-ring .d-sub { color: var(--p-accent); }
+
+  .p-cal-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px solid var(--p-border);
+    font-size: 10px;
+    color: var(--p-ink-2);
+  }
+  .p-cal-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .p-cal-legend i {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    display: inline-block;
+  }
+
+  .p-quick-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .p-quick-bar button {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 9px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    color: var(--p-ink-2);
+  }
+  .p-quick-bar button:hover {
+    border-color: var(--p-accent);
+    color: var(--p-accent);
+  }
+
+  /* 选中日排班解析票据 */
+  .p-ticket {
+    border-radius: 18px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    padding: 13px 14px;
+  }
+  .p-ticket-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .p-ticket-date {
+    font-size: 13.5px;
+    font-weight: 700;
+  }
+  .p-ticket-trace {
+    font-size: 11px;
+    color: var(--p-ink-2);
+    margin-top: 5px;
+    line-height: 1.5;
+  }
+  .p-ticket-times {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 9px;
+  }
+  .p-ticket-times span {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 9px;
+    border-radius: 8px;
+    background: var(--p-surface-2);
+    color: var(--p-ink);
+  }
+
+  /* ============ 3. 编辑规则页 ============ */
+  .p-nav-head {
+    height: 50px;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .p-nav-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 13px;
+    color: var(--p-ink-2);
+    font-weight: 500;
+  }
+  .p-nav-save {
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 6px 13px;
+    border-radius: 999px;
+    background: var(--p-accent);
+    color: #fff;
+  }
+
+  .p-field-card {
+    border-radius: 18px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    padding: 13px 14px;
+  }
+  .p-field-title {
+    font-size: 11px;
+    font-weight: 650;
+    color: var(--p-ink-3);
+    letter-spacing: 0.5px;
+    margin-bottom: 9px;
+  }
+
+  .p-rule-tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: var(--p-surface-2);
+    padding: 3px;
+    border-radius: 12px;
+    gap: 2px;
+  }
+  .p-rule-tabs button {
+    padding: 7px 2px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 9px;
+    color: var(--p-ink-2);
+  }
+  .p-rule-tabs button[aria-pressed="true"] {
+    background: var(--p-accent);
+    color: #ffffff;
+  }
+
+  .p-wd-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+    margin-top: 10px;
+  }
+  .p-wd-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: var(--p-surface-2);
+    font-size: 12.5px;
+    font-weight: 650;
+    color: var(--p-ink-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .p-wd-btn[aria-pressed="true"] {
+    background: var(--p-accent);
+    color: #ffffff;
+  }
+
+  .p-stepper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .p-step-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    background: var(--p-surface-2);
+    font-size: 16px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .p-anchor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 7px;
+  }
+  .p-anchor-chip {
+    padding: 8px 10px;
+    border-radius: 11px;
+    background: var(--p-surface-2);
+    border: 1px solid transparent;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--p-ink-2);
+    text-align: left;
+  }
+  .p-anchor-chip[aria-pressed="true"] {
+    background: var(--p-accent-soft);
+    border-color: var(--p-accent);
+    color: var(--p-accent);
+  }
+
+  .p-timeline-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 11px;
+    background: var(--p-surface-2);
+    margin-bottom: 6px;
+  }
+
+  /* ============ 4. 锁屏响铃:破晓声波场 ============ */
+  .p-ring-screen {
+    background: radial-gradient(110% 70% at 50% 18%, color-mix(in srgb, var(--p-accent) 34%, #12131a) 0%, #0b0c10 62%, #060709 100%);
+    color: #f5f5f4;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 22px 34px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .p-ripples {
+    position: absolute;
+    top: 145px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 280px;
+    height: 280px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .p-ripples span {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    border: 1px solid color-mix(in srgb, var(--p-accent) 28%, transparent);
+  }
+  .p-ripples span:nth-child(2) { inset: 32px; border-color: color-mix(in srgb, var(--p-accent) 42%, transparent); }
+  .p-ripples span:nth-child(3) { inset: 66px; border-color: color-mix(in srgb, var(--p-accent) 58%, transparent); }
+
+  .p-ring-top {
+    position: relative;
+    z-index: 1;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: rgba(255, 255, 255, 0.62);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+
+  .p-ring-center {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .p-ring-date {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.72);
+    font-weight: 500;
+  }
+
+  .p-ring-clock {
+    font-size: 78px;
+    line-height: 1.02;
+    font-weight: 250;
+    letter-spacing: -2px;
+    margin: 6px 0 14px;
+    color: #ffffff;
+  }
+
+  .p-ring-badge {
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.10);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    font-size: 12.5px;
+    font-weight: 600;
+  }
+
+  .p-ring-sub {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.56);
+  }
+
+  .p-ring-actions {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .p-ring-snooze {
+    width: 100%;
+    padding: 14px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.11);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 650;
+  }
+
+  .p-ring-stop {
+    width: 100%;
+    padding: 15px;
+    border-radius: 18px;
+    background: var(--p-accent);
+    color: #ffffff;
+    font-size: 14.5px;
+    font-weight: 750;
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--p-accent) 45%, transparent);
+  }
+
+  /* ============ 5. 保活向导 & 6. 设置 ============ */
+  .p-step-card {
+    border-radius: 18px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    padding: 13px 14px;
+    display: flex;
+    gap: 11px;
+    cursor: pointer;
+  }
+  .p-step-card.done {
+    border-color: var(--p-accent-border);
+    background: color-mix(in srgb, var(--p-accent) 6%, var(--p-surface));
+  }
+  .p-step-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--p-surface-2);
+    color: var(--p-ink-2);
+    font-size: 12px;
+    font-weight: 750;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .p-step-card.done .p-step-num {
+    background: var(--p-accent);
+    color: #fff;
+  }
+  .p-step-path {
+    margin-top: 6px;
+    padding: 5px 8px;
+    border-radius: 7px;
+    background: var(--p-surface-2);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--p-ink-2);
+  }
+
+  .p-list-card {
+    border-radius: 20px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    padding: 4px 14px;
+  }
+  .p-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--p-border);
+    cursor: pointer;
+  }
+  .p-list-row:last-child { border-bottom: 0; }
+  .p-list-row b { font-size: 13px; font-weight: 650; display: block; }
+  .p-list-row span { font-size: 11px; color: var(--p-ink-2); display: block; margin-top: 2px; }
+
+  /* 悬浮毛玻璃胶囊底栏 (对齐真实 App:首页 / 日历 / 设置) */
+  .p-tabbar {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 14px;
+    height: 60px;
+    border-radius: 22px;
+    background: var(--p-nav-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid var(--p-border);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 5px;
+    z-index: 6;
+  }
+  .p-phone-ringing .p-tabbar { display: none; }
+  .p-phone-ringing .p-statusbar { color: #ffffff; }
+
+  .p-tab {
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--p-ink-3);
+    transition: background 0.16s, color 0.16s;
+  }
+  .p-tab[aria-current="page"] {
+    background: var(--p-accent-soft);
+    color: var(--p-accent);
+  }
+  .p-tab .zf-ico { width: 19px; height: 19px; }
+</style>
 </head>
 <body>
-<style>
-/* ============ 手机框:token 作用域 ============ */
-#zf-suite{width:100%}
-#zf-suite .zf-stage{min-height:900px;padding:20px 8px 18px;display:flex;justify-content:center;align-items:flex-start;border-radius:24px;border:1px solid light-dark(#e6e8eb,#3c3f43)}
-#zf-suite .zf-phone{
-  --zf-paper:light-dark(#ffffff,#1c1c1e);
-  --zf-bg:light-dark(#f5f6f7,#000000);
-  --zf-ink:light-dark(#25282c,#f0f1ed);
-  --zf-muted:light-dark(#777c82,rgba(255,255,255,.62));
-  --zf-soft:light-dark(#f3f4f5,#2c2c2e);
-  --zf-line:light-dark(#eceeef,color-mix(in srgb,var(--zf-accent) 30%,transparent));
-  --zf-accent-soft:light-dark(color-mix(in srgb,var(--zf-accent) 10%,transparent),color-mix(in srgb,var(--zf-accent) 16%,transparent));
-  --zf-accent-ink:#ffffff;
-  --zf-green:light-dark(#22c55e,#34d399);
-  --zf-red:light-dark(#ef4444,#f87171);
-  --zf-shadow:light-dark(rgba(36,40,44,.10),rgba(0,0,0,.55));
-  --zf-radius:22px;
-  position:relative;width:min(100%,398px);height:844px;border:1px solid light-dark(#e6e8eb,#3c3f43);
-  border-radius:34px;background:var(--zf-bg);color:var(--zf-ink);box-shadow:0 16px 42px var(--zf-shadow);
-  font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;
-  overflow:hidden;isolation:isolate;text-align:left;font-weight:400;letter-spacing:0;
-}
-#zf-suite .zf-phone *{box-sizing:border-box}
-#zf-suite .zf-phone button{appearance:none;border:0;margin:0;background:transparent;color:inherit;padding:0;-webkit-tap-highlight-color:transparent;font:inherit}
-#zf-suite .zf-phone button:focus-visible{outline:2px solid var(--zf-accent);outline-offset:3px}
-#zf-suite .zf-phone h2,#zf-suite .zf-phone h3,#zf-suite .zf-phone p{margin:0}
-#zf-suite .zf-phone svg{width:20px;height:20px;stroke-width:1.75;flex-shrink:0}
-#zf-suite .zf-phone .zf-num{font-variant-numeric:tabular-nums;font-family:-apple-system,"SF Pro Display","PingFang SC",sans-serif}
-#zf-suite .zf-phone .zf-row{display:flex;align-items:center;gap:10px;min-width:0}
-#zf-suite .zf-phone .zf-between{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
-#zf-suite .zf-phone .zf-icon{display:inline-flex;align-items:center;justify-content:center;width:38px;height:42px;border-radius:12px;color:var(--zf-muted)}
-#zf-suite .zf-phone .zf-icon:hover{background:var(--zf-soft)}
-#zf-suite .zf-status{height:43px;padding:13px 26px 0;display:flex;justify-content:space-between;align-items:flex-start;font-size:13px;line-height:20px;font-weight:600}
-#zf-suite .zf-status svg{width:15px;height:15px;stroke-width:2.2}
-#zf-suite .zf-status .zf-row{gap:5px}
-#zf-suite .zf-main{position:absolute;inset:43px 0 0;overflow:hidden}
-#zf-suite .zf-page{position:absolute;inset:0;display:none;flex-direction:column}
-#zf-suite .zf-phone[data-page="home"] .zf-page[data-page="home"],
-#zf-suite .zf-phone[data-page="edit"] .zf-page[data-page="edit"],
-#zf-suite .zf-phone[data-page="calendar"] .zf-page[data-page="calendar"],
-#zf-suite .zf-phone[data-page="ring"] .zf-page[data-page="ring"],
-#zf-suite .zf-phone[data-page="guide"] .zf-page[data-page="guide"]{display:flex}
-#zf-suite .zf-topbar{display:flex;align-items:center;justify-content:space-between;min-height:58px;padding:0 23px;gap:6px}
-#zf-suite .zf-title{font-size:21px;font-weight:650;letter-spacing:-.6px;display:flex;align-items:center;gap:7px}
-#zf-suite .zf-title svg{width:16px;height:16px;color:var(--zf-muted)}
-#zf-suite .zf-scroll{flex:1;overflow-y:auto;padding:0 23px 96px;scrollbar-width:none}
-#zf-suite .zf-scroll::-webkit-scrollbar{display:none}
-/* 首页 hero */
-#zf-suite .zf-summary{border-radius:var(--zf-radius);background:light-dark(color-mix(in srgb,var(--zf-accent) 9%,var(--zf-paper)),color-mix(in srgb,var(--zf-accent) 14%,#1c1c1e));border:1px solid light-dark(color-mix(in srgb,var(--zf-accent) 24%,transparent),color-mix(in srgb,var(--zf-accent) 34%,transparent));padding:16px 19px 15px;margin-top:6px}
-#zf-suite .zf-summary-label{font-size:11px;color:var(--zf-accent);letter-spacing:1.5px;font-weight:600}
-#zf-suite .zf-summary .zf-big-time{color:var(--zf-ink)}
-#zf-suite .zf-summary .zf-big-date{color:var(--zf-muted)}
-#zf-suite .zf-summary .zf-chip{background:var(--zf-paper);border-color:var(--zf-line);color:var(--zf-muted)}
-#zf-suite .zf-summary .zf-chip.hot{background:var(--zf-accent-soft);border-color:transparent;color:var(--zf-accent);font-weight:600}
-#zf-suite .zf-summary .zf-chip.green{background:transparent;border-color:var(--zf-green);color:var(--zf-green)}
-#zf-suite .zf-summary .zf-chip.red{background:transparent;border-color:var(--zf-red);color:var(--zf-red)}
-#zf-suite .zf-summary .zf-countdown{color:var(--zf-muted)}
-#zf-suite .zf-big-time{font-size:44px;line-height:1.2;font-weight:650;letter-spacing:-1.6px;margin:2px 0 0;white-space:nowrap}
-#zf-suite .zf-big-time sup{font-size:20px;color:var(--zf-accent);font-weight:650;margin-left:6px;letter-spacing:0}
-#zf-suite .zf-big-date{font-size:13px;color:var(--zf-muted);margin-top:3px}
-#zf-suite .zf-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
-#zf-suite .zf-chip{font-size:11px;line-height:1;padding:6px 10px;border-radius:999px;border:1px solid var(--zf-line);color:var(--zf-muted);background:var(--zf-soft);white-space:nowrap}
-#zf-suite .zf-chip.hot{background:var(--zf-accent-soft);border-color:transparent;color:var(--zf-accent);font-weight:600}
-#zf-suite .zf-chip.green{background:color-mix(in srgb,var(--zf-green) 12%,transparent);border-color:transparent;color:var(--zf-green)}
-#zf-suite .zf-chip.red{background:color-mix(in srgb,var(--zf-red) 12%,transparent);border-color:transparent;color:var(--zf-red)}
-#zf-suite .zf-countdown{margin-top:12px;font-size:12px;color:var(--zf-muted)}
-/* 组卡片 */
-#zf-suite .zf-group{border-radius:var(--zf-radius);background:var(--zf-paper);border:1px solid var(--zf-line);padding:6px 16px 4px;margin-top:14px}
-#zf-suite .zf-group-head{display:flex;align-items:center;gap:12px;min-height:62px}
-#zf-suite .zf-gicon{width:39px;height:39px;border-radius:14px;background:var(--zf-accent-soft);color:var(--zf-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-#zf-suite .zf-gicon svg{width:19px;height:19px}
-#zf-suite .zf-gname{font-size:14px;font-weight:600}
-#zf-suite .zf-gsub{font-size:11px;color:var(--zf-muted);margin-top:2px}
-#zf-suite .zf-switch{width:44px;height:26px;border-radius:999px;background:var(--zf-accent);position:relative;cursor:pointer;flex-shrink:0;transition:background .2s}
-#zf-suite .zf-switch::after{content:"";position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:999px;background:#fff;transition:right .2s,left .2s}
-#zf-suite .zf-switch.off{background:var(--zf-soft)}
-#zf-suite .zf-switch.off::after{right:auto;left:3px;background:var(--zf-muted)}
-#zf-suite .zf-chips{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 2px}
-#zf-suite .zf-rows{margin-top:4px}
-#zf-suite .zf-rowitem{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left;cursor:default}
-#zf-suite .zf-rowitem .zf-desc{min-width:0;flex:1;padding:10px 0;border-bottom:1px solid var(--zf-line)}
-#zf-suite .zf-rowitem:last-child .zf-desc{border-bottom:0}
-#zf-suite .zf-rowitem .zf-t{font-size:15px;font-weight:600;letter-spacing:-.2px}
-#zf-suite .zf-rowitem .zf-meta{font-size:11px;color:var(--zf-muted);margin-top:3px}
-#zf-suite .zf-rowitem .zf-next{margin-left:auto;font-size:12px;color:var(--zf-accent);white-space:nowrap}
-/* 编辑页 */
-#zf-suite .zf-navbar{display:flex;align-items:center;justify-content:space-between;min-height:58px;padding:0 23px;gap:6px}
-#zf-suite .zf-navbar .zf-back{display:inline-flex;align-items:center;gap:4px;color:var(--zf-muted);font-size:14px}
-#zf-suite .zf-navbar .zf-save{color:var(--zf-accent);font-weight:600;font-size:14px}
-#zf-suite .zf-capsule{display:grid;grid-template-columns:repeat(4,1fr);background:var(--zf-soft);border-radius:14px;padding:3px;gap:2px;margin-top:4px}
-#zf-suite .zf-capsule button{border-radius:11px;padding:9px 2px;font-size:12px;color:var(--zf-muted)}
-#zf-suite .zf-capsule button[aria-pressed="true"]{background:var(--zf-accent);color:#fff;font-weight:600}
-#zf-suite .zf-field{border-radius:16px;background:var(--zf-paper);border:1px solid var(--zf-line);padding:14px 16px;margin-top:12px}
-#zf-suite .zf-field-label{font-size:11px;color:var(--zf-muted);letter-spacing:1px;margin-bottom:10px}
-#zf-suite .zf-weekrow{display:flex;justify-content:space-between;padding:2px 2px}
-#zf-suite .zf-wd{width:40px;height:40px;border-radius:999px;background:var(--zf-soft);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--zf-muted);cursor:pointer;user-select:none}
-#zf-suite .zf-wd[aria-pressed="true"]{background:var(--zf-accent);color:#fff;font-weight:700}
-#zf-suite .zf-stepper{display:flex;align-items:center;gap:14px}
-#zf-suite .zf-stepbtn{width:34px;height:34px;border-radius:12px;background:var(--zf-soft);display:inline-flex;align-items:center;justify-content:center;color:var(--zf-muted);font-size:16px;cursor:pointer;user-select:none}
-#zf-suite .zf-stepval{font-size:20px;font-weight:700;min-width:56px;text-align:center}
-#zf-suite .zf-anchor{display:flex;flex-wrap:wrap;gap:8px}
-#zf-suite .zf-achip{font-size:12px;padding:8px 12px;border-radius:12px;background:var(--zf-soft);color:var(--zf-muted);cursor:pointer;user-select:none}
-#zf-suite .zf-achip[aria-pressed="true"]{background:var(--zf-accent-soft);color:var(--zf-accent);font-weight:600}
-#zf-suite .zf-hint{font-size:11px;color:var(--zf-muted);line-height:1.7;margin-top:10px}
-#zf-suite .zf-time-row{display:flex;align-items:center;gap:10px;min-height:52px;border-bottom:1px solid var(--zf-line)}
-#zf-suite .zf-time-row:last-of-type{border-bottom:0}
-#zf-suite .zf-time-row .zf-t{font-size:16px;font-weight:600}
-#zf-suite .zf-time-row .zf-x{margin-left:auto;color:var(--zf-red);font-size:13px;cursor:pointer}
-#zf-suite .zf-toggle-row{display:flex;align-items:center;gap:12px}
-#zf-suite .zf-toggle-row .zf-tx b{font-size:14px;font-weight:600;display:block}
-#zf-suite .zf-toggle-row .zf-tx p{font-size:11px;color:zf-muted;color:var(--zf-muted);margin-top:3px}
-#zf-suite .zf-primary{width:100%;background:var(--zf-accent);color:#fff;font-weight:650;border-radius:16px;padding:14px;font-size:14px;letter-spacing:2px;text-align:center;margin-top:4px;box-shadow:0 8px 20px color-mix(in srgb,var(--zf-accent) 35%,transparent)}
-#zf-suite .zf-primary.disabled{opacity:.4;pointer-events:none}
-/* 日历 */
-#zf-suite .zf-cal{border-radius:var(--zf-radius);background:var(--zf-paper);border:1px solid var(--zf-line);padding:12px;margin-top:6px}
-#zf-suite .zf-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
-#zf-suite .zf-dow{font-size:10px;color:var(--zf-muted);text-align:center;padding:4px 0}
-#zf-suite .zf-day{height:48px;border-radius:12px;background:var(--zf-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;cursor:pointer;user-select:none}
-#zf-suite .zf-day.sel{background:var(--zf-accent)}
-#zf-suite .zf-day.sel .n{color:#fff;font-weight:700}
-#zf-suite .zf-day.picked{box-shadow:inset 0 0 0 2px var(--zf-accent)}
-#zf-suite .zf-day.big{background:var(--zf-accent-soft)}
-#zf-suite .zf-day.big .n{color:var(--zf-accent);font-weight:800}
-#zf-suite .zf-day .n{font-size:13px;font-weight:600;color:var(--zf-ink)}
-#zf-suite .zf-day.rest{background:transparent}
-#zf-suite .zf-day.rest .n{color:var(--zf-muted)}
-#zf-suite .zf-day .dots{display:flex;gap:2px}
-#zf-suite .zf-day .dots i{width:4px;height:4px;border-radius:999px;background:var(--zf-accent)}
-#zf-suite .zf-day .tag{position:absolute;top:3px;right:5px;font-size:8px;font-weight:700;color:var(--zf-muted)}
-#zf-suite .zf-day .tag.big{color:var(--zf-accent)}
-#zf-suite .zf-day .tag.off{color:var(--zf-red)}
-#zf-suite .zf-day .tag.swap{color:var(--zf-green)}
-#zf-suite .zf-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;padding:0 2px}
-#zf-suite .zf-legend span{font-size:10px;color:var(--zf-muted);display:flex;align-items:center;gap:5px}
-#zf-suite .zf-legend i{width:8px;height:8px;border-radius:3px}
-#zf-suite .zf-detail{border-radius:16px;background:var(--zf-soft);padding:13px 15px;margin-top:12px;min-height:78px}
-#zf-suite .zf-detail b{font-size:13px}
-#zf-suite .zf-detail .st{font-size:11px;color:var(--zf-muted);margin-top:4px}
-#zf-suite .zf-detail .ev{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-#zf-suite .zf-detail .ev span{font-size:11px;background:var(--zf-paper);border:1px solid var(--zf-line);padding:4px 9px;border-radius:999px;color:var(--zf-muted)}
-/* 响铃页 */
-#zf-suite .zf-phone[data-page="ring"]{background:radial-gradient(120% 80% at 50% 0%,#1c2b47 0%,#0b1220 55%,#070c16 100%)}
-#zf-suite .zf-ring{align-items:center;justify-content:center;text-align:center;color:#f0f1ed}
-#zf-suite .zf-ring .zf-brandline{position:absolute;top:64px;width:100%;text-align:center;font-size:11px;color:rgba(240,241,237,.5);letter-spacing:3px}
-#zf-suite .zf-ring .r-date{font-size:14px;color:rgba(240,241,237,.7);margin-bottom:6px}
-#zf-suite .zf-ring .r-time{font-size:84px;font-weight:200;letter-spacing:2px;line-height:1;color:#fff}
-#zf-suite .zf-ring .r-label{margin-top:18px;font-size:13px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);padding:8px 16px;border-radius:999px}
-#zf-suite .zf-ring .r-sub{margin-top:10px;font-size:11px;color:rgba(240,241,237,.5)}
-#zf-suite .zf-ring .zf-actions{position:absolute;bottom:52px;left:24px;right:24px;display:flex;gap:14px}
-#zf-suite .zf-ring .zf-actions .btn{flex:1;padding:16px;border-radius:16px;font-size:14px;font-weight:650;cursor:pointer}
-#zf-suite .zf-ring .zf-actions .snooze{background:rgba(255,255,255,.1);color:#f0f1ed}
-#zf-suite .zf-ring .zf-actions .stop{background:var(--zf-accent);color:#fff}
-#zf-suite .zf-ring .zf-done{display:none;flex-direction:column;align-items:center;gap:12px}
-#zf-suite .zf-ring .zf-done .ok{font-size:44px;color:var(--zf-green)}
-#zf-suite .zf-ring .zf-done p{font-size:13px;color:rgba(240,241,237,.7)}
-#zf-suite .zf-ring .zf-done .undo{font-size:12px;color:var(--zf-accent);text-decoration:underline;cursor:pointer}
-/* 导航(悬浮胶囊) */
-#zf-suite .zf-nav{position:absolute;left:12px;right:12px;bottom:15px;z-index:3;display:grid;grid-template-columns:repeat(3,1fr);height:66px;padding:7px 7px 10px;background:var(--zf-paper);border:1px solid var(--zf-line);border-radius:24px;box-shadow:0 5px 18px var(--zf-shadow);align-items:center}
-#zf-suite .zf-nav button{display:flex;flex-direction:column;gap:4px;align-items:center;justify-content:center;min-height:47px;color:var(--zf-muted);font-size:10px;line-height:1.3;position:relative;border-radius:12px}
-#zf-suite .zf-nav button[aria-current="page"]{color:var(--zf-ink);font-weight:600}
-#zf-suite .zf-nav button[aria-current="page"]::before{content:"";position:absolute;width:31px;height:27px;border-radius:9px;background:var(--zf-accent-soft);top:-1px;z-index:-1}
-#zf-suite .zf-nav button svg{width:21px;height:21px}
-#zf-suite .zf-add-card{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:52px;border:1.5px dashed light-dark(#c9cdd3,#48484a);border-radius:16px;color:var(--zf-muted);font-size:13px;margin-top:12px;cursor:pointer;background:transparent}
-#zf-suite .zf-add-card:hover{color:var(--zf-accent);border-color:var(--zf-accent);background:var(--zf-accent-soft)}
-#zf-suite .zf-add-card svg{width:16px;height:16px}
-#zf-suite .zf-home-indicator{position:absolute;width:109px;height:4px;background:var(--zf-ink);border-radius:9px;bottom:8px;left:50%;transform:translateX(-50%);opacity:.8;z-index:4}
-#zf-suite .zf-phone[data-page="ring"] .zf-nav,#zf-suite .zf-phone[data-page="ring"] .zf-home-indicator{display:none}
-/* 保活向导 */
-#zf-suite .zf-step{border-radius:16px;background:var(--zf-paper);border:1px solid var(--zf-line);padding:15px 16px;display:flex;gap:12px;cursor:pointer;user-select:none;margin-top:12px;opacity:1}
-#zf-suite .zf-step.done{opacity:.55}
-#zf-suite .zf-step .no{width:26px;height:26px;border-radius:999px;background:var(--zf-soft);color:var(--zf-ink);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0}
-#zf-suite .zf-step.done .no{background:var(--zf-accent-soft);color:var(--zf-accent)}
-#zf-suite .zf-step b{font-size:14px;font-weight:650}
-#zf-suite .zf-step .path{margin-top:8px;font-size:10.5px;background:var(--zf-soft);border-radius:8px;padding:6px 10px;color:var(--zf-muted);font-family:ui-monospace,Menlo,monospace}
-#zf-suite .zf-step p{font-size:11.5px;color:var(--zf-muted);margin-top:6px;line-height:1.7}
-#zf-suite .zf-progress{display:flex;gap:6px;justify-content:center;margin-top:4px}
-#zf-suite .zf-progress i{width:6px;height:6px;border-radius:999px;background:var(--zf-soft)}
-#zf-suite .zf-progress i.on{width:18px;background:var(--zf-accent)}
-/* ===== 排班月历编辑器 ===== */
-#zf-suite .zf-cal-head{display:flex;align-items:center;gap:10px;margin-top:6px;min-height:44px}
-#zf-suite .zf-cal-nav{width:36px;height:36px;border-radius:12px;background:var(--zf-soft);display:inline-flex;align-items:center;justify-content:center;color:var(--zf-muted);cursor:pointer}
-#zf-suite .zf-cal-nav svg{width:16px;height:16px}
-#zf-suite .zf-cal-title{font-size:17px;font-weight:650;letter-spacing:-.3px;flex:1;text-align:center}
-#zf-suite .zf-cal-title small{font-size:11px;color:var(--zf-accent);margin-left:6px;font-weight:600}
-#zf-suite .zf-mode{display:grid;grid-template-columns:1fr 1fr;background:var(--zf-soft);border-radius:14px;padding:3px;gap:2px;margin-top:12px}
-#zf-suite .zf-mode button{border-radius:11px;padding:9px 2px;font-size:12px;color:var(--zf-muted)}
-#zf-suite .zf-mode button[aria-pressed="true"]{background:var(--zf-paper);color:var(--zf-ink);font-weight:600;box-shadow:0 1px 4px var(--zf-shadow)}
-#zf-suite .zf-quick{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-#zf-suite .zf-quick button{font-size:12px;padding:8px 12px;border-radius:12px;background:var(--zf-soft);color:var(--zf-ink);cursor:pointer}
-#zf-suite .zf-quick button:hover{background:var(--zf-accent-soft);color:var(--zf-accent)}
-#zf-suite .zf-day.picked{box-shadow:inset 0 0 0 2px var(--zf-accent);background:var(--zf-accent-soft)}
-#zf-suite .zf-day.dim{opacity:.4}
-#zf-suite .zf-section-label{font-size:11px;color:var(--zf-muted);letter-spacing:1.5px;margin:18px 2px 8px}
-#zf-suite .zf-legend span.pick i{background:var(--zf-accent)}
-</style>
-<body>
-<div id="zf-suite">
-  <div class="zf-brand">
-    <svg class="zf-mark" viewBox="0 0 120 120" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16233A"/><stop offset="1" stop-color="#0B1220"/></linearGradient></defs><rect width="120" height="120" rx="28" fill="url(#lg)"/><g fill="none" stroke="#31476B" stroke-width="9" stroke-linecap="round"><path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/><path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/><path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/><path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/><path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/><path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/></g><path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="var(--zf-accent)" stroke-width="9" stroke-linecap="round"/><g transform="translate(33.6,33) scale(2.2)" fill="#F4F7FC"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></g><circle cx="60" cy="52" r="3" style="fill:var(--zf-accent)"/></svg>
-    <div>
-      <h1>周而复起 <small>ZHOUERFUQI</small></h1>
-      <div class="zf-slogan">闹钟周而复起,班表从不掉链子 · 交互原型 v0.3</div>
+<div class="zf-wrap" id="zfApp">
+
+  <!-- 顶部工作台控制栏 -->
+  <div class="zf-toolbar">
+    <div class="zf-toolbar-top">
+      <div class="zf-brand">
+        <svg class="zf-logo-mark" viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <linearGradient id="brandBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#1c1d22"/>
+              <stop offset="1" stop-color="#0d0e12"/>
+            </linearGradient>
+          </defs>
+          <rect width="120" height="120" rx="28" fill="url(#brandBg)"/>
+          <g fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="8.5" stroke-linecap="round">
+            <path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/>
+            <path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/>
+            <path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/>
+            <path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/>
+            <path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/>
+            <path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/>
+          </g>
+          <path id="logoArc" d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="#FB923C" stroke-width="9" stroke-linecap="round"/>
+          <g transform="translate(33.6,33) scale(2.2)" fill="#F5F5F4">
+            <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+          </g>
+          <circle id="logoDot" cx="60" cy="52" r="3.2" fill="#FB923C"/>
+        </svg>
+        <div>
+          <h1 class="zf-brand-title">周而复起 · 破晓时计 <span class="zf-badge-ver">DESIGN v2.0</span></h1>
+          <p class="zf-brand-sub">去企业蓝框感 · 温暖机械时计美学 · 七日节律视窗 · 全六屏交互</p>
+        </div>
+      </div>
+
+      <div class="zf-palette-group">
+        <div class="zf-seg" id="viewModeSeg" role="group" aria-label="画布视图">
+          <button data-view="single" aria-pressed="true">单机交互</button>
+          <button data-view="gallery">六屏总览</button>
+        </div>
+        <div class="zf-seg" id="appAppearanceSeg" role="group" aria-label="手机外观">
+          <button data-app-theme="dark" aria-pressed="true">曜石暗色</button>
+          <button data-app-theme="light">暖纸浅色</button>
+        </div>
+        <div class="zf-swatches" id="swatchBar" title="切换主色调"></div>
+      </div>
     </div>
-    <div class="zf-controls">
-      <div class="zf-seg" role="group" aria-label="场景">
-        <button data-scene="home" aria-pressed="true">首页</button>
-        <button data-scene="edit">编辑规则</button>
-        <button data-scene="calendar">日历</button>
-        <button data-scene="ring">响铃</button>
-        <button data-scene="guide">保活</button>
+
+    <div class="zf-controls-row" id="sceneControlsRow">
+      <div class="zf-seg" id="sceneSeg" role="group" aria-label="切换页面">
+        <button data-scene="home" aria-pressed="true">1 首页</button>
+        <button data-scene="calendar">2 排班月历</button>
+        <button data-scene="edit">3 编辑班组</button>
+        <button data-scene="ring">4 锁屏响铃</button>
+        <button data-scene="guide">5 保活向导</button>
+        <button data-scene="settings">6 设置</button>
       </div>
-      <div class="zf-seg" role="group" aria-label="主题">
-        <button data-mode="auto" aria-pressed="true" title="跟随系统"><i data-lucide="monitor"></i></button>
-        <button data-mode="dark" title="深色"><i data-lucide="moon"></i></button>
-        <button data-mode="light" title="日间"><i data-lucide="sun"></i></button>
-      </div>
-        <span style="font-size:12px;color:light-dark(#777c82,#a4a6a9)">主题色</span>
-        <div class="zf-colors" id="zfColors" title="主题色"></div>
     </div>
   </div>
 
-  <div class="zf-stage">
-    <div class="zf-phone" data-page="home" id="zfPhone">
-      <div class="zf-status"><span class="zf-row zf-num" id="clock">9:41</span><span class="zf-row"><i data-lucide="wifi"></i><i data-lucide="battery-full"></i></span></div>
-      <div class="zf-main">
+  <!-- 核心演示舞台 -->
+  <div class="zf-stage mode-single" id="zfStage">
 
-        <!-- ============ 首页 ============ -->
-        <div class="zf-page" data-page="home">
-          <div class="zf-topbar">
-            <div class="zf-title">周而复起</div>
-            <div class="zf-row" style="gap:0">
-              <button class="zf-icon" data-goto="edit" title="新建班组"><i data-lucide="plus"></i></button>
-              <button class="zf-icon" data-goto="calendar" title="响铃日历"><i data-lucide="calendar-days"></i></button>
-              <button class="zf-icon" data-goto="guide" title="保活向导"><i data-lucide="shield-check"></i></button>
-            </div>
-          </div>
-          <div class="zf-scroll">
-            <div class="zf-summary">
-              <div class="zf-summary-label">下次响铃 · NEXT RING</div>
-              <div class="zf-big-time zf-num" id="heroTime">06:40<sup>×4</sup></div>
-              <div class="zf-big-date" id="heroDate"></div>
-              <div class="zf-chips" id="heroChips"></div>
-              <div class="zf-countdown" id="heroCountdown"></div>
-            </div>
-            <div class="zf-section-label">班组 · GROUPS</div>
-            <div id="groupCards"></div>
-            <button class="zf-add-card" data-goto="edit"><i data-lucide="plus"></i>新建班组</button>
-          </div>
+    <!-- 左:可交互手机样机 -->
+    <div class="zf-single-pane" style="width:100%;display:flex;justify-content:center">
+      <div class="zf-phone" id="mainPhone" data-appearance="dark">
+        <div class="p-statusbar">
+          <span class="zf-num">09:41</span>
+          <div class="p-island"></div>
+          <div class="p-status-icons" id="statusIcons"></div>
         </div>
 
-        <!-- ============ 编辑规则 ============ -->
-        <div class="zf-page" data-page="edit">
-          <div class="zf-navbar">
-            <button class="zf-back" data-goto="home"><i data-lucide="chevron-left"></i>返回</button>
-            <div class="zf-title" style="font-size:16px">编辑班组</div>
-            <button class="zf-save" id="saveBtn">保存</button>
-          </div>
-          <div class="zf-scroll" style="padding-top:4px">
-            <div class="zf-section-label">班制规则 · SCHEDULE</div>
-            <div class="zf-capsule" id="ruleSeg">
-              <button data-k="weekly">每周几</button>
-              <button data-k="everyNWeeks" aria-pressed="true">每 N 周</button>
-              <button data-k="everyNDays">每 N 天</button>
-              <button data-k="customDates">月历</button>
-            </div>
-            <div class="zf-weekrow" id="weekdayRow"></div>
-            <div class="zf-field" id="p-everyNWeeks">
-              <div class="zf-field-label">周期 N(n=2 即大小周)</div>
-              <div class="zf-stepper">
-                <button class="zf-stepbtn" data-step="-1">−</button>
-                <span class="zf-stepval zf-num" id="nVal">2 周</span>
-                <button class="zf-stepbtn" data-step="1">+</button>
-                <span style="color:var(--zf-muted);font-size:12px">1=单休 · 2=大小周</span>
-              </div>
-            </div>
-            <div class="zf-field" id="p-weekly" style="display:none">
-              <div class="zf-field-label">每周固定星期几</div>
-              <div class="zf-hint">普通双休 / 单休场景。配合下方「节假日联动」即等价于系统的「智能工作日」。</div>
-            </div>
-            <div class="zf-field" id="p-everyNDays" style="display:none">
-              <div class="zf-field-label">每 N 天响一天(上 X 休 Y 最简形态)</div>
-              <div class="zf-stepper">
-                <button class="zf-stepbtn" data-stepd="-1">−</button>
-                <span class="zf-stepval zf-num" id="nValD">3 天</span>
-                <button class="zf-stepbtn" data-stepd="1">+</button>
-                <span style="color:var(--zf-muted);font-size:12px">起点 = 锚点日</span>
-              </div>
-            </div>
-            <div class="zf-field" id="p-anchor" style="display:none">
-              <div class="zf-field-label">锚点日</div>
-              <div class="zf-anchor" id="anchorChips"></div>
-              <div class="zf-hint">大小周:勾选的周一~周五每周响;锚点星期六隔 N 周响(小周休)。</div>
-            </div>
-            <div class="zf-field" id="p-custom" style="display:none">
-              <div class="zf-field-label">手动点选的日期(点选即权威,不受节假日影响)</div>
-              <div class="zf-anchor" id="customChips"></div>
-            </div>
-            <div class="zf-field">
-              <div class="zf-field-label">响铃时间</div>
-              <div id="timeRows"></div>
-              <div class="zf-anchor" id="presetChips" style="margin-top:12px"></div>
-            </div>
-            <div class="zf-field">
-              <div class="zf-toggle-row">
-                <div class="zf-tx"><b>节假日联动</b><p>法定假日跳过 · 调休补班日自动响(holiday-cn)</p></div>
-                <span style="flex:1"></span>
-                <div class="zf-switch" id="holidaySwitch"></div>
-              </div>
-            </div>
-            <div class="zf-primary" id="saveBig">保 存</div>
-          </div>
+        <div class="p-viewport">
+          <!-- 1. 首页 -->
+          <div class="p-screen active" data-screen="home" id="scrHome"></div>
+          <!-- 2. 排班月历 -->
+          <div class="p-screen" data-screen="calendar" id="scrCalendar"></div>
+          <!-- 3. 编辑规则 -->
+          <div class="p-screen" data-screen="edit" id="scrEdit"></div>
+          <!-- 4. 锁屏响铃 -->
+          <div class="p-screen p-ring-screen" data-screen="ring" id="scrRing"></div>
+          <!-- 5. 保活向导 -->
+          <div class="p-screen" data-screen="guide" id="scrGuide"></div>
+          <!-- 6. 设置 -->
+          <div class="p-screen" data-screen="settings" id="scrSettings"></div>
         </div>
 
-        <!-- ============ 排班月历 ============ -->
-        <div class="zf-page" data-page="calendar">
-          <div class="zf-topbar">
-            <div class="zf-title">排班月历</div>
-            <span id="calModeBadge" style="font-size:11px;color:var(--zf-muted)">规则预览</span>
-          </div>
-          <div class="zf-scroll">
-            <div class="zf-mode" id="calMode">
-              <button data-m="rule" aria-pressed="true">规则预览</button>
-              <button data-m="manual">手动排班</button>
-            </div>
-            <div class="zf-cal-head">
-              <button class="zf-cal-nav" id="calPrev" title="上个月"><i data-lucide="chevron-left"></i></button>
-              <div class="zf-cal-title zf-num"><span id="calTitle">2026年11月</span><small id="calHint"></small></div>
-              <button class="zf-cal-nav" id="calNext" title="下个月"><i data-lucide="chevron-right"></i></button>
-              <button class="zf-cal-nav" id="calToday" title="回到本月"><i data-lucide="calendar-check"></i></button>
-            </div>
-            <div class="zf-quick" id="quickRow" style="display:none">
-              <button data-q="workdays">填充工作日</button>
-              <button data-q="all">填充全月</button>
-              <button data-q="clear">清空本月</button>
-              <button data-q="clearAll">清空全部点选</button>
-            </div>
-            <div class="zf-cal">
-              <div class="zf-cal-grid" id="calGrid"></div>
-              <div class="zf-legend">
-                <span><i style="background:var(--zf-accent)"></i>班日响铃</span>
-                <span><i style="background:var(--zf-accent)"></i>大周周六</span>
-                <span><i style="background:var(--zf-red)"></i>法定假日</span>
-                <span><i style="background:var(--zf-green)"></i>调休补班</span>
-                <span class="pick"><i></i>手动点选</span>
-              </div>
-            </div>
-            <div class="zf-detail" id="dayDetail"></div>
-          </div>
-        </div>
-
-        <!-- ============ 响铃 ============ -->
-        <div class="zf-page zf-ring" data-page="ring">
-          <div class="zf-brandline">周 而 复 起 · 系统级响铃</div>
-          <div id="ringMain" style="display:flex;flex-direction:column;align-items:center;width:100%">
-            <div class="r-date">11 月 21 日 · 周六 · 大周</div>
-            <div class="r-time zf-num" id="ringTime">06:40</div>
-            <div class="r-label">上班组 · 第一道 · 还有 06:50 / 07:00 兜底</div>
-            <div class="r-sub" id="ringSub">音量渐强 · 静音/勿扰不影响</div>
-          </div>
-          <div class="zf-done" id="ringDone" style="position:absolute;inset:0;display:none;align-items:center;justify-content:center">
-            <div style="display:flex;flex-direction:column;align-items:center;gap:12px">
-              <div class="ok">✓</div>
-              <p>闹钟已关闭 · 兜底 06:50 保持待命</p>
-              <span class="undo" id="ringUndo">恢复演示</span>
-            </div>
-          </div>
-          <div class="zf-actions" id="ringActions">
-            <button class="btn snooze" id="snoozeBtn">稍后 9 分钟</button>
-            <button class="btn stop" id="stopBtn">关闭</button>
-          </div>
-        </div>
-
-        <!-- ============ 保活向导 ============ -->
-        <div class="zf-page" data-page="guide">
-          <div class="zf-navbar">
-            <button class="zf-back" data-goto="home"><i data-lucide="chevron-left"></i>返回</button>
-            <div class="zf-title" style="font-size:16px">保活向导</div>
-            <span></span>
-          </div>
-          <div class="zf-scroll" style="padding-top:4px">
-            <p class="zf-note">华为 / 荣耀等机型默认管控后台。完成以下 3 步(约 1 分钟),闹钟即可达到系统时钟级可靠性。点击卡片可模拟完成。</p>
-            <div id="guideSteps"></div>
-            <div class="zf-progress" id="guideProgress"><i class="on"></i><i></i><i></i></div>
-            <div class="zf-primary disabled" id="guideDone">已完成,开始使用</div>
-          </div>
-        </div>
-
+        <nav class="p-tabbar" id="phoneTabs"></nav>
       </div>
-      <!-- 悬浮胶囊导航 -->
-      <div class="zf-nav" id="zfNav">
-        <button data-goto="home" aria-current="page"><i data-lucide="alarm-clock"></i>首页</button>
-        <button data-goto="calendar"><i data-lucide="calendar-days"></i>日历</button>
-        <button data-goto="guide"><i data-lucide="shield-check"></i>保活</button>
-      </div>
-      <div class="zf-home-indicator"></div>
     </div>
-  </div>
 
-  <div class="zf-section">设计令牌 · DESIGN TOKENS(三主色 + 中性层;方案 D 暗色)</div>
-  <div class="zf-tokens">
-    <div class="zf-token"><div class="c" style="background:#7FB0DC"></div><p><b>1 主题色</b>主操作 · 选中 · 排班日 · 大周</p></div>
-    <div class="zf-token"><div class="c" style="background:#22C55E"></div><p><b>2 放行绿 / 成功</b>调休补班 · 成功状态</p></div>
-    <div class="zf-token"><div class="c" style="background:#EF4444"></div><p><b>3 警示红 / 假日</b>法定假日 · 删除 · 错误</p></div>
-    <div class="zf-token"><div class="c" style="background:#000000;outline:1px solid rgba(61,139,255,.3)"></div><p><b>暗 bg / 纯黑</b>#000000(OLED)</p></div>
-    <div class="zf-token"><div class="c" style="background:#1C1C1E;outline:1px solid rgba(61,139,255,.3)"></div><p><b>暗 surface</b>#1C1C1E</p></div>
-    <div class="zf-token"><div class="c" style="background:linear-gradient(to bottom,#FAFAFA 50%,#1C1C1E 50%);outline:1px solid #e6e8eb"></div><p><b>中性层</b>亮 #FAFAFA/#FFF · 暗 #000/#1C1C1E</p></div>
-  </div>
-  <p class="zf-note"><b>三色原则</b>:橙=「要响/主操作」,绿=「放行/成功」,红=「假日/警示」——除此之外全部中性灰阶。圆角:卡片 22 / 控件 16 / 胶囊 999;间距 8/12/16;数字一律 tabular-nums,大数字 650 字重 + 负字距;暗色下卡片以主题色 30% 边框替代分割线(方案 D)。</p>
+    <!-- 右:改版设计说明与动态设计令牌 -->
+    <div class="zf-side-notes">
+      <div class="zf-spec-card">
+        <h3>✦ 为什么重做:从「后台表单感」到「床头精密时计」</h3>
+        <p>
+          旧版采用高饱和钉钉蓝配 30% 亮蓝描边,视觉冰冷且卡片像企业审批单;单个班组的 4 个时间纵向铺满屏幕。新版 <b>v2.0 破晓时计 (Dawn Chronometer)</b> 回归品牌初心「7 段周循环 · 破晓而起」,以温润暖纸 / 曜石石墨配 1px 微高光边缘替代刺眼色框。
+        </p>
+      </div>
 
-  <footer>周而复起 zhouerfuqi · 交互原型 v0.3 · 图标 Lucide(vendor)· 引擎与 packages/core 同语义 · <a href="https://github.com/TNT-Likely/zhouerfuqi" target="_blank">GitHub</a></footer>
+      <div class="zf-spec-card">
+        <h3>✦ 四处关键信息架构升级</h3>
+        <p>
+          <b>1. 首页七日节律带</b>:Hero 卡内嵌未来 7 天排班微缩条与 7 段周循环环,不翻日历即可确认本周六是大周还是小周。<br>
+          <b>2. 连环闹钟胶囊化</b>:6:40 → 6:50 → 7:00 → 12:55 改为双列紧凑时序胶囊,同屏从容容纳多班组并存。<br>
+          <b>3. 月历大小周左栏行标</b>:每行左侧直接标注「大 / 小」周次徽章,配合底部规则推理票据,调休补班一目了然。<br>
+          <b>4. 补齐完整六屏闭环</b>:底栏严格对齐真实 App(首页 / 日历 / 设置),完整覆盖锁屏声波响铃页与多厂商保活向导。
+        </p>
+      </div>
+
+      <div class="zf-spec-card">
+        <h3>✦ 当前色彩与表面令牌 (点击顶部圆点实时换肤)</h3>
+        <div class="zf-token-strip" id="tokenStrip"></div>
+      </div>
+    </div>
+
+    <!-- 六屏总览画板 (切换至「六屏总览」时展示) -->
+    <div class="zf-gallery" id="galleryGrid"></div>
+  </div>
 </div>
 
 <script>
-/* ================= 迷你规则引擎(与 packages/core 同语义) ================= */
-const TODAY = '2026-11-14';
-const WD = ['一','二','三','四','五','六','日'];
-const MS = 864e5;
-const HOLIDAYS = { '2026-11-05': true, '2026-11-08': false, '2026-11-19': true, '2026-12-31': false };
-const pd = d => new Date(d + 'T00:00:00Z');
-const iso = dt => dt.toISOString().slice(0, 10);
-const addDays = (d, n) => iso(new Date(pd(d).getTime() + n * MS));
-const diff = (a, b) => Math.round((pd(a) - pd(b)) / MS);
-const dow = d => { const w = pd(d).getUTCDay(); return w === 0 ? 7 : w; };
-const mod = (a, n) => ((a % n) + n) % n;
-const weekStart = d => addDays(d, -(dow(d) - 1));
-function isRuleDay(rule, date) {
-  if (rule.kind === 'weekly') return rule.weekdays.includes(dow(date));
-  if (rule.kind === 'everyNWeeks') {
-    if (!rule.weekdays.includes(dow(date))) return false;
-    if (dow(date) !== dow(rule.anchor)) return true;
-    return mod(Math.floor(diff(weekStart(date), weekStart(rule.anchor)) / 7), rule.n) === 0;
-  }
-  if (rule.kind === 'everyNDays') return mod(diff(date, rule.anchor), rule.n) === 0;
-  return rule.dates.includes(date);
-}
-function evalDay(rule, date, holidayOn) {
-  const hit = isRuleDay(rule, date);
-  const hol = HOLIDAYS[date];
-  const mode = rule.kind === 'customDates' || !holidayOn ? 'raw' : 'china-smart';
-  if (mode === 'raw') return { hit, hol, ring: hit, reason: hit ? 'rule' : null };
-  if (hit) { const ring = hol !== true; return { hit, hol, ring, reason: ring ? 'rule' : null }; }
-  const ring = hol === false;
-  return { hit, hol, ring, reason: ring ? 'swap' : null };
-}
-function nextOccurrence(rule, holidayOn) {
-  for (let i = 0; i < 370; i++) {
-    const date = addDays(TODAY, i);
-    const ev = evalDay(rule, date, holidayOn);
-    if (ev.ring) return { date, ev, dowN: dow(date) };
-  }
-  return null;
-}
+(() => {
+  /* ==================== 内联矢量图标库(零外部依赖) ==================== */
+  const ICONS = {
+    wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/>',
+    battery: '<rect x="2" y="7" width="16" height="10" rx="2.5"/><path d="M21 11v2"/><rect x="4" y="9" width="11" height="6" rx="1" fill="currentColor" stroke="none"/>',
+    alarm: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/>',
+    calendar: '<rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+    plus: '<path d="M12 5v14"/><path d="M5 12h14"/>',
+    bell: '<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+    shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',
+    chevL: '<path d="m15 18-6-6 6-6"/>',
+    chevR: '<path d="m9 18 6-6-6-6"/>',
+    moon: '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/>',
+  };
+  const ico = (name) => `<svg class="zf-ico" viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ''}</svg>`;
 
-/* ================= 状态 ================= */
-const state = {
-  scene: 'home',
-  groupOn: true,
-  holidayOn: true,
-  ruleKind: 'everyNWeeks',
-  weekdays: { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: false },
-  n: 2,
-  anchor: '2026-11-21',
-  nD: 3,
-  anchorD: '2026-11-10',
-  customDates: new Set(['2026-11-21', '2026-11-28', '2026-12-05']),
-  times: [
+  /* ==================== 主题色板 ==================== */
+  const THEMES = [
+    { name: '破晓琥珀', light: '#EA580C', dark: '#FB923C' },
+    { name: '松石青翠', light: '#0D9488', dark: '#2DD4BF' },
+    { name: '星夜靛蓝', light: '#4F46E5', dark: '#818CF8' },
+    { name: '赤陶暖砂', light: '#D94E34', dark: '#F47A60' },
+  ];
+
+  /* ==================== 与 packages/core 同语义排班引擎 ==================== */
+  const TODAY = '2026-11-18'; // 周三:恰好展示本周六(11-21)大周、11-26 假日、11-29 调休补班
+  const WD = ['一', '二', '三', '四', '五', '六', '日'];
+  const MS = 86400000;
+  const HOLIDAYS = {
+    '2026-11-05': true,
+    '2026-11-08': false,
+    '2026-11-26': true,
+    '2026-11-29': false,
+  };
+
+  const pd = (s) => new Date(s + 'T00:00:00Z');
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const addDays = (s, n) => iso(new Date(pd(s).getTime() + n * MS));
+  const diffDays = (a, b) => Math.round((pd(a) - pd(b)) / MS);
+  const dow = (s) => { const w = pd(s).getUTCDay(); return w === 0 ? 7 : w; };
+  const mod = (a, n) => ((a % n) + n) % n;
+  const weekStart = (s) => addDays(s, -(dow(s) - 1));
+  const pad = (n) => String(n).padStart(2, '0');
+  const cnDate = (s) => { const [, m, d] = s.split('-'); return `${+m}月${+d}日`; };
+
+  function isRuleDay(rule, date) {
+    if (rule.kind === 'weekly') return rule.weekdays.includes(dow(date));
+    if (rule.kind === 'everyNWeeks') {
+      if (!rule.weekdays.includes(dow(date))) return false;
+      if (dow(date) !== dow(rule.anchor)) return true;
+      return mod(Math.floor(diffDays(weekStart(date), weekStart(rule.anchor)) / 7), rule.n) === 0;
+    }
+    if (rule.kind === 'everyNDays') return mod(diffDays(date, rule.anchor), rule.n) === 0;
+    return rule.dates.includes(date);
+  }
+
+  function evalDay(rule, date, holidayOn) {
+    const hit = isRuleDay(rule, date);
+    const hol = HOLIDAYS[date];
+    const smart = rule.kind !== 'customDates' && holidayOn;
+    if (!smart) return { hit, hol, ring: hit, reason: hit ? 'rule' : null };
+    if (hit) {
+      const ring = hol !== true;
+      return { hit, hol, ring, reason: ring ? 'rule' : 'skip-holiday' };
+    }
+    const ring = hol === false;
+    return { hit, hol, ring, reason: ring ? 'swap' : null };
+  }
+
+  function isBigWeekRow(rule, mondayDate) {
+    if (rule.kind !== 'everyNWeeks') return null;
+    return mod(Math.floor(diffDays(mondayDate, weekStart(rule.anchor)) / 7), rule.n) === 0;
+  }
+
+  /* ==================== 应用交互状态 ==================== */
+  const state = {
+    viewMode: 'single',      // 'single' | 'gallery'
+    appearance: 'dark',      // 'dark' | 'light'
+    themeIdx: 0,
+    scene: 'home',
+    primaryOn: true,
+    dutyOn: false,
+    holidayOn: true,
+    ruleKind: 'everyNWeeks',
+    weekdays: { 1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 7: false },
+    nWeeks: 2,
+    anchor: '2026-11-21',
+    nDays: 3,
+    anchorDays: '2026-11-18',
+    customDates: new Set(['2026-11-19', '2026-11-21', '2026-11-24', '2026-11-28']),
+    times: [
+      { id: 't1', hour: 6, minute: 40, label: '第一道' },
+      { id: 't2', hour: 6, minute: 50, label: '第二道' },
+      { id: 't3', hour: 7, minute: 0, label: '底线' },
+      { id: 't4', hour: 12, minute: 55, label: '午休' },
+    ],
+    calY: 2026,
+    calM: 11,
+    calMode: 'rule',
+    selDate: '2026-11-21',
+    ringState: 'ringing', // 'ringing' | 'snoozed' | 'stopped'
+    vendor: '华为 HarmonyOS',
+    guideSteps: [true, false, false],
+  };
+
+  const DUTY_GROUP = {
+    name: '轮班值守',
+    rule: { kind: 'everyNDays', n: 3, anchor: '2026-11-20' },
+    times: [
+      { id: 'd1', hour: 7, minute: 30, label: '早交接' },
+      { id: 'd2', hour: 19, minute: 30, label: '晚巡检' },
+    ],
+  };
+
+  const PRESETS = [
     { id: 't1', hour: 6, minute: 40, label: '第一道' },
     { id: 't2', hour: 6, minute: 50, label: '第二道' },
     { id: 't3', hour: 7, minute: 0, label: '底线' },
-    { id: 't4', hour: 12, minute: 55, label: '午休', amber: true },
-  ],
-  selDate: '2026-11-21',
-  calY: 2026,
-  calM: 11,
-  calMode: 'rule',
-};
-const ANCHORS = ['2026-11-14', '2026-11-21', '2026-11-28', '2026-12-05'];
-const PRESETS = [
-  { id: 't1', hour: 6, minute: 40, label: '第一道' },
-  { id: 't2', hour: 6, minute: 50, label: '第二道' },
-  { id: 't3', hour: 7, minute: 0, label: '底线' },
-  { id: 't4', hour: 7, minute: 30, label: '' },
-  { id: 't5', hour: 8, minute: 0, label: '' },
-  { id: 't6', hour: 12, minute: 55, label: '午休' },
-];
-const $ = id => document.getElementById(id);
-const pad = n => String(n).padStart(2, '0');
-const fmtT = t => `${pad(t.hour)}:${pad(t.minute)}`;
-const cnDate = date => { const [, m, d] = date.split('-'); return `${+m}月${+d}日`; };
-const wdOf = date => WD[dow(date) - 1];
-function rule() {
-  if (state.ruleKind === 'weekly') return { kind: 'weekly', weekdays: activeWeekdays() };
-  if (state.ruleKind === 'everyNWeeks') return { kind: 'everyNWeeks', n: state.n, weekdays: activeWeekdays(), anchor: state.anchor };
-  if (state.ruleKind === 'everyNDays') return { kind: 'everyNDays', n: state.nD, anchor: state.anchorD };
-  return { kind: 'customDates', dates: [...state.customDates] };
-}
-function activeWeekdays() { return [1,2,3,4,5,6,7].filter(d => state.weekdays[d]); }
-function wdLabel(list) { return list.length ? [...list].sort().map(d => WD[d-1]).join('') : '未选'; }
-function kindLabel(date) {
-  const r = rule();
-  if (r.kind === 'weekly') return '工作日 ' + wdLabel(r.weekdays);
-  if (r.kind === 'everyNWeeks') {
-    if (r.weekdays.includes(dow(date)) && dow(date) === 6) return r.n === 2 ? '大周周六' : `每 ${r.n} 周的周六`;
-    return '工作日 ' + wdLabel(r.weekdays);
-  }
-  if (r.kind === 'everyNDays') return `每 ${r.n} 天`;
-  return '手动排班';
-}
-function ruleDesc() {
-  const r = rule();
-  if (r.kind === 'weekly') return `每周 · ${wdLabel(r.weekdays)}`;
-  if (r.kind === 'everyNWeeks') return `每 ${r.n} 周 · ${wdLabel(r.weekdays)}`;
-  if (r.kind === 'everyNDays') return `每 ${r.nD} 天`;
-  return `手动 ${state.customDates.size} 天`;
-}
-
-/* ================= 渲染 ================= */
-function renderHome() {
-  const enabled = state.groupOn;
-  const nx = enabled ? nextOccurrence(rule(), state.holidayOn) : null;
-  if (nx) {
-    $('heroTime').innerHTML = `${fmtT(state.times[0])}<sup>×${state.times.length}</sup>`;
-    $('heroDate').textContent = `${cnDate(nx.date)} 周${wdOf(nx.date)}`;
-    let html = `<span class="zf-chip hot">${kindLabel(nx.date)}</span>`;
-    if (nx.ev.hol === false) html += '<span class="zf-chip green">法定上班 · 补班</span>';
-    if (nx.ev.hol === true) html += '<span class="zf-chip red">假日点选</span>';
-    $('heroChips').innerHTML = html;
-    const d = diff(nx.date, TODAY);
-    $('heroCountdown').textContent = d === 0 ? '今天响' : d === 1 ? '明天响' : `距响铃还有 ${d} 天`;
-  } else {
-    $('heroTime').textContent = '— —';
-    $('heroDate').textContent = enabled ? '当前规则 370 天内无响铃' : '上班组已停用';
-    $('heroChips').innerHTML = `<span class="zf-chip red">${enabled ? '无有效规则' : '整组静音'}</span>`;
-    $('heroCountdown').textContent = enabled ? '回编辑页勾选星期或点选日期' : '打开开关后重新计算';
-  }
-  const gc = $('groupCards');
-  gc.innerHTML = `
-    <div class="zf-group">
-      <div class="zf-group-head">
-        <div class="zf-gicon"><i data-lucide="alarm-clock"></i></div>
-        <div style="flex:1;min-width:0;cursor:pointer" data-edit="1">
-          <div class="zf-gname">上班</div>
-          <div class="zf-gsub">${ruleDesc()} · ${state.times.length} 个时间</div>
-        </div>
-        <div class="zf-switch${state.groupOn ? '' : ' off'}" id="groupSwitch" role="switch" aria-checked="${state.groupOn}" tabindex="0"></div>
-      </div>
-      <div class="zf-rows">
-        ${state.times.map(x => `
-          <div class="zf-rowitem">
-            <div class="zf-desc">
-              <div class="zf-t zf-num">${fmtT(x)}</div>
-              <div class="zf-meta">${x.label || ' '}</div>
-            </div>
-            ${nx && state.groupOn ? `<span class="zf-next zf-num">${cnDate(nx.date)}</span>` : ''}
-          </div>`).join('')}
-      </div>
-    </div>`;
-  $('groupSwitch').addEventListener('click', (e) => { e.stopPropagation(); state.groupOn = !state.groupOn; renderAll(); });
-  gc.querySelectorAll('[data-edit]').forEach(el => el.addEventListener('click', () => setScene('edit')));
-  lucide.createIcons();
-}
-
-function renderEdit() {
-  document.querySelectorAll('#ruleSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.k === state.ruleKind)));
-  ['p-weekly','p-everyNWeeks','p-everyNDays','p-anchor','p-custom'].forEach(id => { $(id).style.display = 'none'; });
-  const anchorKinds = ['everyNWeeks', 'everyNDays'];
-  $(state.ruleKind === 'weekly' ? 'p-weekly' : state.ruleKind === 'everyNDays' ? 'p-everyNDays' : state.ruleKind === 'customDates' ? 'p-custom' : 'p-everyNWeeks').style.display = '';
-  if (anchorKinds.includes(state.ruleKind)) $('p-anchor').style.display = '';
-  const showWeek = state.ruleKind === 'weekly' || state.ruleKind === 'everyNWeeks';
-  $('weekdayRow').style.display = showWeek ? '' : 'none';
-  $('weekdayRow').innerHTML = WD.map((w, i) =>
-    `<div class="zf-wd" data-i="${i+1}" aria-pressed="${!!state.weekdays[i+1]}">${w}</div>`).join('');
-  $('weekdayRow').querySelectorAll('.zf-wd').forEach(el => el.addEventListener('click', () => {
-    const i = +el.dataset.i;
-    state.weekdays[i] = !state.weekdays[i];
-    el.setAttribute('aria-pressed', String(!!state.weekdays[i]));
-    renderAll();
-  }));
-  $('nVal').textContent = state.n + ' 周';
-  $('nValD').textContent = state.nD + ' 天';
-  const anchorCur = state.ruleKind === 'everyNDays' ? state.anchorD : state.anchor;
-  const ac = $('anchorChips'); ac.innerHTML = chipHtml(ANCHORS, anchorCur);
-  ac.querySelectorAll('.zf-achip').forEach(el => el.addEventListener('click', () => {
-    if (state.ruleKind === 'everyNDays') state.anchorD = el.dataset.d; else state.anchor = el.dataset.d;
-    renderEdit(); renderHome();
-  }));
-  const cq = $('customChips');
-  cq.innerHTML = [...state.customDates].sort().map(d =>
-    `<button class="zf-achip" data-d="${d}" aria-pressed="true">${cnDate(d)}</button>`).join('') ||
-    '<span style="font-size:12px;color:var(--zf-muted)">尚未点选日期</span>';
-  $('holidaySwitch').className = 'zf-switch' + (state.holidayOn ? '' : ' off');
-  $('timeRows').innerHTML = state.times.map(x => `
-    <div class="zf-time-row">
-      <span class="zf-t zf-num">${fmtT(x)}</span>
-      <span class="zf-meta" style="margin-top:0">${x.label || ''}</span>
-      <span class="zf-x" data-del="${x.id}">✕</span>
-    </div>`).join('');
-  $('timeRows').querySelectorAll('[data-del]').forEach(el => el.addEventListener('click', () => {
-    state.times = state.times.filter(x => x.id !== el.dataset.del);
-    renderEdit(); renderHome();
-  }));
-  const pc = $('presetChips');
-  pc.innerHTML = PRESETS.map(p => {
-    const exists = state.times.some(x => x.id === p.id);
-    return `<button class="zf-achip" data-p="${p.id}" aria-pressed="${exists}">${exists ? '✓ ' : ''}${fmtT(p)}</button>`;
-  }).join('');
-  pc.querySelectorAll('.zf-achip').forEach(el => el.addEventListener('click', () => {
-    const p = PRESETS.find(x => x.id === el.dataset.p);
-    if (state.times.some(x => x.id === p.id)) state.times = state.times.filter(x => x.id !== p.id);
-    else state.times = [...state.times, { ...p }];
-    renderEdit(); renderHome();
-  }));
-}
-
-function monthMeta(y, m) {
-  const first = `${y}-${pad(m)}-01`;
-  return { first, days: new Date(y, m, 0).getDate(), firstDow: dow(first) };
-}
-function renderCalendar() {
-  const y = state.calY, m = state.calM;
-  const manual = state.ruleKind === 'customDates';
-  $('calTitle').textContent = `${y}年${m}月`;
-  $('calHint').textContent = (y === 2026 && m === 11) ? '本月' : '';
-  $('calModeBadge').textContent = manual ? (state.calMode === 'manual' ? '手动排班 · 编辑中' : '手动排班 · 预览') : '规则预览';
-  $('quickRow').style.display = (manual && state.calMode === 'manual') ? '' : 'none';
-  const grid = $('calGrid');
-  const { first, days, firstDow } = monthMeta(y, m);
-  let html = WD.map(w => `<div class="zf-dow">${w}</div>`).join('');
-  for (let i = 1; i < firstDow; i++) html += '<div></div>';
-  for (let d = 1; d <= days; d++) {
-    const date = `${y}-${pad(m)}-${pad(d)}`;
-    const ev = evalDay(rule(), date, state.holidayOn);
-    const ring = state.groupOn && ev.ring;
-    const picked = state.customDates.has(date);
-    const w = dow(date);
-    let cls = 'zf-day', tag = '', tagCls = '';
-    if (picked) cls += ' picked';
-    if (date === TODAY) cls += ' sel';
-    if (manual) {
-      if (ev.hol === true && !picked) cls += ' dim';
-      if (picked) { tag = '✓'; tagCls = 'big'; }
-      else if (ev.hol === true) { tag = '假'; tagCls = 'off'; }
-    } else {
-      if (!ring && w >= 6) cls += ' rest';
-      if (ring && state.ruleKind === 'everyNWeeks' && state.weekdays[6] && w === 6) cls += ' big';
-      if (ev.hol === true) { tag = '假'; tagCls = 'off'; }
-      else if (ev.hol === false && ring) { tag = '班'; tagCls = 'swap'; }
-      else if (ring && w === 6 && state.ruleKind === 'everyNWeeks') { tag = '大周'; tagCls = 'big'; }
-      else if (!ring && w === 6) { tag = '小周'; }
-      else if (!ring && w === 7) { tag = '休'; }
-    }
-    let dots = '';
-    if (!manual && ring) {
-      dots = `<div class="dots">${'<i></i>'.repeat(Math.min(state.times.length, 4))}</div>`;
-    }
-    html += `<div class="${cls}" data-date="${date}"><span class="n">${d}</span>${tag ? `<span class="tag ${tagCls}">${tag}</span>` : ''}${dots}</div>`;
-  }
-  grid.innerHTML = html;
-  grid.querySelectorAll('.zf-day').forEach(el => el.addEventListener('click', () => {
-    const date = el.dataset.date;
-    if (manual) {
-      state.customDates.has(date) ? state.customDates.delete(date) : state.customDates.add(date);
-      renderAll();
-    } else {
-      state.selDate = date;
-      renderCalendar();
-    }
-  }));
-  renderDetail();
-}
-
-function renderDetail() {
-  const box = $('dayDetail');
-  const date = state.selDate;
-  const ev = evalDay(rule(), date, state.holidayOn);
-  const ring = state.groupOn && ev.ring;
-  const manual = state.ruleKind === 'customDates';
-  let st;
-  if (manual) st = state.customDates.has(date) ? '已加入排班(点选即权威,不受节假日影响)' : '未排班 · 点击上方格子加入';
-  else if (ev.hol === true) st = '法定假日 · 联动开启时自动跳过';
-  else if (ev.hol === false) st = '调休补班日 · 法定上班';
-  else if (dow(date) >= 6) st = '周末';
-  else st = '工作日';
-  if (ring && ev.reason === 'swap') st += ' · 补班自动响起';
-  const evh = ring
-    ? `<div class="ev">${state.times.map(x => `<span>${fmtT(x)}${x.label ? ' ' + x.label : ''}</span>`).join('')}</div>`
-    : `<div class="ev"><span>${state.groupOn ? '无响铃' : '整组已停用'}</span></div>`;
-  box.innerHTML = `<b>${cnDate(date)} 周${wdOf(date)} · ${ring ? (ev.reason === 'swap' ? '补班上班' : kindLabel(date)) : (manual ? '未点选' : '不响')}</b>
-    <div class="st">${st}</div>${evh}`;
-}
-
-/* 月历导航 / 模式 / 快捷填充 */
-$('calPrev').addEventListener('click', () => { state.calM--; if (state.calM === 0) { state.calM = 12; state.calY--; } renderCalendar(); });
-$('calNext').addEventListener('click', () => { state.calM++; if (state.calM === 13) { state.calM = 1; state.calY++; } renderCalendar(); });
-$('calToday').addEventListener('click', () => {
-  state.calY = Number(TODAY.slice(0, 4)); state.calM = Number(TODAY.slice(5, 7)); renderCalendar();
-});
-$('calMode').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-  const m2 = b.dataset.m;
-  if (m2 === 'manual' && state.ruleKind !== 'customDates') {
-    // 进入手动排班:把可见月份的规则响铃日播种为点选起点
-    const { days } = monthMeta(state.calY, state.calM);
-    for (let d = 1; d <= days; d++) {
-      const date = `${state.calY}-${pad(state.calM)}-${pad(d)}`;
-      if (date >= TODAY && evalDay(rule(), date, state.holidayOn).ring) state.customDates.add(date);
-    }
-    state.ruleKind = 'customDates';
-  }
-  state.calMode = m2;
-  renderAll();
-}));
-$('quickRow').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-  const q = b.dataset.q;
-  const { days } = monthMeta(state.calY, state.calM);
-  for (let d = 1; d <= days; d++) {
-    const date = `${state.calY}-${pad(state.calM)}-${pad(d)}`;
-    if (q === 'workdays' && dow(date) <= 5) state.customDates.add(date);
-    if (q === 'all') state.customDates.add(date);
-    if (q === 'clear') state.customDates.delete(date);
-  }
-  if (q === 'clearAll') state.customDates.clear();
-  renderAll();
-}));
-
-function renderGuide() {
-  const STEPS = [
-    { title: '允许自启动与后台活动', path: '设置 → 应用 → 应用启动管理 → 周而复起 → 手动管理', desc: '勾选:允许自启动 · 允许关联启动 · 允许后台活动' },
-    { title: '忽略电池优化', path: '设置 → 电池 → 更多电池设置 → 应用专项', desc: '把「周而复起」设为不受限;锁屏后不清理。' },
-    { title: '最近任务里加锁', path: '多任务卡片下拉 → 🔒 锁定', desc: '防止一键清理误杀。完成一次即可。' },
+    { id: 't5', hour: 7, minute: 30, label: '弹性' },
+    { id: 't6', hour: 8, minute: 0, label: '晚起' },
+    { id: 't4', hour: 12, minute: 55, label: '午休' },
   ];
-  const steps = window.__guideSteps || (window.__guideSteps = [false, false, false]);
-  $('guideSteps').innerHTML = STEPS.map((s, i) => `
-    <div class="zf-step${steps[i] ? ' done' : ''}" data-i="${i}" tabindex="0">
-      <div class="no">${steps[i] ? '✓' : i + 1}</div>
-      <div style="flex:1;min-width:0">
-        <b>${s.title}</b>
-        <div class="path">${s.path}</div>
-        <p>${s.desc}</p>
+
+  const ANCHOR_SATS = ['2026-11-21', '2026-11-28', '2026-12-05', '2026-12-12'];
+
+  const activeWeekdays = () => [1, 2, 3, 4, 5, 6, 7].filter((d) => state.weekdays[d]);
+  const fmtT = (t) => `${pad(t.hour)}:${pad(t.minute)}`;
+
+  function currentRule() {
+    if (state.ruleKind === 'weekly') return { kind: 'weekly', weekdays: activeWeekdays() };
+    if (state.ruleKind === 'everyNWeeks') return { kind: 'everyNWeeks', n: state.nWeeks, weekdays: activeWeekdays(), anchor: state.anchor };
+    if (state.ruleKind === 'everyNDays') return { kind: 'everyNDays', n: state.nDays, anchor: state.anchorDays };
+    return { kind: 'customDates', dates: [...state.customDates] };
+  }
+
+  function ruleSummaryText() {
+    const wds = activeWeekdays().map((d) => WD[d - 1]).join('');
+    if (state.ruleKind === 'weekly') return `每周 · 周${wds || '未选'}`;
+    if (state.ruleKind === 'everyNWeeks') return `${state.nWeeks === 2 ? '大小周' : `每 ${state.nWeeks} 周`} · 周${wds || '未选'}`;
+    if (state.ruleKind === 'everyNDays') return `每 ${state.nDays} 天一班`;
+    return `手动月历 · 已选 ${state.customDates.size} 天`;
+  }
+
+  function findNextRing() {
+    const candidates = [];
+    if (state.primaryOn && state.times.length) {
+      const r = currentRule();
+      for (let i = 1; i <= 60; i++) {
+        const d = addDays(TODAY, i);
+        const ev = evalDay(r, d, state.holidayOn);
+        if (ev.ring) {
+          candidates.push({ date: d, groupName: '主力早班', times: state.times, ev, rule: r });
+          break;
+        }
+      }
+    }
+    if (state.dutyOn) {
+      for (let i = 1; i <= 60; i++) {
+        const d = addDays(TODAY, i);
+        const ev = evalDay(DUTY_GROUP.rule, d, true);
+        if (ev.ring) {
+          candidates.push({ date: d, groupName: DUTY_GROUP.name, times: DUTY_GROUP.times, ev, rule: DUTY_GROUP.rule });
+          break;
+        }
+      }
+    }
+    candidates.sort((a, b) => a.date.localeCompare(b.date));
+    return candidates[0] || null;
+  }
+
+  /* ==================== 各屏幕 HTML 生成器(支持主屏与总览复用) ==================== */
+  function buildCycleDialSVG(nextDow) {
+    // 7 段圆弧对应周一至周日,高亮下次响铃所在星期段
+    const cx = 29, cy = 29, r = 23;
+    let paths = '';
+    for (let i = 0; i < 7; i++) {
+      const a1 = ((-90 + i * (360 / 7) + 6) * Math.PI) / 180;
+      const a2 = ((-90 + (i + 1) * (360 / 7) - 6) * Math.PI) / 180;
+      const x1 = (cx + r * Math.cos(a1)).toFixed(2);
+      const y1 = (cy + r * Math.sin(a1)).toFixed(2);
+      const x2 = (cx + r * Math.cos(a2)).toFixed(2);
+      const y2 = (cy + r * Math.sin(a2)).toFixed(2);
+      const active = nextDow === i + 1;
+      paths += `<path d="M${x1} ${y1} A${r} ${r} 0 0 1 ${x2} ${y2}" fill="none" stroke="${active ? 'var(--p-accent)' : 'var(--p-border)'}" stroke-width="${active ? 4.2 : 3.2}" stroke-linecap="round"/>`;
+    }
+    return `<svg viewBox="0 0 58 58" aria-hidden="true">${paths}</svg>`;
+  }
+
+  function htmlHome() {
+    const nx = findNextRing();
+    const r = currentRule();
+    const stripCells = [];
+    for (let i = 0; i < 7; i++) {
+      const d = addDays(TODAY, i);
+      const w = dow(d);
+      const ev = state.primaryOn ? evalDay(r, d, state.holidayOn) : { ring: false, hol: HOLIDAYS[d] };
+      let badge = '休', bCls = '';
+      if (ev.hol === true && !ev.ring) { badge = '假'; bCls = 'hol'; }
+      else if (ev.reason === 'swap') { badge = '补班'; bCls = 'swap'; }
+      else if (ev.ring && w === 6 && r.kind === 'everyNWeeks') { badge = '大周'; bCls = 'ring'; }
+      else if (!ev.ring && w === 6 && r.kind === 'everyNWeeks') { badge = '小周'; }
+      else if (ev.ring) { badge = '响'; bCls = 'ring'; }
+      const isNext = nx && nx.date === d;
+      stripCells.push(`
+        <div class="p-ws-cell ${isNext ? 'is-next' : ''} ${!ev.ring ? 'is-off' : ''}">
+          <span class="p-ws-wd">${i === 0 ? '今' : WD[w - 1]}</span>
+          <span class="p-ws-num zf-num">${+d.slice(8)}</span>
+          <span class="p-ws-badge ${bCls}">${badge}</span>
+        </div>
+      `);
+    }
+
+    const diff = nx ? diffDays(nx.date, TODAY) : 0;
+    const leadLabel = !nx ? '全部班组已静音' : diff === 1 ? '明天破晓响铃' : `${diff} 天后响铃`;
+    const shiftTag = nx
+      ? (nx.ev.reason === 'swap' ? '调休补班' : (dow(nx.date) === 6 && nx.rule.kind === 'everyNWeeks' ? '大周周六' : `${nx.groupName}`))
+      : '待命';
+
+    return `
+      <div class="p-topbar">
+        <div class="p-app-title">
+          <span class="p-mini-dial">${ico('alarm')}</span>
+          <span>周而复起</span>
+        </div>
+        <div class="p-top-actions">
+          <button class="p-icon-btn" data-goto="ring" title="预览锁屏响铃">${ico('bell')}<span>试响</span></button>
+          <button class="p-icon-btn" data-goto="edit" title="编辑或新建班组">${ico('plus')}<span>新建</span></button>
+        </div>
       </div>
-    </div>`).join('');
-  $('guideSteps').querySelectorAll('.zf-step').forEach(el => el.addEventListener('click', () => {
-    steps[+el.dataset.i] = !steps[+el.dataset.i];
-    renderGuide();
-  }));
-  const doneCount = steps.filter(Boolean).length;
-  $('guideProgress').innerHTML = [0,1,2].map(i => `<i class="${i < doneCount ? 'on' : ''}"></i>`).join('');
-  $('guideDone').classList.toggle('disabled', doneCount < 3);
-}
+      <div class="p-scroll">
+        <div class="p-hero">
+          <div class="p-hero-head">
+            <span class="p-live-pill"><i class="p-live-dot"></i>${leadLabel}</span>
+            <span class="p-holiday-tag">${state.holidayOn ? 'holiday-cn 联动开启' : '纯规则模式'}</span>
+          </div>
+          <div class="p-hero-main">
+            <div>
+              <div class="p-hero-time zf-num">${nx ? fmtT(nx.times[0]) : '—:—'}</div>
+              <div class="p-hero-sub">
+                <span>${nx ? `${cnDate(nx.date)} 周${WD[dow(nx.date) - 1]}` : '开启任意班组以排期'}</span>
+                <span class="p-tag accent">${shiftTag}</span>
+                ${nx ? `<span class="p-tag">连环 ×${nx.times.length}</span>` : ''}
+              </div>
+            </div>
+            <div class="p-cycle-ring">
+              ${buildCycleDialSVG(nx ? dow(nx.date) : 0)}
+              <div class="p-cycle-center">${nx ? `周${WD[dow(nx.date) - 1]}<br><small style="font-size:8px;opacity:.7">NEXT</small>` : 'OFF'}</div>
+            </div>
+          </div>
+          <div class="p-week-strip">${stripCells.join('')}</div>
+        </div>
 
-/* ================= 场景切换 / 主题 / 交互 ================= */
-function setScene(scene) {
-  state.scene = scene;
-  $('zfPhone').dataset.page = scene;
-  document.querySelectorAll('.zf-nav button[data-goto]').forEach(b => {
-    b.setAttribute('aria-current', b.dataset.goto === scene ? 'page' : 'false');
+        <div class="p-sec-head">
+          <span>排班闹钟组 · 2</span>
+          <span style="color:var(--p-accent);cursor:pointer" data-goto="calendar">查看月历 ›</span>
+        </div>
+
+        <!-- 主力班组卡 -->
+        <div class="p-group-card ${state.primaryOn ? '' : 'is-muted'}">
+          <div class="p-group-top">
+            <div class="p-group-ico">${ico('sun')}</div>
+            <div class="p-group-info" data-goto="edit">
+              <div class="p-group-name">
+                <span>主力早班</span>
+                ${state.holidayOn ? '<span class="p-tag accent" style="font-size:9.5px;padding:2px 6px">智能节假</span>' : ''}
+              </div>
+              <div class="p-group-rule">${ruleSummaryText()} · ${state.times.length} 道响铃</div>
+            </div>
+            <button class="p-switch ${state.primaryOn ? '' : 'off'}" data-toggle="primary" aria-label="开关主力早班"></button>
+          </div>
+          <div class="p-cascade-grid">
+            ${state.times.map((t, idx) => `
+              <div class="p-time-pill ${idx === 0 && state.primaryOn ? 'first' : ''}">
+                <span class="p-tp-clock zf-num">${fmtT(t)}</span>
+                <span class="p-tp-label">${t.label || '闹钟'}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="p-group-foot" data-goto="edit">
+            <span>本周六 (11月21日) 属 <span class="hi">大周上班日</span></span>
+            <span>编辑规则 ›</span>
+          </div>
+        </div>
+
+        <!-- 第二班组卡:展示多组并存能力 -->
+        <div class="p-group-card ${state.dutyOn ? '' : 'is-muted'}">
+          <div class="p-group-top">
+            <div class="p-group-ico">${ico('moon')}</div>
+            <div class="p-group-info" data-goto="edit">
+              <div class="p-group-name"><span>${DUTY_GROUP.name}</span></div>
+              <div class="p-group-rule">每 3 天一班 · 上一休二 · 2 道响铃</div>
+            </div>
+            <button class="p-switch ${state.dutyOn ? '' : 'off'}" data-toggle="duty" aria-label="开关轮班值守"></button>
+          </div>
+          <div class="p-cascade-grid">
+            ${DUTY_GROUP.times.map((t) => `
+              <div class="p-time-pill">
+                <span class="p-tp-clock zf-num">${fmtT(t)}</span>
+                <span class="p-tp-label">${t.label}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <button class="p-add-btn" data-goto="edit">${ico('plus')}<span>新建排班闹钟组</span></button>
+      </div>
+    `;
+  }
+
+  function htmlCalendar() {
+    const y = state.calY, m = state.calM;
+    const first = `${y}-${pad(m)}-01`;
+    const days = new Date(y, m, 0).getDate();
+    const firstDow = dow(first);
+    const r = currentRule();
+    const editingManual = state.calMode === 'manual';
+
+    // 构建按周分组的行,每行左侧带 大/小 周徽章
+    const cells = [];
+    for (let i = 1; i < firstDow; i++) cells.push(null);
+    for (let d = 1; d <= days; d++) cells.push(`${y}-${pad(m)}-${pad(d)}`);
+    while (cells.length % 7 !== 0) cells.push(null);
+
+    let gridRowsHtml = `<div></div>` + WD.map((w) => `<div class="p-cal-dow">${w}</div>`).join('');
+    let ringDaysCount = 0;
+
+    for (let row = 0; row < cells.length / 7; row++) {
+      const slice = cells.slice(row * 7, row * 7 + 7);
+      const refDate = slice.find(Boolean);
+      const mon = weekStart(refDate);
+      const bigFlag = isBigWeekRow(r, mon);
+      const wkBadge = !editingManual && bigFlag !== null
+        ? `<div class="p-wk-tag ${bigFlag ? 'big' : ''}">${bigFlag ? '大' : '小'}</div>`
+        : `<div class="p-wk-tag">周</div>`;
+
+      const rowCells = slice.map((date) => {
+        if (!date) return `<div></div>`;
+        const dNum = +date.slice(8);
+        const w = dow(date);
+        const ev = evalDay(r, date, state.holidayOn);
+        const ring = state.primaryOn && ev.ring;
+        if (ring) ringDaysCount++;
+        const picked = state.customDates.has(date);
+
+        let cls = 'p-day', sub = '';
+        if (date === TODAY) cls += ' today';
+        if (date === state.selDate) cls += ' selected';
+
+        if (editingManual) {
+          if (picked) { cls += ' big-sat'; sub = '已排'; }
+          else if (ev.hol === true) { cls += ' hol-day'; sub = '假日'; }
+          else { cls += ' rest'; sub = '点选'; }
+        } else {
+          if (ev.hol === true && !ring) { cls += ' hol-day'; sub = '休假'; }
+          else if (ev.reason === 'swap') { cls += ' swap-day'; sub = '补班'; }
+          else if (ring && w === 6 && r.kind === 'everyNWeeks') { cls += ' big-sat'; sub = '大周'; }
+          else if (!ring && w === 6 && r.kind === 'everyNWeeks') { cls += ' rest'; sub = '小周'; }
+          else if (ring) { cls += ' work-ring'; sub = `×${state.times.length}`; }
+          else { cls += ' rest'; sub = '休'; }
+        }
+        return `<div class="${cls}" data-cal-date="${date}">
+          <span class="d-num zf-num">${dNum}</span>
+          <span class="d-sub">${sub}</span>
+        </div>`;
+      }).join('');
+
+      gridRowsHtml += `<div style="display:flex;justify-content:center">${wkBadge}</div>` + rowCells;
+    }
+
+    // 底部选中日期推理票据
+    const selEv = evalDay(r, state.selDate, state.holidayOn);
+    const selRing = state.primaryOn && selEv.ring;
+    let traceText = '';
+    if (editingManual) {
+      traceText = state.customDates.has(state.selDate)
+        ? '手动点选权威生效 · 不受法定节假日跳过影响'
+        : '未加入手动排班 · 点击日历格子即可切换排班状态';
+    } else if (selEv.reason === 'skip-holiday') {
+      traceText = '规则层命中工作日 → 节假日层识别为法定假日 → 自动跳过不响';
+    } else if (selEv.reason === 'swap') {
+      traceText = '规则层为周末休息 → 节假日层识别为全国调休补班 → 自动唤醒响铃';
+    } else if (selRing && dow(state.selDate) === 6 && r.kind === 'everyNWeeks') {
+      traceText = `与锚点日 (${cnDate(state.anchor)}) 同属大周周期 → 周六正常响铃`;
+    } else if (!selRing && dow(state.selDate) === 6 && r.kind === 'everyNWeeks') {
+      traceText = `距大周锚点隔周轮空 → 本周为小周周六,安心睡懒觉`;
+    } else {
+      traceText = selRing ? '常规工作日排班命中 · 连环闹钟按时待命' : '常规休息日 · 当日静音';
+    }
+
+    return `
+      <div class="p-topbar">
+        <div class="p-app-title"><span>排班月历</span></div>
+        <span class="p-tag accent zf-num">本月响 ${ringDaysCount} 天</span>
+      </div>
+      <div class="p-scroll">
+        <div class="p-seg-bar">
+          <button data-cal-mode="rule" aria-pressed="${!editingManual}">规则预览</button>
+          <button data-cal-mode="manual" aria-pressed="${editingManual}">手动点选排班</button>
+        </div>
+
+        ${editingManual ? `
+          <div class="p-quick-bar">
+            <button data-quick="workdays">填充工作日</button>
+            <button data-quick="all">填充全月</button>
+            <button data-quick="clear">清空本月</button>
+          </div>
+        ` : ''}
+
+        <div class="p-cal-card">
+          <div class="p-cal-header">
+            <div class="p-cal-month zf-num">
+              <span>${y} 年 ${m} 月</span>
+              ${y === 2026 && m === 11 ? '<span class="p-tag accent">本月</span>' : ''}
+            </div>
+            <div class="p-cal-navs">
+              <button data-cal-step="-1" aria-label="上个月">${ico('chevL')}</button>
+              <button data-cal-step="0" aria-label="回到本月" style="font-size:10.5px;font-weight:700;width:auto;padding:0 8px">今</button>
+              <button data-cal-step="1" aria-label="下个月">${ico('chevR')}</button>
+            </div>
+          </div>
+          <div class="p-cal-grid">${gridRowsHtml}</div>
+          <div class="p-cal-legend">
+            <span><i style="background:var(--p-accent)"></i>班日 / 大周</span>
+            <span><i style="background:var(--p-green)"></i>调休补班</span>
+            <span><i style="background:var(--p-red)"></i>法定假日</span>
+          </div>
+        </div>
+
+        <div class="p-ticket">
+          <div class="p-ticket-top">
+            <span class="p-ticket-date zf-num">${cnDate(state.selDate)} 周${WD[dow(state.selDate) - 1]}</span>
+            <span class="p-tag ${selRing ? 'accent' : ''}">${selRing ? '当日响铃' : '当日静音'}</span>
+          </div>
+          <div class="p-ticket-trace">${traceText}</div>
+          ${selRing ? `
+            <div class="p-ticket-times zf-num">
+              ${state.times.map((t) => `<span>${fmtT(t)} ${t.label || ''}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function htmlEdit() {
+    return `
+      <div class="p-nav-head">
+        <button class="p-nav-back" data-goto="home">${ico('chevL')}<span>返回</span></button>
+        <span style="font-size:15px;font-weight:750">编辑主力早班</span>
+        <button class="p-nav-save" data-goto="home">保存</button>
+      </div>
+      <div class="p-scroll">
+        <div class="p-field-card">
+          <div class="p-field-title">班制模型 · RULE ENGINE</div>
+          <div class="p-rule-tabs">
+            <button data-rk="weekly" aria-pressed="${state.ruleKind === 'weekly'}">每周几</button>
+            <button data-rk="everyNWeeks" aria-pressed="${state.ruleKind === 'everyNWeeks'}">每 N 周</button>
+            <button data-rk="everyNDays" aria-pressed="${state.ruleKind === 'everyNDays'}">每 N 天</button>
+            <button data-rk="customDates" aria-pressed="${state.ruleKind === 'customDates'}">月历点选</button>
+          </div>
+
+          ${(state.ruleKind === 'weekly' || state.ruleKind === 'everyNWeeks') ? `
+            <div class="p-wd-row">
+              ${WD.map((w, idx) => `
+                <button class="p-wd-btn" data-wd="${idx + 1}" aria-pressed="${!!state.weekdays[idx + 1]}">${w}</button>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        ${state.ruleKind === 'everyNWeeks' ? `
+          <div class="p-field-card">
+            <div class="p-field-title">大小周锚点 · 只答一个问题</div>
+            <div class="p-stepper" style="margin-bottom:11px">
+              <button class="p-step-btn" data-nstep="-1">−</button>
+              <span class="zf-num" style="font-size:17px;font-weight:750;min-width:48px;text-align:center">${state.nWeeks} 周</span>
+              <button class="p-step-btn" data-nstep="1">+</button>
+              <span style="font-size:11px;color:var(--p-ink-2)">2 周 = 标准大小周</span>
+            </div>
+            <div style="font-size:11.5px;color:var(--p-ink-2);margin-bottom:8px">最近哪一个周六需要上班(大周)?</div>
+            <div class="p-anchor-grid">
+              ${ANCHOR_SATS.map((s, idx) => `
+                <button class="p-anchor-chip zf-num" data-anchor="${s}" aria-pressed="${state.anchor === s}">
+                  ${cnDate(s)} ${idx === 0 ? '· 本周六' : ''}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+
+        ${state.ruleKind === 'everyNDays' ? `
+          <div class="p-field-card">
+            <div class="p-field-title">轮班间隔 · 上 1 休 N-1</div>
+            <div class="p-stepper">
+              <button class="p-step-btn" data-ndstep="-1">−</button>
+              <span class="zf-num" style="font-size:18px;font-weight:750;min-width:54px;text-align:center">每 ${state.nDays} 天</span>
+              <button class="p-step-btn" data-ndstep="1">+</button>
+              <span style="font-size:11px;color:var(--p-ink-2)">锚点: 11月18日</span>
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="p-field-card">
+          <div class="p-field-title">连环响铃时间轴 (${state.times.length} 道)</div>
+          ${state.times.map((t) => `
+            <div class="p-timeline-item">
+              <div>
+                <b class="zf-num" style="font-size:15px">${fmtT(t)}</b>
+                <span style="font-size:11px;color:var(--p-ink-2);margin-left:6px">${t.label || '兜底'}</span>
+              </div>
+              <button data-del-time="${t.id}" style="color:var(--p-red);font-size:12px;font-weight:700;padding:4px 6px">移除</button>
+            </div>
+          `).join('')}
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+            ${PRESETS.map((p) => {
+              const on = state.times.some((x) => x.id === p.id);
+              return `<button class="p-tag ${on ? 'accent' : ''} zf-num" data-preset="${p.id}" style="padding:5px 9px;cursor:pointer">${on ? '✓ ' : '+ '}${fmtT(p)}</button>`;
+            }).join('')}
+          </div>
+        </div>
+
+        <div class="p-field-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-size:13.5px;font-weight:700">法定节假日智能联动</div>
+            <div style="font-size:11px;color:var(--p-ink-2);margin-top:2px">法定假日自动跳过 · 调休补班周六日自动响</div>
+          </div>
+          <button class="p-switch ${state.holidayOn ? '' : 'off'}" data-toggle="holiday" aria-label="节假日联动"></button>
+        </div>
+      </div>
+    `;
+  }
+
+  function htmlRing() {
+    if (state.ringState === 'stopped') {
+      return `
+        <div class="p-ring-top">周 而 复 起 · 破 晓 时 计</div>
+        <div class="p-ring-center" style="gap:10px">
+          <div style="width:56px;height:56px;border-radius:999px;background:rgba(52,211,153,0.18);color:#34d399;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700">✓</div>
+          <div style="font-size:17px;font-weight:700">早安,第一道闹钟已关闭</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.6)">后续 06:50 / 07:00 兜底闹钟保持待命</div>
+        </div>
+        <div class="p-ring-actions">
+          <button class="p-ring-snooze" data-ring-act="reset">重新演示响铃</button>
+          <button class="p-ring-stop" data-goto="home">返回应用首页</button>
+        </div>
+      `;
+    }
+    return `
+      <div class="p-ripples"><span></span><span></span><span></span></div>
+      <div class="p-ring-top">系统级精确闹钟 · 无视静音与勿扰</div>
+      <div class="p-ring-center">
+        <div class="p-ring-date">11 月 21 日 · 周六 · 大周上班日</div>
+        <div class="p-ring-clock zf-num">${state.ringState === 'snoozed' ? '06:49' : '06:40'}</div>
+        <div class="p-ring-badge">主力早班 · 第 1 / 4 道 · 第一道唤醒</div>
+        <div class="p-ring-sub">
+          ${state.ringState === 'snoozed' ? '已进入 9 分钟贪睡倒计时 · 06:49 再次渐强响起' : '30 秒渐强铃声 · 后续 06:50 / 07:00 兜底待命'}
+        </div>
+      </div>
+      <div class="p-ring-actions">
+        <button class="p-ring-snooze" data-ring-act="snooze">稍后提醒 · 贪睡 9 分钟</button>
+        <button class="p-ring-stop" data-ring-act="stop">关闭本道闹钟</button>
+      </div>
+    `;
+  }
+
+  function htmlGuide() {
+    const stepsData = [
+      { title: '开启自启动与后台关联活动', path: '系统设置 → 应用 → 启动管理 → 周而复起 → 手动管理', desc: '允许自启动与后台运行,确保凌晨 03:30 定时刷新器稳定执行。' },
+      { title: '电池优化设为「无限制」', path: '系统设置 → 电池 → 应用耗电管理 → 不受限制', desc: '防止深度睡眠期间系统冻结精确闹钟广播。' },
+      { title: '最近任务卡片下拉加锁', path: '上滑多任务视图 → 下拉卡片出现锁头图标', desc: '避免睡前一键清理后台时误杀闹钟守护进程。' },
+    ];
+    const doneCount = state.guideSteps.filter(Boolean).length;
+    return `
+      <div class="p-nav-head">
+        <button class="p-nav-back" data-goto="settings">${ico('chevL')}<span>设置</span></button>
+        <span style="font-size:15px;font-weight:750">厂商后台保活向导</span>
+        <span class="p-tag accent zf-num">${doneCount}/3</span>
+      </div>
+      <div class="p-scroll">
+        <div class="p-field-card">
+          <div style="font-size:12px;color:var(--p-ink-2);line-height:1.55">
+            国产定制系统默认严格管控后台。花 <b>45 秒</b>核对以下三步(点击卡片标记已完成),即可获得与系统自带时钟同级的响铃可靠性。
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+            ${['华为 HarmonyOS', '小米 HyperOS', 'OPPO / vivo'].map((v) => `
+              <button class="p-tag ${state.vendor === v ? 'accent' : ''}" data-vendor="${v}" style="padding:5px 9px;cursor:pointer">${v}</button>
+            `).join('')}
+          </div>
+        </div>
+
+        ${stepsData.map((s, i) => `
+          <div class="p-step-card ${state.guideSteps[i] ? 'done' : ''}" data-gstep="${i}">
+            <div class="p-step-num">${state.guideSteps[i] ? '✓' : i + 1}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13.5px;font-weight:700">${s.title}</div>
+              <div class="p-step-path">${s.path}</div>
+              <div style="font-size:11px;color:var(--p-ink-2);margin-top:6px;line-height:1.5">${s.desc}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  function htmlSettings() {
+    const doneCount = state.guideSteps.filter(Boolean).length;
+    return `
+      <div class="p-topbar">
+        <div class="p-app-title"><span>设置与可靠性</span></div>
+        <span class="p-tag green">调度健康 ✓</span>
+      </div>
+      <div class="p-scroll">
+        <div class="p-field-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--p-accent-soft);border-color:var(--p-accent-border)">
+          <div>
+            <div style="font-size:13.5px;font-weight:750;color:var(--p-accent)">系统精确闹钟已就绪</div>
+            <div style="font-size:11px;color:var(--p-ink-2);margin-top:2px">未来 14 天共 42 次响铃已写入系统时钟队列</div>
+          </div>
+          <button class="p-nav-save" data-goto="ring" style="flex-shrink:0">立即试响</button>
+        </div>
+
+        <div class="p-sec-head"><span>可靠性专项</span></div>
+        <div class="p-list-card">
+          <div class="p-list-row" data-goto="guide">
+            <div>
+              <b>厂商后台保活向导</b>
+              <span>当前进度 ${doneCount}/3 · 华为 / 小米 / OV 必做</span>
+            </div>
+            <span style="color:var(--p-ink-3)">›</span>
+          </div>
+          <div class="p-list-row" data-goto="ring">
+            <div>
+              <b>90 秒锁屏试响演练</b>
+              <span>真实验证 SET_ALARM_CLOCK + 全屏锁屏唤醒链路</span>
+            </div>
+            <span style="color:var(--p-ink-3)">›</span>
+          </div>
+          <div class="p-list-row">
+            <div>
+              <b>权限健康自检</b>
+              <span>精确闹钟已授权 ✓ · 全屏强提醒通知已授权 ✓</span>
+            </div>
+            <span class="p-tag green">正常</span>
+          </div>
+        </div>
+
+        <div class="p-sec-head"><span>本地数据与节假日</span></div>
+        <div class="p-list-card">
+          <div class="p-list-row">
+            <div>
+              <b>中国法定节假日库 (holiday-cn)</b>
+              <span>内置 2025–2026 离线快照 · 每年 11–12 月支持拉取新年度</span>
+            </div>
+            <span class="p-tag">已最新</span>
+          </div>
+          <div class="p-list-row">
+            <div>
+              <b>导出 / 恢复排班备份 (JSON)</b>
+              <span>纯本地零云端存储 · 换机一键迁移全部班组与规则</span>
+            </div>
+            <span style="color:var(--p-ink-3)">›</span>
+          </div>
+          <div class="p-list-row">
+            <div>
+              <b>关于周而复起</b>
+              <span>v0.2.0 · MIT 开源协议 · @zhouerfuqi/core 驱动</span>
+            </div>
+            <span style="color:var(--p-ink-3)">›</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function htmlTabBar(activeScene) {
+    const tabTarget = (activeScene === 'edit') ? 'home' : (activeScene === 'guide' ? 'settings' : activeScene);
+    const tabs = [
+      { id: 'home', label: '首页', icon: 'alarm' },
+      { id: 'calendar', label: '排班日历', icon: 'calendar' },
+      { id: 'settings', label: '设置', icon: 'settings' },
+    ];
+    return tabs.map((t) => `
+      <button class="p-tab" data-goto="${t.id}" aria-current="${tabTarget === t.id ? 'page' : 'false'}">
+        ${ico(t.icon)}
+        <span>${t.label}</span>
+      </button>
+    `).join('');
+  }
+
+  /* ==================== 渲染与事件绑定 ==================== */
+  const $ = (id) => document.getElementById(id);
+
+  function renderTokens() {
+    const t = THEMES[state.themeIdx];
+    const isDark = state.appearance === 'dark';
+    const items = [
+      { label: t.name + '(主色)', hex: isDark ? t.dark : t.light },
+      { label: 'App 背景底色', hex: isDark ? '#0C0D10' : '#F6F4EF' },
+      { label: '卡片表面层', hex: isDark ? '#16181D' : '#FFFFFF' },
+      { label: '调休补班绿', hex: isDark ? '#34D399' : '#059669' },
+      { label: '法定假日红', hex: isDark ? '#FB7185' : '#E11D48' },
+    ];
+    $('tokenStrip').innerHTML = items.map((it) => `
+      <div class="zf-token-chip">
+        <i class="zf-token-dot" style="background:${it.hex}"></i>
+        <div class="zf-token-meta"><b>${it.label}</b><span>${it.hex}</span></div>
+      </div>
+    `).join('');
+  }
+
+  function applyThemeVars(el) {
+    const t = THEMES[state.themeIdx];
+    el.style.setProperty('--theme-light', t.light);
+    el.style.setProperty('--theme-dark', t.dark);
+    el.dataset.appearance = state.appearance;
+  }
+
+  function renderMainPhone() {
+    const phone = $('mainPhone');
+    applyThemeVars(phone);
+    phone.classList.toggle('p-phone-ringing', state.scene === 'ring');
+
+    $('statusIcons').innerHTML = `${ico('wifi')}${ico('battery')}`;
+    $('scrHome').innerHTML = htmlHome();
+    $('scrCalendar').innerHTML = htmlCalendar();
+    $('scrEdit').innerHTML = htmlEdit();
+    $('scrRing').innerHTML = htmlRing();
+    $('scrGuide').innerHTML = htmlGuide();
+    $('scrSettings').innerHTML = htmlSettings();
+
+    phone.querySelectorAll('.p-screen').forEach((s) => {
+      s.classList.toggle('active', s.dataset.screen === state.scene);
+    });
+    $('phoneTabs').innerHTML = htmlTabBar(state.scene);
+
+    document.querySelectorAll('#sceneSeg button').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.scene === state.scene));
+    });
+
+    const t = THEMES[state.themeIdx];
+    $('logoArc').setAttribute('stroke', t.dark);
+    $('logoDot').setAttribute('fill', t.dark);
+    renderTokens();
+  }
+
+  function renderGallery() {
+    if (state.viewMode !== 'gallery') return;
+    const screens = [
+      { id: 'home', title: '01 · 首页 (破晓视窗 + 七日节律带)', html: htmlHome() },
+      { id: 'calendar', title: '02 · 排班月历 (大小周行标 + 规则推理)', html: htmlCalendar() },
+      { id: 'edit', title: '03 · 规则编辑 (一问锚点 + 连环闹钟)', html: htmlEdit() },
+      { id: 'ring', title: '04 · 锁屏响铃 (声波场 + 兜底提示)', html: htmlRing(), isRing: true },
+      { id: 'guide', title: '05 · 厂商保活向导 (三步引导)', html: htmlGuide() },
+      { id: 'settings', title: '06 · 设置与可靠性中心', html: htmlSettings() },
+    ];
+    const t = THEMES[state.themeIdx];
+    $('galleryGrid').innerHTML = screens.map((s) => `
+      <div class="zf-gallery-item">
+        <div class="zf-phone is-mini ${s.isRing ? 'p-phone-ringing' : ''}" data-appearance="${state.appearance}" style="--theme-light:${t.light};--theme-dark:${t.dark}">
+          <div class="p-statusbar">
+            <span class="zf-num">09:41</span>
+            <div class="p-island"></div>
+            <div class="p-status-icons">${ico('wifi')}${ico('battery')}</div>
+          </div>
+          <div class="p-viewport">
+            <div class="p-screen active ${s.isRing ? 'p-ring-screen' : ''}">${s.html}</div>
+          </div>
+          <nav class="p-tabbar">${htmlTabBar(s.id)}</nav>
+        </div>
+        <div class="zf-gallery-cap">${s.title}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderAll() {
+    $('zfStage').className = `zf-stage mode-${state.viewMode}`;
+    $('sceneControlsRow').style.display = state.viewMode === 'single' ? '' : 'none';
+    renderMainPhone();
+    renderGallery();
+  }
+
+  /* 渲染顶部主题色板 */
+  function initSwatches() {
+    $('swatchBar').innerHTML = THEMES.map((t, i) => `
+      <button class="zf-swatch" data-tidx="${i}" style="background:${t.light}" aria-pressed="${i === state.themeIdx}" title="${t.name}"></button>
+    `).join('');
+  }
+
+  /* 事件委托:一处绑定全站生效 */
+  document.getElementById('zfApp').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-scene],[data-goto],[data-view],[data-app-theme],[data-tidx],[data-toggle],[data-rk],[data-wd],[data-nstep],[data-ndstep],[data-anchor],[data-del-time],[data-preset],[data-cal-mode],[data-cal-date],[data-cal-step],[data-quick],[data-ring-act],[data-gstep],[data-vendor]');
+    if (!btn) return;
+
+    if (btn.dataset.view) {
+      state.viewMode = btn.dataset.view;
+      document.querySelectorAll('#viewModeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      renderAll();
+      return;
+    }
+    if (btn.dataset.appTheme) {
+      state.appearance = btn.dataset.appTheme;
+      document.querySelectorAll('#appAppearanceSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      renderAll();
+      return;
+    }
+    if (btn.dataset.tidx !== undefined) {
+      state.themeIdx = +btn.dataset.tidx;
+      initSwatches();
+      renderAll();
+      return;
+    }
+    if (btn.dataset.scene) {
+      state.scene = btn.dataset.scene;
+      renderAll();
+      return;
+    }
+    if (btn.dataset.goto) {
+      if (state.viewMode === 'gallery') {
+        state.viewMode = 'single';
+        document.querySelectorAll('#viewModeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === 'single')));
+      }
+      state.scene = btn.dataset.goto;
+      renderAll();
+      return;
+    }
+    if (btn.dataset.toggle) {
+      const k = btn.dataset.toggle;
+      if (k === 'primary') state.primaryOn = !state.primaryOn;
+      if (k === 'duty') state.dutyOn = !state.dutyOn;
+      if (k === 'holiday') state.holidayOn = !state.holidayOn;
+      renderAll();
+      return;
+    }
+    if (btn.dataset.rk) {
+      state.ruleKind = btn.dataset.rk;
+      renderAll();
+      return;
+    }
+    if (btn.dataset.wd) {
+      const w = +btn.dataset.wd;
+      state.weekdays[w] = !state.weekdays[w];
+      renderAll();
+      return;
+    }
+    if (btn.dataset.nstep) {
+      state.nWeeks = Math.min(4, Math.max(1, state.nWeeks + (+btn.dataset.nstep)));
+      renderAll();
+      return;
+    }
+    if (btn.dataset.ndstep) {
+      state.nDays = Math.min(7, Math.max(2, state.nDays + (+btn.dataset.ndstep)));
+      renderAll();
+      return;
+    }
+    if (btn.dataset.anchor) {
+      state.anchor = btn.dataset.anchor;
+      renderAll();
+      return;
+    }
+    if (btn.dataset.delTime) {
+      if (state.times.length > 1) state.times = state.times.filter((x) => x.id !== btn.dataset.delTime);
+      renderAll();
+      return;
+    }
+    if (btn.dataset.preset) {
+      const p = PRESETS.find((x) => x.id === btn.dataset.preset);
+      if (state.times.some((x) => x.id === p.id)) {
+        if (state.times.length > 1) state.times = state.times.filter((x) => x.id !== p.id);
+      } else {
+        state.times = [...state.times, { ...p }].sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute));
+      }
+      renderAll();
+      return;
+    }
+    if (btn.dataset.calMode) {
+      const m = btn.dataset.calMode;
+      if (m === 'manual' && state.ruleKind !== 'customDates') state.ruleKind = 'customDates';
+      if (m === 'rule' && state.ruleKind === 'customDates') state.ruleKind = 'everyNWeeks';
+      state.calMode = m;
+      renderAll();
+      return;
+    }
+    if (btn.dataset.calDate) {
+      const d = btn.dataset.calDate;
+      state.selDate = d;
+      if (state.calMode === 'manual') {
+        state.customDates.has(d) ? state.customDates.delete(d) : state.customDates.add(d);
+      }
+      renderAll();
+      return;
+    }
+    if (btn.dataset.calStep !== undefined) {
+      const step = +btn.dataset.calStep;
+      if (step === 0) { state.calY = 2026; state.calM = 11; }
+      else {
+        state.calM += step;
+        if (state.calM < 1) { state.calM = 12; state.calY--; }
+        if (state.calM > 12) { state.calM = 1; state.calY++; }
+      }
+      renderAll();
+      return;
+    }
+    if (btn.dataset.quick) {
+      const q = btn.dataset.quick;
+      const days = new Date(state.calY, state.calM, 0).getDate();
+      for (let d = 1; d <= days; d++) {
+        const dt = `${state.calY}-${pad(state.calM)}-${pad(d)}`;
+        if (q === 'workdays' && dow(dt) <= 5) state.customDates.add(dt);
+        if (q === 'all') state.customDates.add(dt);
+        if (q === 'clear') state.customDates.delete(dt);
+      }
+      renderAll();
+      return;
+    }
+    if (btn.dataset.ringAct) {
+      const a = btn.dataset.ringAct;
+      state.ringState = a === 'snooze' ? 'snoozed' : a === 'stop' ? 'stopped' : 'ringing';
+      renderAll();
+      return;
+    }
+    if (btn.dataset.gstep !== undefined) {
+      const idx = +btn.dataset.gstep;
+      state.guideSteps[idx] = !state.guideSteps[idx];
+      renderAll();
+      return;
+    }
+    if (btn.dataset.vendor) {
+      state.vendor = btn.dataset.vendor;
+      renderAll();
+    }
   });
-  document.querySelectorAll('.zf-controls [data-scene]').forEach(b => {
-    b.setAttribute('aria-pressed', String(b.dataset.scene === scene));
-  });
-  if (scene === 'home') renderHome();
-  if (scene === 'edit') renderEdit();
-  if (scene === 'calendar') renderCalendar();
-  if (scene === 'guide') renderGuide();
-  if (scene === 'ring') lucide.createIcons();
-}
-document.querySelectorAll('.zf-controls [data-scene]').forEach(b =>
-  b.addEventListener('click', () => setScene(b.dataset.scene)));
-document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => setScene(b.dataset.goto)));
 
-/* 主题:auto=移除覆盖,跟随系统 */
-document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => {
-  const m = b.dataset.mode;
-  document.documentElement.style.colorScheme = m === 'auto' ? '' : m;
-  document.querySelectorAll('[data-mode]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
-}));
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('view') === 'gallery') state.viewMode = 'gallery';
+  if (qs.get('appearance') === 'light') state.appearance = 'light';
+  if (qs.get('scene')) state.scene = qs.get('scene');
+  if (qs.get('color')) state.themeIdx = Math.min(3, Math.max(0, +qs.get('color') || 0));
 
-/* 主题色候选:点选即全站生效(含 Logo 弧线与呼吸点) */
-const ACCENTS = [
-  { n: '钉钉蓝', l: '#1677FF', d: '#4096FF' },
-  { n: '晴空', l: '#3C8FD6', d: '#62B3F2' },
-  { n: '靛蓝', l: '#4C63D2', d: '#8C9EF5' },
-  { n: '青碧', l: '#2FA8C9', d: '#54C8E4' },
-];
-function renderColors() {
-  $('zfColors').innerHTML = ACCENTS.map((c, i) =>
-    `<button class="zf-color" data-i="${i}" style="background:light-dark(${c.l},${c.d})" aria-pressed="${i === (window.__accentIdx ?? 0)}" title="${c.n}"></button>`).join('');
-  $('zfColors').querySelectorAll('.zf-color').forEach(el => el.addEventListener('click', () => {
-    const c = ACCENTS[+el.dataset.i];
-    window.__accentIdx = +el.dataset.i;
-    document.documentElement.style.setProperty('--zf-accent-light', c.l);
-    document.documentElement.style.setProperty('--zf-accent-dark', c.d);
-    renderColors();
-  }));
-}
-renderColors();
-
-/* 编辑页固定交互 */
-document.querySelectorAll('#ruleSeg button').forEach(b => b.addEventListener('click', () => {
-  state.ruleKind = b.dataset.k;
-  renderEdit(); renderHome();
-}));
-document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
-  state.n = Math.min(4, Math.max(1, state.n + (+b.dataset.step)));
-  renderEdit(); renderHome();
-}));
-document.querySelectorAll('[data-stepd]').forEach(b => b.addEventListener('click', () => {
-  state.nD = Math.min(7, Math.max(2, state.nD + (+b.dataset.stepd)));
-  renderEdit(); renderHome();
-}));
-$('holidaySwitch').addEventListener('click', () => {
-  state.holidayOn = !state.holidayOn;
+  document.querySelectorAll('#viewModeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === state.viewMode)));
+  document.querySelectorAll('#appAppearanceSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.appTheme === state.appearance)));
+  initSwatches();
   renderAll();
-});
-$('saveBtn').addEventListener('click', () => { $('saveBtn').textContent = '已保存 ✓'; setTimeout(() => { $('saveBtn').textContent = '保存'; }, 1200); });
-$('saveBig').addEventListener('click', () => { $('saveBig').textContent = '已保存 ✓'; setTimeout(() => { $('saveBig').textContent = '保 存'; }, 1200); setScene('home'); });
-
-/* 响铃页演示 */
-$('snoozeBtn').addEventListener('click', () => {
-  $('ringTime').textContent = '06:49';
-  $('ringSub').textContent = '已延后 9 分钟 → 06:49 再响';
-});
-$('stopBtn').addEventListener('click', () => {
-  $('ringMain').style.display = 'none';
-  $('ringActions').style.display = 'none';
-  $('ringDone').style.display = 'flex';
-});
-$('ringUndo').addEventListener('click', () => {
-  $('ringTime').textContent = '06:40';
-  $('ringSub').textContent = '音量渐强 · 静音/勿扰不影响';
-  $('ringMain').style.display = 'flex';
-  $('ringActions').style.display = 'flex';
-  $('ringDone').style.display = 'none';
-});
-
-/* 状态栏时钟 */
-function tickClock() {
-  const d = new Date();
-  $('clock').textContent = `${d.getHours()}:${pad(d.getMinutes())}`;
-}
-setInterval(tickClock, 30000);
-tickClock();
-
-function renderAll() { renderHome(); if (state.scene === 'edit') renderEdit(); if (state.scene === 'calendar') renderCalendar(); }
-renderAll();
-lucide.createIcons();
+})();
 </script>
 </body>
 </html>

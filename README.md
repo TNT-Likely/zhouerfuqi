@@ -4,6 +4,13 @@
 
 开源、本地优先的「任意班制」闹钟 App,为**大小周、轮班倒班、自定义月历排班**而生。
 
+<p align="center">
+  <img src="docs/screens/banner.png" alt="周而复起 · 五屏总览" width="720" />
+</p>
+<p align="center">
+  <a href="docs/screens/promo.gif"><img src="docs/screens/promo.gif" alt="功能演示 GIF" width="380" /></a>
+</p>
+
 ## 参与内测
 
 - 🍎 **iOS · TestFlight**:装好 [TestFlight](https://apps.apple.com/app/testflight/id899247664)
@@ -21,6 +28,11 @@
 - 想要一个规则可控、数据本地的开源实现,顺便验证跨端方案。
 
 ## 能力规划
+
+**外观**(design v2.0「破晓时计」):
+- **主题色调节**:设置 → 外观,5 色板(静海蓝 / 破晓琥珀 / 松石青翠 / 星夜靛蓝 / 赤陶暖砂),即刻全局换肤;亮暗跟随系统
+- **七日节律带**:首页 Hero 内嵌未来 7 天(响 / 假 / 补班 / 大周 / 小周徽章),不翻日历即知本周节奏
+- **自定义时间**:快捷项之外,滚轮网格选择任意时:分 + 标签,连环闹钟想加几道加几道
 
 **班制规则**(一个闹钟组挂一条规则,可多组并存):
 
