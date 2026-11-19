@@ -1,7 +1,9 @@
+import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { useGuide } from '@/stores/guide';
 import { useTheme } from '@/theme';
+import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
 
 const STEPS = [
   {
@@ -26,6 +28,16 @@ export default function GuideScreen() {
   const steps = useGuide((s) => s.steps);
   const toggle = useGuide((s) => s.toggle);
   const doneCount = steps.filter(Boolean).length;
+  // 实时权限卡:自动检测、一键拉系统弹窗,授权后自动置绿——不依赖手动标记
+  const [permOk, setPermOk] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    void checkNotificationPermission().then(setPermOk);
+  }, []);
+
+  const requestPerm = () => {
+    void requestNotificationPermission().then((ok) => setPermOk(ok));
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
@@ -36,6 +48,37 @@ export default function GuideScreen() {
       <Text style={{ color: t.text3, fontSize: 12, lineHeight: 20, marginTop: 10 }}>
         华为 / 荣耀等机型默认管控后台应用。完成以下 3 步(约 1 分钟),闹钟即可达到系统时钟级可靠性。点击卡片可标记完成。
       </Text>
+
+      {/* 步骤 0:系统权限(实时检测 + 主动申请) */}
+      <View style={[styles.step, { backgroundColor: t.surface, borderColor: t.line }]}>
+        <View
+          style={[
+            styles.no,
+            { backgroundColor: permOk === true ? 'rgba(62,207,142,0.15)' : 'rgba(77,157,255,0.15)' },
+          ]}
+        >
+          <Text style={{ color: permOk === true ? t.green : t.primary, fontWeight: '800', fontSize: 13 }}>
+            {permOk === true ? '✓' : permOk === false ? '!' : '…'}
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: t.text, fontSize: 14, fontWeight: '700' }}>
+            允许通知与精确闹钟(系统权限)
+          </Text>
+          <Text style={{ color: t.text3, fontSize: 11.5, marginTop: 6, lineHeight: 18 }}>
+            {permOk === null
+              ? '检测中…'
+              : permOk
+                ? '✓ 已授权,响铃可达系统时钟级可靠性。'
+                : '未授权:点「去授权」拉起系统弹窗,选「允许」即可自动完成。'}
+          </Text>
+        </View>
+        {permOk === false ? (
+          <Pressable onPress={requestPerm} style={[styles.permBtn, { backgroundColor: t.primary }]}>
+            <Text style={{ color: t.onPrimary, fontSize: 12, fontWeight: '800' }}>去授权</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       {STEPS.map((s, i) => (
         <Pressable
@@ -75,5 +118,6 @@ const styles = StyleSheet.create({
   step: { borderWidth: 1, borderRadius: 20, padding: 16, flexDirection: 'row', gap: 12 },
   no: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   path: { marginTop: 8, fontSize: 10.5, borderRadius: 8, borderWidth: 1, padding: 6, overflow: 'hidden', fontFamily: undefined },
+  permBtn: { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8 },
   primaryBtn: { borderRadius: 14, padding: 14, alignItems: 'center', marginTop: 4 },
 });

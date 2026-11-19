@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -15,12 +15,20 @@ import { getHolidayCalendar } from '@/services/holidays';
 import { todayISO } from '@/scheduler/materialize';
 import { syncAll } from '@/scheduler/sync';
 import { cnDate, WD, ruleDesc, ringReasonLabel } from '@/lib/labels';
+import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
 import { useTheme } from '@/theme';
 
 export default function HomeScreen() {
   const t = useTheme();
   const groups = useGroups((s) => s.groups);
   const setEnabled = useGroups((s) => s.setEnabled);
+  const [notifMissing, setNotifMissing] = useState(false);
+
+  // 主动检测:有启用中的班组但通知权限未授 → 首页横幅引导(不依赖用户去向导里手动标记)
+  useEffect(() => {
+    const anyEnabled = groups.some((g) => g.enabled);
+    void checkNotificationPermission().then((ok) => setNotifMissing(anyEnabled && ok === false));
+  }, [groups]);
   const cal = useMemo(() => getHolidayCalendar(), []);
 
   const next = useMemo(() => {
@@ -107,6 +115,23 @@ export default function HomeScreen() {
           <Ionicons name="shield-checkmark-outline" size={17} color={t.text2} />
         </Pressable>
       </View>
+
+      {/* 主动权限横幅:检测到未授权时引导,点击拉起系统弹窗 */}
+      {notifMissing ? (
+        <Pressable
+          style={[styles.permBanner, { backgroundColor: t.heroBg, borderColor: t.red }]}
+          onPress={() => {
+            void requestNotificationPermission().then((ok) => setNotifMissing(!ok));
+          }}
+        >
+          <Ionicons name="notifications-off-outline" size={16} color={t.red} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: t.text, fontSize: 12.5, fontWeight: '700' }}>响铃通知未授权</Text>
+            <Text style={{ color: t.text2, fontSize: 11, marginTop: 2 }}>点此授权,否则闹钟只静默不提醒 · 点「允许」即可</Text>
+          </View>
+          <Text style={{ color: t.primary, fontSize: 12, fontWeight: '800' }}>去授权</Text>
+        </Pressable>
+      ) : null}
 
       {/* Hero:下次响铃 + 七日节律带 */}
       <View style={[styles.hero, { backgroundColor: t.heroBg, borderColor: t.heroBorder }]}>
@@ -257,6 +282,10 @@ const styles = StyleSheet.create({
   appName: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
   iconBtn: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   hero: { borderWidth: 1, borderRadius: 22, padding: 16 },
+  permBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    borderWidth: 1.5, borderRadius: 16, padding: 12,
+  },
   heroHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   livePill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,

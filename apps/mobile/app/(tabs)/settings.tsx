@@ -14,6 +14,7 @@ import { scheduleRefresher as zfScheduleRefresher } from '../../modules/zf-alarm
 import { useTheme, THEME_COLORS } from '@/theme';
 import { usePrefs } from '@/stores/prefs';
 import { useColorScheme } from 'react-native';
+import { requestNotificationPermission } from '@/services/permissions';
 
 export default function SettingsScreen() {
   const t = useTheme();
@@ -93,19 +94,32 @@ export default function SettingsScreen() {
           sub={perm ? `通知 ${perm.notifications ? '✓' : '✗'} · 精确闹钟 ${perm.exactAlarms ? '✓' : '需检查'}` : '检测中…'}
           arrow
           onPress={() => {
-            void gateway.status().then((p) => {
+            // 主动申请机制:缺什么直接拉系统弹窗;被永久拒绝才引导去系统设置
+            void (async () => {
+              const p = await gateway.status();
               setPerm(p);
               if (p && (!p.notifications || !p.exactAlarms)) {
+                if (!p.notifications) {
+                  const ok = await requestNotificationPermission();
+                  const after = await gateway.status();
+                  setPerm(after);
+                  if (ok || after.notifications) {
+                    Alert.alert('已授权', '响铃提醒通知已开启。');
+                    return;
+                  }
+                }
                 Alert.alert(
                   '权限不完整',
-                  `${p.notifications ? '' : '通知未授权(降级提醒不可用)。'}${p.exactAlarms ? '' : '精确闹钟未授权(响铃不可靠)。'}\n可到系统设置里开启。`,
+                  `${p.notifications ? '' : '通知未授权(降级提醒不可用)。'}${p.exactAlarms ? '' : '精确闹钟未授权(响铃不可靠)。'}\n系统弹窗已被永久拒绝,请到应用详情里手动开启。`,
                   [
                     { text: '知道了', style: 'cancel' },
-                    { text: '打开系统设置', onPress: () => void Linking.openSettings() },
+                    { text: '打开系统设置', onPress: () => Linking.openSettings() },
                   ],
                 );
+              } else {
+                Alert.alert('权限完整', '通知与精确闹钟均已授权,响铃可达系统时钟级可靠性。');
               }
-            });
+            })();
           }}
         />
         <Row label="立即重排" sub="规则变更后通常自动执行;此按钮用于排查" arrow onPress={() => void syncAll().then(() => Alert.alert('已重排', '未来 14 天的响铃已同步到系统'))} />
@@ -233,7 +247,7 @@ export default function SettingsScreen() {
 function Row({ label, sub, arrow, onPress }: { label: string; sub: string; arrow?: boolean; onPress?: () => void }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} style={[styles.row, { borderBottomColor: t.line }]}>
+    <Pressable onPress={onPress} style={styles.row}>
       <View style={{ flex: 1 }}>
         <Text style={{ color: t.text, fontSize: 14, fontWeight: '600' }}>{label}</Text>
         <Text style={{ color: t.text3, fontSize: 11, marginTop: 3 }}>{sub}</Text>
@@ -254,5 +268,5 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: 19, borderWidth: 2,
     alignItems: 'center', justifyContent: 'center',
   },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, borderBottomWidth: 1 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11 },
 });
