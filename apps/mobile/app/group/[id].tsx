@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Switch, Alert, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, TextInput, Switch, Alert, Modal, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import type { AlarmGroup, Weekday } from '@core';
 import { useGroups } from '@/stores/groups';
@@ -8,6 +8,7 @@ import { todayISO } from '@/scheduler/materialize';
 import { cnDate, WD } from '@/lib/labels';
 import { useTheme, type Tokens } from '@/theme';
 import { TimeGridPicker } from '@/components/TimeWheel';
+import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
 
 const KINDS = [
   { k: 'weekly', label: '每周几' },
@@ -75,6 +76,23 @@ export default function GroupEditScreen() {
   const save = () => {
     if (!draft.times.length) {
       Alert.alert('至少保留一个响铃时间');
+      return;
+    }
+    // 主动权限机制:保存启用中的班组前,缺通知权限就先拉系统弹窗(而不是让用户去设置里找)
+    if (draft.enabled) {
+      void checkNotificationPermission().then((ok) => {
+        if (ok === false) {
+          void requestNotificationPermission().finally(() => {
+            upsert(draft);
+            void syncAll();
+            router.back();
+          });
+          return;
+        }
+        upsert(draft);
+        void syncAll();
+        router.back();
+      });
       return;
     }
     upsert(draft);
@@ -314,26 +332,33 @@ function CustomTimeAdder({
         style={[styles.customBtn, { borderColor: t.primary }]}
       >
         <Text style={{ color: t.primary, fontSize: 13, fontWeight: '700' }}>＋ 自定义时间</Text>
-        <Text style={{ color: t.text3, fontSize: 11 }}>滚轮选择任意时刻</Text>
+        <Text style={{ color: t.text3, fontSize: 11 }}>弹窗选择任意时刻</Text>
       </Pressable>
     );
   }
 
   return (
-    <View style={{ marginTop: 14 }}>
-      <TimeGridPicker
-        t={t}
-        hour={pending.hour}
-        minute={pending.minute}
-        label={pending.label}
-        onChange={setPending}
-        onSubmit={add}
-        submitLabel="加入"
-      />
-      <Pressable onPress={() => setOpen(false)} style={{ alignItems: 'center', paddingVertical: 10 }}>
-        <Text style={{ color: t.text3, fontSize: 12 }}>收起</Text>
-      </Pressable>
-    </View>
+    <Modal visible transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <View style={styles.modalBackdrop}>
+        <View style={[styles.modalCard, { backgroundColor: t.surface, borderColor: t.line }]}>
+          <View style={styles.modalHead}>
+            <Text style={{ color: t.text, fontSize: 15, fontWeight: '800' }}>自定义响铃时间</Text>
+            <Pressable onPress={() => setOpen(false)}>
+              <Text style={{ color: t.text3, fontSize: 16 }}>✕</Text>
+            </Pressable>
+          </View>
+          <TimeGridPicker
+            t={t}
+            hour={pending.hour}
+            minute={pending.minute}
+            label={pending.label}
+            onChange={setPending}
+            onSubmit={add}
+            submitLabel="加入并关闭"
+          />
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -378,5 +403,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 14, padding: 12, marginTop: 14,
   },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center', padding: 20 },
+  modalCard: { width: '100%', maxWidth: 460, borderWidth: 1, borderRadius: 22, padding: 16, maxHeight: '88%' },
+  modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
   primaryBtn: { borderRadius: 14, padding: 14, alignItems: 'center' },
 });
