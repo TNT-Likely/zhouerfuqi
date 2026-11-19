@@ -84,6 +84,8 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          # 手动 dispatch 无 tag 上下文:显式指定 tag_name(不存在时 softprops 会自动建)
+          tag_name: v${{ steps.ver.outputs.version_name }}
           files: |
             dist/zhouerfuqi-${{ steps.ver.outputs.version_name }}-arm64-v8a.apk
             dist/zhouerfuqi-${{ steps.ver.outputs.version_name }}-armeabi-v7a.apk
