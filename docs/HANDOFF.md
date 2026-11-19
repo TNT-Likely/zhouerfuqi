@@ -203,6 +203,19 @@ cd apps/mobile/android
    commit。此后发版 = 打 tag/手动触发 `upload=true`,**全程 CI,不再碰 Console UI**。
    用户真机(已装 gateway 占位包)会在 Play 测试通道收到 0.2.0 更新。
    凭据沉淀 `~/Documents/googleplay/`(含 chrome-session-backup 会话快照)
+8. **Android 原生全屏响铃(v2.2+,2026-11-19/20)**:
+   - 旧链路(notify-kit 通知)真机「闹钟不响,只有无意义提醒」两层根因:
+     ①通知渠道没配 sound(渠道建后不可改);②**App 更新/重装清空系统闹钟,而 syncAll 按
+     registry diff 永远看不出 → 已改强制全量重排**(原生 setAlarmClock 幂等,32 枚已验证)
+   - 新链路:zf-alarm 原生 `setAlarmClock` → ZfAlarmFireReceiver → **全屏意图通知** →
+     AlarmActivity(锁屏接管/循环铃声 10 秒渐强/原生贪睡+关闭,自包含杀进程不影响);
+     Android 14+ 后台直启 Activity 被 BAL 拦 → **FSI 通知是合规通道**(灭屏时系统放行全屏)
+   - ⚠️ 教训:新 receiver 必须在模块 manifest 注册;CI 失败排障**别用 rerun**(脏工作区),
+     新 dispatch;每日 03:30 refresher 会取消不在物化视野里的闹钟(试响按钮避开该时段)
+   - 电池豁免:主动检测 + ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS 一键申请
+     (向导步骤 2 实时化,不再手动标记);iOS AlarmKit 本就是系统级 UI,无需改动
+9. **v0.2.2 三渠道发版**:TestFlight/Play alpha/APK 全绿(Play 上传脚本加
+   分块重试 + 600s 超时,修 runner 64MB read timeout;CI 失败排障别 rerun,新 dispatch)
 
 ## 8. iOS(M2)进展
 
