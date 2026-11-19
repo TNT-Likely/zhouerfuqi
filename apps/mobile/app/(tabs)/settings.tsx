@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useGuide } from '@/stores/guide';
 import { holidayInfo, refreshHolidays } from '@/services/holidays';
@@ -10,10 +11,15 @@ import { checkUpdate, downloadAndInstall } from '@/services/updater';
 import { getVersion, isUpdateSupported } from '../../modules/zf-update/src';
 import Constants from 'expo-constants';
 import { scheduleRefresher as zfScheduleRefresher } from '../../modules/zf-alarm/src';
-import { useTheme } from '@/theme';
+import { useTheme, THEME_COLORS } from '@/theme';
+import { usePrefs } from '@/stores/prefs';
+import { useColorScheme } from 'react-native';
 
 export default function SettingsScreen() {
   const t = useTheme();
+  const scheme = useColorScheme();
+  const themeIdx = usePrefs((s) => s.themeIdx);
+  const setThemeIdx = usePrefs((s) => s.setThemeIdx);
   const steps = useGuide((s) => s.steps);
   const info = holidayInfo();
   const [perm, setPerm] = useState<{ notifications: boolean; exactAlarms: boolean } | null>(null);
@@ -182,6 +188,40 @@ export default function SettingsScreen() {
       </View>
       )}
 
+      {/* 外观 · 主题色调节(参考 design v2.0 色板) */}
+      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
+        <Text style={[styles.cardTitle, { color: t.text3 }]}>外观 · 主题色</Text>
+        <View style={styles.swatchRow}>
+          {THEME_COLORS.map((s, i) => {
+            const selected = themeIdx === i;
+            const color = scheme === 'light' ? s.light : s.dark;
+            return (
+              <Pressable
+                key={s.name}
+                onPress={() => setThemeIdx(i)}
+                style={styles.swatchItem}
+                accessibilityLabel={`主题色 ${s.name}`}
+              >
+                <View
+                  style={[
+                    styles.swatchDot,
+                    { backgroundColor: color, borderColor: selected ? t.text : t.line },
+                  ]}
+                >
+                  {selected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
+                </View>
+                <Text style={{ fontSize: 10, color: selected ? t.text : t.text3, fontWeight: selected ? '700' : '400' }}>
+                  {s.name}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={{ color: t.text3, fontSize: 11, marginTop: 10, lineHeight: 17 }}>
+          主色即刻全局生效;亮暗外观跟随系统设置。
+        </Text>
+      </View>
+
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>关于</Text>
         <Row label="周而复起" sub={`${Constants.expoConfig?.version ?? ver?.versionName ?? 'v0.1.0'} · MIT · github.com/TNT-Likely/zhouerfuqi`} arrow onPress={() => Alert.alert('周而复起', '开源、本地优先的任意班制闹钟。\n规则引擎 @zhouerfuqi/core · Expo RN')} />
@@ -208,5 +248,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '800', paddingTop: 52, paddingHorizontal: 2 },
   card: { borderWidth: 1, borderRadius: 20, padding: 16 },
   cardTitle: { fontSize: 11, letterSpacing: 2, marginBottom: 6 },
+  swatchRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 6 },
+  swatchItem: { alignItems: 'center', gap: 6 },
+  swatchDot: {
+    width: 38, height: 38, borderRadius: 19, borderWidth: 2,
+    alignItems: 'center', justifyContent: 'center',
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 12, borderBottomWidth: 1 },
 });

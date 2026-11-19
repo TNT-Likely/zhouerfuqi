@@ -7,6 +7,7 @@ import { syncAll } from '@/scheduler/sync';
 import { todayISO } from '@/scheduler/materialize';
 import { cnDate, WD } from '@/lib/labels';
 import { useTheme, type Tokens } from '@/theme';
+import { TimeWheelPicker } from '@/components/TimeWheel';
 
 const KINDS = [
   { k: 'weekly', label: '每周几' },
@@ -237,6 +238,7 @@ export default function GroupEditScreen() {
             );
           })}
         </View>
+        <CustomTimeAdder t={t} draft={draft} setDraft={setDraft} />
       </FieldCard>
 
       {/* 节假日联动 */}
@@ -282,6 +284,59 @@ function switchRule(rule: AlarmGroup['rule'], kind: string): AlarmGroup['rule'] 
   return { kind: 'customDates', dates: [nextSaturdays(1)[0]!] };
 }
 
+/** 自定义时间:滚轮选择任意时:分 + 标签,与快捷项并存 */
+function CustomTimeAdder({
+  t,
+  draft,
+  setDraft,
+}: {
+  t: Tokens;
+  draft: AlarmGroup;
+  setDraft: (fn: (d: AlarmGroup) => AlarmGroup) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pending, setPending] = useState({ hour: 7, minute: 0, label: '' });
+
+  const add = () => {
+    const { hour, minute, label } = pending;
+    const key = `t${hour}${String(minute).padStart(2, '0')}`;
+    setDraft((d) => {
+      if (d.times.some((x) => x.hour === hour && x.minute === minute)) return d;
+      return { ...d, times: [...d.times, { id: key, hour, minute, label: label || undefined }] };
+    });
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={[styles.customBtn, { borderColor: t.primary }]}
+      >
+        <Text style={{ color: t.primary, fontSize: 13, fontWeight: '700' }}>＋ 自定义时间</Text>
+        <Text style={{ color: t.text3, fontSize: 11 }}>滚轮选择任意时刻</Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <View style={{ marginTop: 14 }}>
+      <TimeWheelPicker
+        t={t}
+        hour={pending.hour}
+        minute={pending.minute}
+        label={pending.label}
+        onChange={setPending}
+        onSubmit={add}
+        submitLabel="加入"
+      />
+      <Pressable onPress={() => setOpen(false)} style={{ alignItems: 'center', paddingVertical: 10 }}>
+        <Text style={{ color: t.text3, fontSize: 12 }}>收起</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function Centered({ children, t }: { children: React.ReactNode; t: Tokens }) {
   return <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>{children}</View>;
 }
@@ -319,5 +374,9 @@ const styles = StyleSheet.create({
   stepBtn: { width: 34, height: 34, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   chip: { fontSize: 12, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
   timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 14, padding: 10, marginBottom: 8 },
+  customBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: 1.5, borderStyle: 'dashed', borderRadius: 14, padding: 12, marginTop: 14,
+  },
   primaryBtn: { borderRadius: 14, padding: 14, alignItems: 'center' },
 });
