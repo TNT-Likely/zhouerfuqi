@@ -19,8 +19,8 @@ import { requestNotificationPermission } from '@/services/permissions';
 export default function SettingsScreen() {
   const t = useTheme();
   const scheme = useColorScheme();
-  const themeIdx = usePrefs((s) => s.themeIdx);
-  const setThemeIdx = usePrefs((s) => s.setThemeIdx);
+  const { themeIdx, setThemeIdx, mode, setMode, avatarEmoji, setAvatarEmoji } = usePrefs();
+  const effectiveScheme = mode === 'system' ? (scheme === 'light' ? 'light' : 'dark') : mode;
   const steps = useGuide((s) => s.steps);
   const info = holidayInfo();
   const [perm, setPerm] = useState<{ notifications: boolean; exactAlarms: boolean } | null>(null);
@@ -69,7 +69,7 @@ export default function SettingsScreen() {
     }
   };
 
-  const guideDone = steps.every(Boolean);
+
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
@@ -78,15 +78,15 @@ export default function SettingsScreen() {
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>可靠性</Text>
         {Platform.OS === 'android' ? (
-          <Row label="保活向导" sub={guideDone ? '已完成 ✓ · 华为/荣耀必做' : '未完成 · 华为/荣耀机型必做'} arrow onPress={() => router.push('/guide')} />
+          <Row label="保活向导" sub="响铃可靠性检查:权限 / 电池豁免 / 厂商设置" arrow onPress={() => router.push('/guide')} />
         ) : null}
         <Row
-          label="试响(90 秒后)"
+          label="试响(30 秒后)"
           sub="验证精确闹钟 + 全屏意图触发链"
           arrow
           onPress={() => {
             void scheduleTestRing();
-            Alert.alert('已排期', '90 秒后将触发试响闹钟(可锁屏观察)');
+            Alert.alert('已排期', '30 秒后将触发试响闹钟(可锁屏观察)');
           }}
         />
         <Row
@@ -202,13 +202,32 @@ export default function SettingsScreen() {
       </View>
       )}
 
-      {/* 外观 · 主题色调节(参考 design v2.0 色板) */}
+      {/* 外观 · 模式 + 主题色(参考 design v2.0 色板) */}
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>外观 · 主题色</Text>
+        <Text style={[styles.cardTitle, { color: t.text3 }]}>外观</Text>
+        <View style={styles.modeSeg}>
+          {([
+            { k: 'system', label: '跟随系统' },
+            { k: 'light', label: '日间' },
+            { k: 'dark', label: '暗黑' },
+          ] as const).map((m) => {
+            const on = mode === m.k;
+            return (
+              <Pressable
+                key={m.k}
+                onPress={() => setMode(m.k)}
+                style={[styles.modeItem, on ? { backgroundColor: t.primary } : { backgroundColor: t.surface2 }]}
+              >
+                <Text style={{ fontSize: 12, color: on ? t.onPrimary : t.text2, fontWeight: on ? '800' : '400' }}>{m.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={[styles.cardTitle, { color: t.text3, marginTop: 16 }]}>主题色</Text>
         <View style={styles.swatchRow}>
           {THEME_COLORS.map((s, i) => {
             const selected = themeIdx === i;
-            const color = scheme === 'light' ? s.light : s.dark;
+            const color = effectiveScheme === 'light' ? s.light : s.dark;
             return (
               <Pressable
                 key={s.name}
@@ -231,9 +250,35 @@ export default function SettingsScreen() {
             );
           })}
         </View>
-        <Text style={{ color: t.text3, fontSize: 11, marginTop: 10, lineHeight: 17 }}>
-          主色即刻全局生效;亮暗外观跟随系统设置。
-        </Text>
+      </View>
+
+      {/* 个人 · 头像 + 语言 */}
+      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
+        <Text style={[styles.cardTitle, { color: t.text3 }]}>个人</Text>
+        <View style={styles.avatarRow}>
+          <View style={[styles.avatarPreview, { backgroundColor: t.heroBg, borderColor: t.heroBorder }]}>
+            <Text style={{ fontSize: 30 }}>{avatarEmoji}</Text>
+          </View>
+          <View style={styles.avatarChoices}>
+            {['⏰', '🌅', '🔥', '🌙', '☕', '🦉'].map((e) => {
+              const on = avatarEmoji === e;
+              return (
+                <Pressable
+                  key={e}
+                  onPress={() => setAvatarEmoji(e)}
+                  style={[styles.avatarChoice, { backgroundColor: on ? t.accentSoft : t.surface2, borderColor: on ? t.primary : t.line }]}
+                >
+                  <Text style={{ fontSize: 18 }}>{e}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      </View>
+
+      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
+        <Text style={[styles.cardTitle, { color: t.text3 }]}>语言 · Language</Text>
+        <Row label="简体中文" sub="当前语言 · 更多语言规划中" arrow={false} />
       </View>
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
@@ -262,6 +307,12 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '800', paddingTop: 52, paddingHorizontal: 2 },
   card: { borderWidth: 1, borderRadius: 20, padding: 16 },
   cardTitle: { fontSize: 11, letterSpacing: 2, marginBottom: 6 },
+  modeSeg: { flexDirection: 'row', borderRadius: 999, borderWidth: 1, padding: 4, gap: 4 },
+  modeItem: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999 },
+  avatarRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  avatarPreview: { width: 62, height: 62, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  avatarChoices: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  avatarChoice: { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   swatchRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 6 },
   swatchItem: { alignItems: 'center', gap: 6 },
   swatchDot: {
