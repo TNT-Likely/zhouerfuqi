@@ -1,12 +1,12 @@
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { useColorScheme } from 'react-native';
 import { usePrefs } from '@/stores/prefs';
 
 /**
  * 设计令牌 v2.1 —— 对齐 design/index.html v2.0「破晓时计」:
  * - 主题色可调:THEME_COLORS 调色板(默认「静海蓝」= 原主题蓝,不变),亮暗两态各自有适配值
+ * - 外观模式:跟随系统 / 亮色 / 暗色(设置页可切,覆写系统)
  * - 中性表面沿用 v2 方案 D:暗色纯黑 scaffold + #1C1C1E surface + 主题色 30% 边框替代分割线
- * - 亮色:#FAFAFA scaffold + 白卡片 + hairline
  * - accentSoft/heroBg/heroBorder 全部由当前主色派生(换肤即全 app 生效)
  */
 export const THEME_COLORS = [
@@ -87,12 +87,19 @@ function buildTokens(scheme: 'dark' | 'light', themeIdx: number): Tokens {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const scheme = useColorScheme();
-  const themeIdx = usePrefs((s) => s.themeIdx);
-  const t = useMemo(
-    () => buildTokens(scheme === 'light' ? 'light' : 'dark', themeIdx),
-    [scheme, themeIdx],
+  const systemScheme = useColorScheme();
+  const { themeIdx, mode } = usePrefs();
+  // 跟随系统时订阅系统变化;覆写时直接用偏好
+  const [sysOverride, setSysOverride] = useState<'dark' | 'light'>(
+    systemScheme === 'light' ? 'light' : 'dark',
   );
+
+  useEffect(() => {
+    setSysOverride(systemScheme === 'light' ? 'light' : 'dark');
+  }, [systemScheme]);
+
+  const scheme = mode === 'system' ? sysOverride : mode;
+  const t = useMemo(() => buildTokens(scheme, themeIdx), [scheme, themeIdx]);
   return <ThemeContext.Provider value={t}>{children}</ThemeContext.Provider>;
 }
 

@@ -46,9 +46,9 @@ export async function snooze(minutes: number, title: string): Promise<void> {
   registry.set(map);
 }
 
-/** 设置页「试响」:注册一枚 90 秒后的一次性闹钟,用于真机/模拟器验证触发链 */
+/** 设置页「试响」:注册一枚 30 秒后的一次性闹钟,用于真机/模拟器验证触发链 */
 export async function scheduleTestRing(): Promise<void> {
-  const epochMs = Date.now() + 90e3;
+  const epochMs = Date.now() + 30e3;
   const alarm = {
     id: `test:${epochMs}`,
     epochMs,
@@ -56,7 +56,7 @@ export async function scheduleTestRing(): Promise<void> {
     timeId: 'test',
     timeLabel: '',
     title: '⏰ 试响 · 周而复起',
-    body: '90 秒后触发,验证精确闹钟与全屏意图',
+    body: '30 秒后触发,验证精确闹钟与全屏意图',
   };
   await gateway.schedule([alarm]);
   const map = registry.get();
