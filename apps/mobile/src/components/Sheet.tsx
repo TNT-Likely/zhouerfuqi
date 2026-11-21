@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useTheme } from '@/theme';
 
@@ -22,7 +23,7 @@ export function Sheet({
 }) {
   const t = useTheme();
   return (
-    <View style={[styles.host, { backgroundColor: t.bg }]}>
+    <SafeAreaView edges={['top']} style={[styles.host, { backgroundColor: t.bg }]}>
       <View style={[styles.sheet, { backgroundColor: t.surface, borderColor: t.line }]}>
         <View style={[styles.handle, { backgroundColor: t.text3 }]} />
         <View style={styles.head}>
@@ -38,7 +39,7 @@ export function Sheet({
         </View>
         {children}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

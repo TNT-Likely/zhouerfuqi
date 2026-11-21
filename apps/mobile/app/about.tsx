@@ -15,7 +15,7 @@ export default function AboutScreen() {
   const info = holidayInfo();
   const enabled = groups.filter((g) => g.enabled).length;
   const times = groups.filter((g) => g.enabled).reduce((n, g) => n + g.times.length, 0);
-  const ver = Constants.expoConfig?.version ?? '0.2.6';
+  const ver = Constants.expoConfig?.version ?? '0.2.7';
 
   const joinBeta =
     Platform.OS === 'ios'

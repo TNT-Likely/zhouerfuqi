@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, TextInput, Switch, Alert, Modal, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, Switch, Alert, Modal, StyleSheet } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import type { AlarmGroup, Weekday } from '@core';
 import { useGroups } from '@/stores/groups';
@@ -8,6 +8,7 @@ import { todayISO } from '@/scheduler/materialize';
 import { cnDate, WD } from '@/lib/labels';
 import { useTheme, type Tokens } from '@/theme';
 import { TimeGridPicker } from '@/components/TimeWheel';
+import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
 import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
 
 const KINDS = [
@@ -101,7 +102,7 @@ export default function GroupEditScreen() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
+    <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.container}>
       <View style={styles.nav}>
         <Pressable onPress={() => router.back()}><Text style={{ color: t.text2, fontSize: 18 }}>‹</Text></Pressable>
         <Text style={{ color: t.text, fontSize: 16, fontWeight: '800' }}>{isNew ? '新建班组' : '编辑班组'}</Text>
@@ -291,7 +292,7 @@ export default function GroupEditScreen() {
           <Text style={{ color: t.red, fontSize: 13 }}>删除该班组</Text>
         </Pressable>
       ) : null}
-    </ScrollView>
+    </SafeAreaScrollView>
   );
 }
 
@@ -388,7 +389,7 @@ function Chip({ t, on, onPress, children }: { t: Tokens; on?: boolean; onPress?:
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 48, gap: 14 },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 52 },
+  nav: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   input: { borderWidth: 1, borderRadius: 14, padding: 12, fontSize: 15 },
   seg: { flexDirection: 'row', borderRadius: 999, borderWidth: 1, padding: 4, gap: 4 },
   segItem: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999 },

@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { syncAll, snooze } from '@/scheduler/sync';
 import { useTheme } from '@/theme';
 
 export default function RingScreen() {
   const t = useTheme();
+  const { top } = useSafeAreaInsets();
   const params = useLocalSearchParams<{ timeLabel?: string; groupId?: string }>();
   const [state, setState] = useState<'ringing' | 'snoozed' | 'closed'>('ringing');
 
@@ -14,7 +16,7 @@ export default function RingScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: '#0B1220' }]}>
-      <Text style={styles.brand}>周 而 复 起 · 系统级响铃</Text>
+      <Text style={[styles.brand, { top: Math.max(44, top + 8) }]}>周 而 复 起 · 系统级响铃</Text>
 
       {state === 'closed' ? (
         <View style={{ alignItems: 'center', gap: 12 }}>
@@ -70,7 +72,7 @@ function nowLabel(): string {
 
 const styles = StyleSheet.create({
   root: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  brand: { position: 'absolute', top: 44, fontSize: 11, color: '#5B6E8F', letterSpacing: 3 },
+  brand: { position: 'absolute', fontSize: 11, color: '#5B6E8F', letterSpacing: 3 },
   time: { fontSize: 84, fontWeight: '200', color: '#EDF2FA', letterSpacing: 2, lineHeight: 100 },
   label: { marginTop: 18, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
   sub: { marginTop: 10, fontSize: 11 },

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform, Linking } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Alert, Platform, Linking } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { useTheme } from '@/theme';
+import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
 import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
 import { isIgnoringBatteryOptimizations, requestIgnoreBatteryOptimization } from '@/services/battery';
 
@@ -79,7 +80,7 @@ export default function GuideScreen() {
   const healthColor = health === '完整' ? t.green : health === '部分' ? '#F59E0B' : t.red;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
+    <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.container}>
       <View style={styles.headRow}>
         <Pressable onPress={() => router.back()}><Text style={{ color: t.text2, fontSize: 18 }}>‹</Text></Pressable>
         <Text style={{ color: t.text, fontSize: 16, fontWeight: '800', marginLeft: 12 }}>保活向导</Text>
@@ -194,13 +195,13 @@ export default function GuideScreen() {
       <Text style={{ color: t.text3, fontSize: 11, textAlign: 'center', marginTop: 4 }}>
         可靠性徽章只反映可检测项;厂商设置完成后实际可达系统时钟级。
       </Text>
-    </ScrollView>
+    </SafeAreaScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 48, gap: 14 },
-  headRow: { flexDirection: 'row', alignItems: 'center', paddingTop: 52 },
+  headRow: { flexDirection: 'row', alignItems: 'center' },
   healthChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     borderWidth: 1.5, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5,

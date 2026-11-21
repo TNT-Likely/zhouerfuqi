@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, Switch, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
@@ -18,6 +18,7 @@ import { cnDate, WD, ruleDesc, ringReasonLabel } from '@/lib/labels';
 import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
 import { useTheme } from '@/theme';
 import { usePrefs } from '@/stores/prefs';
+import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
 
 export default function HomeScreen() {
   const t = useTheme();
@@ -103,7 +104,7 @@ export default function HomeScreen() {
   }, [first]);
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
+    <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.container}>
       <View style={styles.appbar}>
         <Pressable
           style={[styles.avatarBtn, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}
@@ -283,13 +284,13 @@ export default function HomeScreen() {
         <Ionicons name="add" size={15} color={t.text2} />
         <Text style={{ color: t.text2, fontSize: 13 }}>新建排班闹钟组</Text>
       </Pressable>
-    </ScrollView>
+    </SafeAreaScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 48, gap: 12 },
-  appbar: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingHorizontal: 2, gap: 10 },
+  appbar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 2, gap: 10 },
   miniDial: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   avatarBtn: { width: 36, height: 36, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   avatarDot: { position: 'absolute', right: -1, top: -1, width: 10, height: 10, borderRadius: 5, borderWidth: 2 },
