@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 启动窗口背景:品牌暗底 + 居中 120dp 图标(不再把 logo PNG 拉伸铺满全屏) -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:drawable="@color/launch_bg" />
+  <item
+    android:width="120dp"
+    android:height="120dp"
+    android:gravity="center">
+    <bitmap
+      android:src="@mipmap/ic_launcher"
+      android:gravity="center" />
+  </item>
+</layer-list>

@@ -1,0 +1,7 @@
+<resources>
+  <!-- Android 12+:系统启动屏(SplashScreen API)以底色 + 启动图标呈现,底色对齐品牌暗底 -->
+  <style name="Theme.App.SplashScreen" parent="AppTheme">
+    <item name="android:windowBackground">@drawable/splashscreen</item>
+    <item name="android:windowSplashScreenBackground">@color/launch_bg</item>
+  </style>
+</resources>

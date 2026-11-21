@@ -1,14 +1,18 @@
 package expo.modules.zfalarm
 
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.AlarmManager
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
 import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -21,15 +25,24 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.view.Gravity
 import android.view.View
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.view.WindowManager
-import android.widget.Button
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * 原生全屏响铃 Activity(对标系统时钟):
  * - setAlarmClock 触发 PendingIntent 直达本 Activity,锁屏/杀进程均可全屏接管
  * - showWhenLocked + turnScreenOn + keepScreenOn
+ * - 沉浸式全屏:隐藏状态栏/导航栏,挖孔区穿透(整块屏幕都是响铃页)
+ * - 设计:「破晓时计」暗底 + 主题色破晓光晕(呼吸动画)+ 细体大字钟面 + 胶囊按钮
  * - 铃声:系统闹钟音循环播放,音量 10 秒渐强;振动循环
  * - 原生按钮:稍后 9 分钟(原生重排)/ 关闭
  * - 自包含:全部状态来自 Intent extras,app 被杀不影响
@@ -39,19 +52,54 @@ class AlarmActivity : Activity() {
   private var player: MediaPlayer? = null
   private var vibrator: Vibrator? = null
   private val handler = Handler(Looper.getMainLooper())
-  private var accent = "#4096FF"
-  private var clockView: TextView? = null
+  private var accentColor = Color.parseColor("#4096FF")
+  private val animators = mutableListOf<ValueAnimator>()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    // 锁屏显示 + 亮屏 + 常亮(老 API flag 兼容 minSdk 24)
+    // 锁屏显示 + 亮屏 + 常亮(flag 兼容 minSdk 24,27+ 走新 API)
     window.addFlags(
       WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
         or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
         or WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
     )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+      setShowWhenLocked(true)
+      setTurnScreenOn(true)
+    }
 
-    accent = intent.getStringExtra(EXTRA_ACCENT) ?: "#4096FF"
+    // 沉浸式全屏:隐藏状态栏/导航栏 + 挖孔区穿透——响铃页接管整块屏幕
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      window.setDecorFitsSystemWindows(false)
+      window.insetsController?.apply {
+        hide(WindowInsets.Type.systemBars())
+        systemBarsBehavior = WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+      }
+    } else {
+      @Suppress("DEPRECATION")
+      window.decorView.systemUiVisibility = (
+        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+          or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+          or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+          or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+          or View.SYSTEM_UI_FLAG_FULLSCREEN
+          or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+        )
+    }
+    window.attributes = window.attributes.apply {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        layoutInDisplayCutoutMode =
+          WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+      }
+      // 响铃页固定 90% 亮度,避免锁屏自动亮度把界面压暗
+      screenBrightness = 0.9f
+    }
+
+    accentColor = try {
+      Color.parseColor(intent.getStringExtra(EXTRA_ACCENT))
+    } catch (_: Exception) {
+      Color.parseColor("#4096FF")
+    }
     val title = intent.getStringExtra(EXTRA_TITLE) ?: "闹钟"
     val groupId = intent.getStringExtra(EXTRA_GROUP) ?: ""
     val timeLabel = intent.getStringExtra(EXTRA_TIME_LABEL) ?: nowLabel()
@@ -67,99 +115,224 @@ class AlarmActivity : Activity() {
   }
 
   private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
+  private fun accentTint(alpha: Int): Int = ColorUtils.setAlphaComponent(accentColor, alpha)
+  private fun white(alpha: Int): Int = ColorUtils.setAlphaComponent(Color.WHITE, alpha)
+
+  private fun dateLabel(): String =
+    SimpleDateFormat("M月d日 EEEE", Locale.CHINA).format(Date())
 
   private fun buildUi(title: String, groupId: String, timeLabel: String) {
-    val root = LinearLayout(this).apply {
-      orientation = LinearLayout.VERTICAL
-      setBackgroundColor(Color.parseColor("#0B1220"))
-      gravity = Gravity.CENTER
-      setPadding(dp(24), dp(64), dp(24), dp(40))
+    val dec = AccelerateDecelerateInterpolator()
+
+    // 底:纵向渐变近黑(上冷下沉),光晕单独一层做「破晓」感
+    val root = FrameLayout(this).apply {
+      background = GradientDrawable(
+        GradientDrawable.Orientation.TOP_BOTTOM,
+        intArrayOf(Color.parseColor("#12151C"), Color.parseColor("#06070B")),
+      )
     }
+
+    // 破晓光晕:主题色径向渐变,置于顶部(呼吸动画在 startRing 后启动)
+    val glow = View(this).apply {
+      background = GradientDrawable().apply {
+        gradientType = GradientDrawable.RADIAL_GRADIENT
+        colors = intArrayOf(accentTint(0x3C), accentTint(0x00))
+        setGradientCenter(0.5f, 0.1f)
+        setGradientRadius(resources.displayMetrics.widthPixels * 0.78f)
+      }
+      alpha = 0.85f
+    }
+    root.addView(
+      glow,
+      FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        dp(480),
+        Gravity.TOP or Gravity.CENTER_HORIZONTAL,
+      ),
+    )
+
+    val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+
+    col.addView(View(this), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 0.24f))
 
     val brand = TextView(this).apply {
-      text = "周 而 复 起 · 系 统 级 响 铃"
-      setTextColor(Color.parseColor("#5B6E8F"))
+      text = "周 而 复 起"
+      setTextColor(white(0x66))
       textSize = 11f
-      letterSpacing = 0.15f
+      letterSpacing = 0.35f
       gravity = Gravity.CENTER
     }
-    root.addView(brand, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(8) })
+    col.addView(brand, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
 
-    val clock = TextView(this).apply {
-      text = nowLabel()
-      setTextColor(Color.parseColor("#EDF2FA"))
-      textSize = 78f
-      typeface = Typeface.DEFAULT_BOLD
-      letterSpacing = -0.04f
+    // 钟面:排班时间为大字(原生闹钟语义);贪睡等非时刻文案退回当前时间
+    val heroText = if (timeLabel.matches(Regex("^\\d{1,2}:\\d{2}$"))) timeLabel else nowLabel()
+    val hero = TextView(this).apply {
+      text = heroText
+      setTextColor(Color.parseColor("#F4F6FA"))
+      textSize = 96f
+      typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+      letterSpacing = -0.02f
+      includeFontPadding = false
       gravity = Gravity.CENTER
     }
-    clockView = clock
-    root.addView(clock, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(40) })
+    col.addView(
+      hero,
+      LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) },
+    )
 
+    val date = TextView(this).apply {
+      text = dateLabel()
+      setTextColor(white(0x8C))
+      textSize = 14f
+      gravity = Gravity.CENTER
+    }
+    col.addView(
+      date,
+      LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(6) },
+    )
+
+    // 闹钟标识胶囊:主题色软底 + 描边;时刻已上大字则不再重复
+    val pillParts = mutableListOf<String>()
+    if (title.isNotBlank()) pillParts.add(title)
+    if (groupId.isNotBlank() && groupId !in pillParts) pillParts.add(groupId)
+    if (timeLabel.isNotBlank() && timeLabel != heroText) pillParts.add(timeLabel)
+    if (pillParts.isEmpty()) pillParts.add("闹钟")
+    val pill = TextView(this).apply {
+      text = pillParts.joinToString(" · ")
+      setTextColor(accentTint(0xE6))
+      textSize = 13f
+      maxLines = 1
+      ellipsize = android.text.TextUtils.TruncateAt.END
+      background = GradientDrawable().apply {
+        cornerRadius = dp(40).toFloat()
+        setColor(accentTint(0x2E))
+        setStroke(dp(1), accentTint(0x55))
+      }
+      setPadding(dp(18), dp(9), dp(18), dp(9))
+    }
+    col.addView(
+      pill,
+      LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        topMargin = dp(20); gravity = Gravity.CENTER_HORIZONTAL
+      },
+    )
+
+    // 状态行:呼吸圆点 + 响铃中提示
+    val liveRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
+    val dot = View(this).apply {
+      background = GradientDrawable().apply {
+        shape = GradientDrawable.OVAL
+        setColor(accentColor)
+      }
+    }
+    liveRow.addView(
+      dot,
+      LinearLayout.LayoutParams(dp(8), dp(8)).apply { gravity = Gravity.CENTER_VERTICAL; marginEnd = dp(8) },
+    )
     val live = TextView(this).apply {
       text = "响铃中 · 音量渐强 · 静音/勿扰不影响"
-      setTextColor(Color.parseColor("#8FA3C4"))
+      setTextColor(white(0x73))
       textSize = 12f
-      gravity = Gravity.CENTER
     }
-    root.addView(live, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(6) })
+    liveRow.addView(live)
+    col.addView(
+      liveRow,
+      LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(16) },
+    )
 
-    val chip = TextView(this).apply {
-      text = "$title · $timeLabel${if (groupId.isNotEmpty()) " · $groupId" else ""}"
-      setTextColor(Color.parseColor("#EDF2FA"))
-      textSize = 13f
-      background = GradientDrawable().apply {
-        setColor(Color.parseColor("#14FFFFFF"))
-        cornerRadius = dp(40).toFloat()
-        setStroke(dp(1), Color.parseColor("#24FFFFFF"))
-      }
-      setPadding(dp(16), dp(8), dp(16), dp(8))
+    col.addView(View(this), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
+
+    // 按钮排:大胶囊,拇指可达;稍后=描边弱化,关闭=主题色实底
+    val btnRow = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+
+    val snoozeBg = GradientDrawable().apply {
+      cornerRadius = dp(31).toFloat()
+      setColor(white(0x14))
+      setStroke(dp(1), white(0x2E))
     }
-    root.addView(chip, LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
-      topMargin = dp(18); gravity = Gravity.CENTER
-    })
-
-    val spacer = View(this)
-    root.addView(spacer, LinearLayout.LayoutParams(1, 0, 1f))
-
-    val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER }
-
-    val snooze = Button(this).apply {
+    val snooze = TextView(this).apply {
       text = "稍后 9 分钟"
       setTextColor(Color.WHITE)
-      textSize = 14f
+      textSize = 15f
       typeface = Typeface.DEFAULT_BOLD
-      background = GradientDrawable().apply {
-        setColor(Color.parseColor("#1AFFFFFF"))
-        cornerRadius = dp(14).toFloat()
-      }
-      setOnClickListener {
-        scheduleSnooze()
-        stopRing()
-        finish()
-      }
+      gravity = Gravity.CENTER
+      background = RippleDrawable(ColorStateList.valueOf(white(0x2E)), snoozeBg, null)
     }
-    row.addView(snooze, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f).apply { marginEnd = dp(12) })
+    snooze.setOnClickListener {
+      scheduleSnooze()
+      stopRing()
+      finish()
+    }
+    btnRow.addView(
+      snooze,
+      LinearLayout.LayoutParams(0, dp(62), 1f).apply { marginEnd = dp(14) },
+    )
 
-    val stop = Button(this).apply {
+    val stopBg = GradientDrawable().apply {
+      cornerRadius = dp(31).toFloat()
+      setColor(accentColor)
+    }
+    val stop = TextView(this).apply {
       text = "关 闭"
       setTextColor(Color.WHITE)
-      textSize = 14f
+      textSize = 15f
       typeface = Typeface.DEFAULT_BOLD
-      background = GradientDrawable().apply {
-        setColor(Color.parseColor(accent))
-        cornerRadius = dp(14).toFloat()
-      }
-      setOnClickListener {
-        stopRing()
-        finish()
-      }
+      gravity = Gravity.CENTER
+      background = RippleDrawable(ColorStateList.valueOf(white(0x30)), stopBg, null)
     }
-    row.addView(stop, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+    stop.setOnClickListener {
+      stopRing()
+      finish()
+    }
+    btnRow.addView(stop, LinearLayout.LayoutParams(0, dp(62), 1f))
 
-    root.addView(row, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(24) })
+    col.addView(
+      btnRow,
+      LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
+        setMargins(dp(20), dp(4), dp(20), dp(4))
+      },
+    )
 
+    col.addView(View(this), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(20)))
+
+    root.addView(col, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
     setContentView(root)
+
+    // 入场:整体淡入,钟面微缩放归位,按钮自下而上
+    root.alpha = 0f
+    root.animate().alpha(1f).setDuration(240).start()
+    hero.alpha = 0f
+    hero.scaleX = 0.965f
+    hero.scaleY = 0.965f
+    hero.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(460).setInterpolator(dec).start()
+    btnRow.alpha = 0f
+    btnRow.translationY = dp(28).toFloat()
+    btnRow.animate().alpha(1f).translationY(0f).setStartDelay(120).setDuration(340).setInterpolator(dec).start()
+
+    // 呼吸动画:光晕明暗 + 圆点脉动(引用存表,退出统一取消)
+    animators.add(
+      ObjectAnimator.ofFloat(glow, View.ALPHA, 0.5f, 1f).apply {
+        duration = 2200
+        repeatCount = ValueAnimator.INFINITE
+        repeatMode = ValueAnimator.REVERSE
+        interpolator = dec
+        start()
+      },
+    )
+    animators.add(
+      ValueAnimator.ofFloat(0f, 1f).apply {
+        duration = 1100
+        repeatCount = ValueAnimator.INFINITE
+        repeatMode = ValueAnimator.REVERSE
+        addUpdateListener { a ->
+          val f = a.animatedValue as Float
+          dot.scaleX = 1f + 0.9f * f
+          dot.scaleY = dot.scaleX
+          dot.alpha = 1f - 0.55f * f
+        }
+        start()
+      },
+    )
   }
 
   private fun startRing() {
@@ -203,18 +376,12 @@ class AlarmActivity : Activity() {
         vibrate(longArrayOf(0, 400, 300, 400, 300), 0)
       }
     }
-    // 每秒刷新时钟
-    val tick = object : Runnable {
-      override fun run() {
-        clockView?.text = nowLabel()
-        handler.postDelayed(this, 1000)
-      }
-    }
-    tick.run()
   }
 
   private fun stopRing() {
     handler.removeCallbacksAndMessages(null)
+    animators.forEach { it.cancel() }
+    animators.clear()
     try {
       player?.stop()
       player?.release()
@@ -231,10 +398,10 @@ class AlarmActivity : Activity() {
     val fire = Intent(this, AlarmActivity::class.java).apply {
       putExtra(EXTRA_ID, "snooze:$epochMs")
       putExtra(EXTRA_EPOCH, epochMs)
-      putExtra(EXTRA_TITLE, "⏰ 贪睡 · 周而复起")
+      putExtra(EXTRA_TITLE, "贪睡")
       putExtra(EXTRA_GROUP, intent.getStringExtra(EXTRA_GROUP) ?: "")
       putExtra(EXTRA_TIME_LABEL, "贪睡 9 分钟后")
-      putExtra(EXTRA_ACCENT, accent)
+      putExtra(EXTRA_ACCENT, String.format("#%06X", 0xFFFFFF and accentColor))
     }
     val pi = PendingIntent.getActivity(
       this,
