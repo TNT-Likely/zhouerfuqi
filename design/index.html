@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>周而复起 · 破晓时计 UI 设计稿 v2.0</title>
+<title>周而复起 · 破晓时计 UI 设计稿 v2.1</title>
 <style>
   /* 宿主/独立浏览双兼容变量底座(不覆盖 T3 注入的 :root 变量) */
   :where(:root) {
@@ -535,10 +535,11 @@
   }
   .p-icon-btn .zf-ico { width: 14px; height: 14px; }
 
+  /* 滚动区 padding 收紧(底栏已退场,无需预留) */
   .p-scroll {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 18px 92px;
+    padding: 4px 18px 24px;
     scrollbar-width: none;
     display: flex;
     flex-direction: column;
@@ -1440,44 +1441,130 @@
   .p-list-row b { font-size: 13px; font-weight: 650; display: block; }
   .p-list-row span { font-size: 11px; color: var(--p-ink-2); display: block; margin-top: 2px; }
 
-  /* 悬浮毛玻璃胶囊底栏 (对齐真实 App:首页 / 日历 / 设置) */
-  .p-tabbar {
+  /* ============ v2.1 模态抽屉(sheet)与头像入口 ============ */
+  .p-sheet {
     position: absolute;
-    left: 16px;
-    right: 16px;
-    bottom: 14px;
-    height: 60px;
-    border-radius: 22px;
-    background: var(--p-nav-bg);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 46px;
+    background: var(--p-bg);
     border: 1px solid var(--p-border);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    padding: 5px;
-    z-index: 6;
-  }
-  .p-phone-ringing .p-tabbar { display: none; }
-  .p-phone-ringing .p-statusbar { color: #ffffff; }
-
-  .p-tab {
-    border-radius: 16px;
+    border-bottom: 0;
+    border-radius: 26px 26px 0 0;
+    box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.30);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    z-index: 4;
+  }
+  .p-screen.active .p-sheet { animation: zfSheetUp 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  @keyframes zfSheetUp {
+    from { transform: translateY(56px); opacity: 0.35; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .p-sheet-handle {
+    width: 38px;
+    height: 4.5px;
+    border-radius: 999px;
+    background: var(--p-ink-3);
+    opacity: 0.55;
+    margin: 8px auto 0;
+    flex-shrink: 0;
+  }
+  .p-sheet-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px 6px;
+    flex-shrink: 0;
+  }
+  .p-sheet-title { font-size: 17px; font-weight: 750; letter-spacing: -0.3px; flex: 1; }
+  .p-sheet-done {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--p-accent);
+    background: var(--p-accent-soft);
+    border: 1px solid var(--p-accent-border);
+    padding: 6px 14px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+
+  /* 头像按钮(个人入口 → 设置抽屉);右上角小圆点 = 响铃健康度 */
+  .p-avatar-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: var(--p-accent-soft);
+    border: 1px solid var(--p-accent-border);
+    font-size: 16px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--p-ink-3);
-    transition: background 0.16s, color 0.16s;
+    position: relative;
   }
-  .p-tab[aria-current="page"] {
+  .p-avatar-btn::after {
+    content: "";
+    position: absolute;
+    right: -1px;
+    top: -1px;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--p-green);
+    border: 2px solid var(--p-bg);
+  }
+
+  /* ============ 7. 关于页:v2.1 焕新 ============ */
+  .p-about-hero {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    border-radius: 24px;
+    padding: 22px 16px 18px;
+    background:
+      radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--p-accent) 22%, transparent) 0%, transparent 62%),
+      var(--p-surface);
+    border: 1px solid var(--p-accent-border);
+    box-shadow: var(--p-highlight), var(--p-card-shadow);
+  }
+  .p-about-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    margin: 0 auto 12px;
+    display: block;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+  }
+  .p-about-name { font-size: 21px; font-weight: 800; letter-spacing: -0.6px; }
+  .p-about-tag { font-size: 12px; color: var(--p-ink-2); margin-top: 4px; font-weight: 500; }
+  .p-about-ver {
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 4px 12px;
+    border-radius: 999px;
     background: var(--p-accent-soft);
+    border: 1px solid var(--p-accent-border);
     color: var(--p-accent);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
   }
-  .p-tab .zf-ico { width: 19px; height: 19px; }
+  .p-about-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .p-about-stat {
+    border-radius: 16px;
+    background: var(--p-surface);
+    border: 1px solid var(--p-border);
+    box-shadow: var(--p-highlight);
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .p-about-stat b { display: block; font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
+  .p-about-stat span { display: block; font-size: 9.5px; color: var(--p-ink-3); margin-top: 3px; font-weight: 600; }
+  .p-about-foot { text-align: center; font-size: 10.5px; color: var(--p-ink-3); padding: 6px 0 2px; line-height: 1.6; }
+
+  .p-phone-ringing .p-statusbar { color: #ffffff; }
 </style>
 </head>
 <body>
@@ -1510,8 +1597,8 @@
           <circle id="logoDot" cx="60" cy="52" r="3.2" fill="#FB923C"/>
         </svg>
         <div>
-          <h1 class="zf-brand-title">周而复起 · 破晓时计 <span class="zf-badge-ver">DESIGN v2.0</span></h1>
-          <p class="zf-brand-sub">去企业蓝框感 · 温暖机械时计美学 · 七日节律视窗 · 全六屏交互</p>
+          <h1 class="zf-brand-title">周而复起 · 破晓时计 <span class="zf-badge-ver">DESIGN v2.1</span></h1>
+          <p class="zf-brand-sub">单主屏时计台 · 模态抽屉导航(告别底部 Tab)· 头像个人入口 · 关于页焕新</p>
         </div>
       </div>
 
@@ -1530,12 +1617,13 @@
 
     <div class="zf-controls-row" id="sceneControlsRow">
       <div class="zf-seg" id="sceneSeg" role="group" aria-label="切换页面">
-        <button data-scene="home" aria-pressed="true">1 首页</button>
-        <button data-scene="calendar">2 排班月历</button>
+        <button data-scene="home" aria-pressed="true">1 主屏</button>
+        <button data-scene="calendar">2 月历抽屉</button>
         <button data-scene="edit">3 编辑班组</button>
         <button data-scene="ring">4 锁屏响铃</button>
         <button data-scene="guide">5 保活向导</button>
-        <button data-scene="settings">6 设置</button>
+        <button data-scene="settings">6 设置抽屉</button>
+        <button data-scene="about">7 关于</button>
       </div>
     </div>
   </div>
@@ -1553,9 +1641,9 @@
         </div>
 
         <div class="p-viewport">
-          <!-- 1. 首页 -->
+          <!-- 1. 主屏(唯一常驻页,Hub) -->
           <div class="p-screen active" data-screen="home" id="scrHome"></div>
-          <!-- 2. 排班月历 -->
+          <!-- 2. 排班月历(模态抽屉) -->
           <div class="p-screen" data-screen="calendar" id="scrCalendar"></div>
           <!-- 3. 编辑规则 -->
           <div class="p-screen" data-screen="edit" id="scrEdit"></div>
@@ -1563,11 +1651,11 @@
           <div class="p-screen p-ring-screen" data-screen="ring" id="scrRing"></div>
           <!-- 5. 保活向导 -->
           <div class="p-screen" data-screen="guide" id="scrGuide"></div>
-          <!-- 6. 设置 -->
+          <!-- 6. 设置(模态抽屉) -->
           <div class="p-screen" data-screen="settings" id="scrSettings"></div>
+          <!-- 7. 关于(模态抽屉 · v2.1 焕新) -->
+          <div class="p-screen" data-screen="about" id="scrAbout"></div>
         </div>
-
-        <nav class="p-tabbar" id="phoneTabs"></nav>
       </div>
     </div>
 
@@ -1576,17 +1664,19 @@
       <div class="zf-spec-card">
         <h3>✦ 为什么重做:从「后台表单感」到「床头精密时计」</h3>
         <p>
-          旧版采用高饱和钉钉蓝配 30% 亮蓝描边,视觉冰冷且卡片像企业审批单;单个班组的 4 个时间纵向铺满屏幕。新版 <b>v2.0 破晓时计 (Dawn Chronometer)</b> 回归品牌初心「7 段周循环 · 破晓而起」,以温润暖纸 / 曜石石墨配 1px 微高光边缘替代刺眼色框。
+          v2.0 回归品牌初心「7 段周循环 · 破晓而起」,以温润暖纸 / 曜石石墨配 1px 微高光边缘替代刺眼色框。
+          <b>v2.1 更进一步:底栏 Tab 退场</b>——闹钟应用的主任务只有「看下次什么时候响、改排班」,
+          一块常驻主屏 + 模态抽屉就足够,交互层级更浅、屏占比更高。
         </p>
       </div>
 
       <div class="zf-spec-card">
-        <h3>✦ 四处关键信息架构升级</h3>
+        <h3>✦ v2.1 四处关键信息架构升级</h3>
         <p>
-          <b>1. 首页七日节律带</b>:Hero 卡内嵌未来 7 天排班微缩条与 7 段周循环环,不翻日历即可确认本周六是大周还是小周。<br>
-          <b>2. 连环闹钟胶囊化</b>:6:40 → 6:50 → 7:00 → 12:55 改为双列紧凑时序胶囊,同屏从容容纳多班组并存。<br>
-          <b>3. 月历大小周左栏行标</b>:每行左侧直接标注「大 / 小」周次徽章,配合底部规则推理票据,调休补班一目了然。<br>
-          <b>4. 补齐完整六屏闭环</b>:底栏严格对齐真实 App(首页 / 日历 / 设置),完整覆盖锁屏声波响铃页与多厂商保活向导。
+          <b>1. 单主屏时计台 (Hub)</b>:首页是唯一常驻页,Hero + 七日节律带 + 全部班组一屏尽览;<br>
+          <b>2. 模态抽屉导航</b>:排班月历 / 设置 / 关于改为底部滑出的圆角抽屉(抓握条 + 「完成」),编辑班组与向导保持推入式——底部 Tab 及其玻璃胶囊底栏整体移除;<br>
+          <b>3. 头像个人入口</b>:顶栏左侧头像(右上角绿点 = 响铃健康度)直达设置抽屉,右侧保留「月历 / 新建」;<br>
+          <b>4. 关于页焕新</b>:独立抽屉页——破晓渐变英雄卡(logo + 版本胶囊)+ 实时数据芯片(启用班组 / 响铃道数 / 假日库)+ 社区链接行 + 技术声明,替代旧版设置里干瘪的一行。
         </p>
       </div>
 
@@ -1626,6 +1716,7 @@
     { name: '松石青翠', light: '#0D9488', dark: '#2DD4BF' },
     { name: '星夜靛蓝', light: '#4F46E5', dark: '#818CF8' },
     { name: '赤陶暖砂', light: '#D94E34', dark: '#F47A60' },
+    { name: '静海蓝', light: '#1677FF', dark: '#4096FF' },
   ];
 
   /* ==================== 与 packages/core 同语义排班引擎 ==================== */
@@ -1707,6 +1798,8 @@
     ringState: 'ringing', // 'ringing' | 'snoozed' | 'stopped'
     vendor: '华为 HarmonyOS',
     guideSteps: [true, false, false],
+    appMode: 'dark',        // 跟随系统 / 日间 / 暗黑(设置抽屉·外观卡)
+    avatarEmoji: '🌅',      // 默认头像:破晓(v2.1 起)
   };
 
   const DUTY_GROUP = {
@@ -1825,11 +1918,11 @@
     return `
       <div class="p-topbar">
         <div class="p-app-title">
-          <span class="p-mini-dial">${ico('alarm')}</span>
+          <button class="p-avatar-btn" data-goto="settings" title="个人与设置">${state.avatarEmoji}</button>
           <span>周而复起</span>
         </div>
         <div class="p-top-actions">
-          <button class="p-icon-btn" data-goto="ring" title="预览锁屏响铃">${ico('bell')}<span>试响</span></button>
+          <button class="p-icon-btn" data-goto="calendar" title="排班月历(抽屉)">${ico('calendar')}<span>月历</span></button>
           <button class="p-icon-btn" data-goto="edit" title="编辑或新建班组">${ico('plus')}<span>新建</span></button>
         </div>
       </div>
@@ -1994,11 +2087,14 @@
     }
 
     return `
-      <div class="p-topbar">
-        <div class="p-app-title"><span>排班月历</span></div>
-        <span class="p-tag accent zf-num">本月响 ${ringDaysCount} 天</span>
-      </div>
-      <div class="p-scroll">
+      <div class="p-sheet">
+        <div class="p-sheet-handle"></div>
+        <div class="p-sheet-head">
+          <span class="p-sheet-title">排班月历</span>
+          <span class="p-tag accent zf-num">本月响 ${ringDaysCount} 天</span>
+          <button class="p-sheet-done" data-goto="home">完成</button>
+        </div>
+        <div class="p-scroll">
         <div class="p-seg-bar">
           <button data-cal-mode="rule" aria-pressed="${!editingManual}">规则预览</button>
           <button data-cal-mode="manual" aria-pressed="${editingManual}">手动点选排班</button>
@@ -2043,6 +2139,7 @@
               ${state.times.map((t) => `<span>${fmtT(t)} ${t.label || ''}</span>`).join('')}
             </div>
           ` : ''}
+        </div>
         </div>
       </div>
     `;
@@ -2211,11 +2308,14 @@
   function htmlSettings() {
     const doneCount = state.guideSteps.filter(Boolean).length;
     return `
-      <div class="p-topbar">
-        <div class="p-app-title"><span>设置与可靠性</span></div>
-        <span class="p-tag green">调度健康 ✓</span>
-      </div>
-      <div class="p-scroll">
+      <div class="p-sheet">
+        <div class="p-sheet-handle"></div>
+        <div class="p-sheet-head">
+          <span class="p-sheet-title">设置与可靠性</span>
+          <span class="p-tag green">调度健康 ✓</span>
+          <button class="p-sheet-done" data-goto="home">完成</button>
+        </div>
+        <div class="p-scroll">
         <div class="p-field-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--p-accent-soft);border-color:var(--p-accent-border)">
           <div>
             <div style="font-size:13.5px;font-weight:750;color:var(--p-accent)">系统精确闹钟已就绪</div>
@@ -2235,7 +2335,7 @@
           </div>
           <div class="p-list-row" data-goto="ring">
             <div>
-              <b>90 秒锁屏试响演练</b>
+              <b>30 秒锁屏试响演练</b>
               <span>真实验证 SET_ALARM_CLOCK + 全屏锁屏唤醒链路</span>
             </div>
             <span style="color:var(--p-ink-3)">›</span>
@@ -2246,6 +2346,37 @@
               <span>精确闹钟已授权 ✓ · 全屏强提醒通知已授权 ✓</span>
             </div>
             <span class="p-tag green">正常</span>
+          </div>
+        </div>
+
+        <div class="p-sec-head"><span>外观</span></div>
+        <div class="p-field-card">
+          <div class="p-field-title">外观模式</div>
+          <div class="p-seg-bar" style="grid-template-columns:repeat(3,1fr)">
+            <button data-appmode="system" aria-pressed="${state.appMode === 'system'}">跟随系统</button>
+            <button data-appmode="light" aria-pressed="${state.appMode === 'light'}">日间</button>
+            <button data-appmode="dark" aria-pressed="${state.appMode === 'dark'}">暗黑</button>
+          </div>
+          <div class="p-field-title" style="margin-top:13px">主题色 · 全局换肤</div>
+          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
+            ${THEMES.map((th, i) => `
+              <button data-tidx="${i}" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 2px;border-radius:12px;background:${i === state.themeIdx ? 'var(--p-accent-soft)' : 'transparent'};border:1px solid ${i === state.themeIdx ? 'var(--p-accent-border)' : 'transparent'}">
+                <span style="width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg, ${th.light} 50%, ${th.dark} 50%);border:2px solid ${i === state.themeIdx ? 'var(--p-ink)' : 'var(--p-border)'};box-sizing:border-box"></span>
+                <span style="font-size:8.5px;color:${i === state.themeIdx ? 'var(--p-accent)' : 'var(--p-ink-3)'};font-weight:${i === state.themeIdx ? 700 : 500}">${th.name}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="p-sec-head"><span>个人</span></div>
+        <div class="p-field-card">
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="p-avatar-btn" style="width:46px;height:46px;font-size:22px">${state.avatarEmoji}</span>
+            <div style="flex:1;display:flex;flex-wrap:wrap;gap:6px">
+              ${['🌅', '⏰', '🔥', '🌙', '☕', '🦉'].map((e) => `
+                <button data-avatar="${e}" style="width:36px;height:36px;border-radius:12px;font-size:17px;background:${state.avatarEmoji === e ? 'var(--p-accent-soft)' : 'var(--p-surface-2)'};border:1px solid ${state.avatarEmoji === e ? 'var(--p-accent-border)' : 'transparent'}">${e}</button>
+              `).join('')}
+            </div>
           </div>
         </div>
 
@@ -2265,31 +2396,128 @@
             </div>
             <span style="color:var(--p-ink-3)">›</span>
           </div>
+        </div>
+
+        <div class="p-sec-head"><span>应用更新</span></div>
+        <div class="p-list-card">
           <div class="p-list-row">
             <div>
-              <b>关于周而复起</b>
-              <span>v0.2.0 · MIT 开源协议 · @zhouerfuqi/core 驱动</span>
+              <b>检查更新</b>
+              <span>当前 v0.2.6 · GitHub Releases 直连 · APK 渠道支持自更新</span>
             </div>
             <span style="color:var(--p-ink-3)">›</span>
           </div>
+        </div>
+
+        <div class="p-sec-head"><span>语言 · Language</span></div>
+        <div class="p-list-card">
+          <div class="p-list-row">
+            <div>
+              <b>简体中文</b>
+              <span>当前语言 · 更多语言规划中(语义绑定中文排班语境)</span>
+            </div>
+            <span class="p-tag accent">默认</span>
+          </div>
+        </div>
+
+        <div class="p-sec-head"><span>关于</span></div>
+        <div class="p-list-card">
+          <div class="p-list-row" data-goto="about">
+            <div>
+              <b>关于周而复起</b>
+              <span>v0.2.6 · MIT 开源 · 设计与规则引擎自研</span>
+            </div>
+            <span style="color:var(--p-ink-3)">›</span>
+          </div>
+        </div>
         </div>
       </div>
     `;
   }
 
-  function htmlTabBar(activeScene) {
-    const tabTarget = (activeScene === 'edit') ? 'home' : (activeScene === 'guide' ? 'settings' : activeScene);
-    const tabs = [
-      { id: 'home', label: '首页', icon: 'alarm' },
-      { id: 'calendar', label: '排班日历', icon: 'calendar' },
-      { id: 'settings', label: '设置', icon: 'settings' },
-    ];
-    return tabs.map((t) => `
-      <button class="p-tab" data-goto="${t.id}" aria-current="${tabTarget === t.id ? 'page' : 'false'}">
-        ${ico(t.icon)}
-        <span>${t.label}</span>
-      </button>
-    `).join('');
+  /* ==================== 7. 关于页(v2.1 焕新):破晓英雄卡 + 实时数据 + 链接行 ==================== */
+  function htmlAbout() {
+    const enabledCount = (state.primaryOn ? 1 : 0) + (state.dutyOn ? 1 : 0);
+    const totalTimes = (state.primaryOn ? state.times.length : 0) + (state.dutyOn ? DUTY_GROUP.times.length : 0);
+    const holDays = Object.keys(HOLIDAYS).length;
+    return `
+      <div class="p-sheet">
+        <div class="p-sheet-handle"></div>
+        <div class="p-sheet-head">
+          <span class="p-sheet-title">关于</span>
+          <button class="p-sheet-done" data-goto="settings">完成</button>
+        </div>
+        <div class="p-scroll">
+          <div class="p-about-hero">
+            <svg class="p-about-logo" viewBox="0 0 120 120" aria-hidden="true">
+              <defs>
+                <linearGradient id="abBg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#1c1d22"/>
+                  <stop offset="1" stop-color="#0d0e12"/>
+                </linearGradient>
+              </defs>
+              <rect width="120" height="120" rx="28" fill="url(#abBg)"/>
+              <g fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="8.5" stroke-linecap="round">
+                <path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/>
+                <path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/>
+                <path d="M72.86 91.48 A34 34 0 0 1 47.14 91.48"/>
+                <path d="M43.45 89.70 A34 34 0 0 1 27.36 69.53"/>
+                <path d="M26.45 65.53 A34 34 0 0 1 32.17 40.46"/>
+                <path d="M34.71 37.27 A34 34 0 0 1 57.92 26.06"/>
+              </g>
+              <path d="M92.64 69.53 A34 34 0 0 1 76.55 89.70" fill="none" stroke="var(--p-accent)" stroke-width="9" stroke-linecap="round"/>
+              <g transform="translate(33.6,33) scale(2.2)" fill="#F5F5F4">
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+              </g>
+              <circle cx="60" cy="52" r="3.2" fill="var(--p-accent)"/>
+            </svg>
+            <div class="p-about-name">周而复起</div>
+            <div class="p-about-tag">任意班制 · 破晓而起 · 系统级精确响铃</div>
+            <span class="p-about-ver zf-num">v0.2.6 · OFFLINE FIRST</span>
+          </div>
+
+          <div class="p-about-stats">
+            <div class="p-about-stat"><b class="zf-num">${enabledCount}</b><span>启用排班组</span></div>
+            <div class="p-about-stat"><b class="zf-num">${totalTimes}</b><span>连环响铃道数</span></div>
+            <div class="p-about-stat"><b class="zf-num">${holDays} 假 / 2 补</b><span>离线假日库</span></div>
+          </div>
+
+          <div class="p-sec-head"><span>项目与社区</span></div>
+          <div class="p-list-card">
+            <div class="p-list-row">
+              <div><b>GitHub 仓库</b><span>github.com/TNT-Likely/zhouerfuqi · 点 Star 支持开发</span></div>
+              <span style="color:var(--p-ink-3)">›</span>
+            </div>
+            <div class="p-list-row">
+              <div><b>问题反馈与需求</b><span>排班场景跑偏了?来 Issue 区聊聊</span></div>
+              <span style="color:var(--p-ink-3)">›</span>
+            </div>
+            <div class="p-list-row">
+              <div><b>加入内测</b><span>TestFlight(iOS)· Google Play 封闭测试(Android)</span></div>
+              <span style="color:var(--p-ink-3)">›</span>
+            </div>
+          </div>
+
+          <div class="p-sec-head"><span>技术与声明</span></div>
+          <div class="p-list-card">
+            <div class="p-list-row">
+              <div><b>规则引擎 @zhouerfuqi/core</b><span>四种班制模型 · 节假日联动推理可解释</span></div>
+              <span class="p-tag accent">自研</span>
+            </div>
+            <div class="p-list-row">
+              <div><b>本地优先 · 零云端</b><span>排班数据不出设备,备份与恢复走系统分享面板</span></div>
+              <span class="p-tag green">隐私</span>
+            </div>
+            <div class="p-list-row">
+              <div><b>Expo · React Native</b><span>一套代码双端交付 · 原生 AlarmActivity 全屏响铃</span></div>
+              <span class="p-tag">栈</span>
+            </div>
+          </div>
+
+          <div class="p-about-foot">MIT License © 2026 周而复起<br>为所有轮班的人而做 · 明早破晓见</div>
+        </div>
+      </div>
+    `;
   }
 
   /* ==================== 渲染与事件绑定 ==================== */
@@ -2332,11 +2560,11 @@
     $('scrRing').innerHTML = htmlRing();
     $('scrGuide').innerHTML = htmlGuide();
     $('scrSettings').innerHTML = htmlSettings();
+    $('scrAbout').innerHTML = htmlAbout();
 
     phone.querySelectorAll('.p-screen').forEach((s) => {
       s.classList.toggle('active', s.dataset.screen === state.scene);
     });
-    $('phoneTabs').innerHTML = htmlTabBar(state.scene);
 
     document.querySelectorAll('#sceneSeg button').forEach((b) => {
       b.setAttribute('aria-pressed', String(b.dataset.scene === state.scene));
@@ -2351,12 +2579,13 @@
   function renderGallery() {
     if (state.viewMode !== 'gallery') return;
     const screens = [
-      { id: 'home', title: '01 · 首页 (破晓视窗 + 七日节律带)', html: htmlHome() },
-      { id: 'calendar', title: '02 · 排班月历 (大小周行标 + 规则推理)', html: htmlCalendar() },
+      { id: 'home', title: '01 · 主屏 (时计台 Hub + 七日节律带)', html: htmlHome() },
+      { id: 'calendar', title: '02 · 排班月历 (模态抽屉)', html: htmlCalendar() },
       { id: 'edit', title: '03 · 规则编辑 (一问锚点 + 连环闹钟)', html: htmlEdit() },
       { id: 'ring', title: '04 · 锁屏响铃 (声波场 + 兜底提示)', html: htmlRing(), isRing: true },
       { id: 'guide', title: '05 · 厂商保活向导 (三步引导)', html: htmlGuide() },
-      { id: 'settings', title: '06 · 设置与可靠性中心', html: htmlSettings() },
+      { id: 'settings', title: '06 · 设置与可靠性 (模态抽屉)', html: htmlSettings() },
+      { id: 'about', title: '07 · 关于页 (破晓英雄卡 + 社区链接)', html: htmlAbout() },
     ];
     const t = THEMES[state.themeIdx];
     $('galleryGrid').innerHTML = screens.map((s) => `
@@ -2370,7 +2599,6 @@
           <div class="p-viewport">
             <div class="p-screen active ${s.isRing ? 'p-ring-screen' : ''}">${s.html}</div>
           </div>
-          <nav class="p-tabbar">${htmlTabBar(s.id)}</nav>
         </div>
         <div class="zf-gallery-cap">${s.title}</div>
       </div>
@@ -2393,7 +2621,7 @@
 
   /* 事件委托:一处绑定全站生效 */
   document.getElementById('zfApp').addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-scene],[data-goto],[data-view],[data-app-theme],[data-tidx],[data-toggle],[data-rk],[data-wd],[data-nstep],[data-ndstep],[data-anchor],[data-del-time],[data-preset],[data-cal-mode],[data-cal-date],[data-cal-step],[data-quick],[data-ring-act],[data-gstep],[data-vendor]');
+    const btn = e.target.closest('[data-scene],[data-goto],[data-view],[data-app-theme],[data-appmode],[data-avatar],[data-tidx],[data-toggle],[data-rk],[data-wd],[data-nstep],[data-ndstep],[data-anchor],[data-del-time],[data-preset],[data-cal-mode],[data-cal-date],[data-cal-step],[data-quick],[data-ring-act],[data-gstep],[data-vendor]');
     if (!btn) return;
 
     if (btn.dataset.view) {
@@ -2526,6 +2754,19 @@
     if (btn.dataset.gstep !== undefined) {
       const idx = +btn.dataset.gstep;
       state.guideSteps[idx] = !state.guideSteps[idx];
+      renderAll();
+      return;
+    }
+    if (btn.dataset.appmode) {
+      const m = btn.dataset.appmode;
+      state.appMode = m;
+      if (m !== 'system') state.appearance = m;
+      document.querySelectorAll('#appAppearanceSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.appTheme === state.appearance)));
+      renderAll();
+      return;
+    }
+    if (btn.dataset.avatar) {
+      state.avatarEmoji = btn.dataset.avatar;
       renderAll();
       return;
     }

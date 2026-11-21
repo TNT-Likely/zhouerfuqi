@@ -71,9 +71,13 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <StatusBar style="light" />
+      <StatusBar style="auto" />
+      {/* v2.1 单主屏架构:首页唯一常驻;月历/设置/关于为底部滑出的模态抽屉 */}
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: undefined } }}>
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="calendar" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="about" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="group/[id]" />
         <Stack.Screen name="guide" />
         <Stack.Screen name="ring" options={{ presentation: 'fullScreenModal' }} />

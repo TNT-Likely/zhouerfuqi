@@ -29,6 +29,23 @@ function load<T>(key: string, fallback: T): T {
   }
 }
 
+/** 默认头像 v2.1:破晓 🌅;旧默认 ⏰ 一次性迁移(带标记,用户主动选回 ⏰ 不再覆盖) */
+function loadAvatar(): string {
+  const dflt = '🌅';
+  try {
+    const raw = mmkv.getString('avatarEmoji');
+    if (raw == null) return dflt;
+    const v = JSON.parse(raw) as string;
+    if (v === '⏰' && !mmkv.getString('avatarEmojiMigrated')) {
+      mmkv.set('avatarEmojiMigrated', JSON.stringify(true));
+      return dflt;
+    }
+    return v || dflt;
+  } catch {
+    return dflt;
+  }
+}
+
 export const usePrefs = create<Prefs>((set) => ({
   themeIdx: load('themeIdx', 0),
   setThemeIdx: (i) => {
@@ -44,7 +61,7 @@ export const usePrefs = create<Prefs>((set) => ({
     } catch {}
     set({ mode: m });
   },
-  avatarEmoji: load('avatarEmoji', '⏰'),
+  avatarEmoji: loadAvatar(),
   setAvatarEmoji: (e) => {
     try {
       mmkv.set('avatarEmoji', JSON.stringify(e));

@@ -8,13 +8,14 @@ import { exportBackup, importBackup } from '@/services/backup';
 import { gateway } from '@/gateway';
 import { scheduleTestRing, syncAll } from '@/scheduler/sync';
 import { checkUpdate, downloadAndInstall } from '@/services/updater';
-import { getVersion, isUpdateSupported } from '../../modules/zf-update/src';
+import { getVersion, isUpdateSupported } from '../modules/zf-update/src';
 import Constants from 'expo-constants';
-import { scheduleRefresher as zfScheduleRefresher } from '../../modules/zf-alarm/src';
+import { scheduleRefresher as zfScheduleRefresher } from '../modules/zf-alarm/src';
 import { useTheme, THEME_COLORS } from '@/theme';
 import { usePrefs } from '@/stores/prefs';
 import { useColorScheme } from 'react-native';
 import { requestNotificationPermission } from '@/services/permissions';
+import { Sheet } from '@/components/Sheet';
 
 export default function SettingsScreen() {
   const t = useTheme();
@@ -72,8 +73,8 @@ export default function SettingsScreen() {
 
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
-      <Text style={[styles.title, { color: t.text }]}>设置</Text>
+    <Sheet title="设置">
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>可靠性</Text>
@@ -283,9 +284,10 @@ export default function SettingsScreen() {
 
       <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
         <Text style={[styles.cardTitle, { color: t.text3 }]}>关于</Text>
-        <Row label="周而复起" sub={`${Constants.expoConfig?.version ?? ver?.versionName ?? 'v0.1.0'} · MIT · github.com/TNT-Likely/zhouerfuqi`} arrow onPress={() => Alert.alert('周而复起', '开源、本地优先的任意班制闹钟。\n规则引擎 @zhouerfuqi/core · Expo RN')} />
+        <Row label="周而复起" sub={`v${Constants.expoConfig?.version ?? ''} · MIT 开源 · 设计与规则引擎自研`} arrow onPress={() => router.push('/about')} />
       </View>
-    </ScrollView>
+      </ScrollView>
+    </Sheet>
   );
 }
 

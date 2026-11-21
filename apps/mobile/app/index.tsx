@@ -17,10 +17,12 @@ import { syncAll } from '@/scheduler/sync';
 import { cnDate, WD, ruleDesc, ringReasonLabel } from '@/lib/labels';
 import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
 import { useTheme } from '@/theme';
+import { usePrefs } from '@/stores/prefs';
 
 export default function HomeScreen() {
   const t = useTheme();
   const groups = useGroups((s) => s.groups);
+  const { avatarEmoji } = usePrefs();
   const setEnabled = useGroups((s) => s.setEnabled);
   const [notifMissing, setNotifMissing] = useState(false);
 
@@ -103,16 +105,21 @@ export default function HomeScreen() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
       <View style={styles.appbar}>
-        <View style={[styles.miniDial, { backgroundColor: t.heroBg }]}>
-          <Ionicons name="alarm-outline" size={17} color={t.primary} />
-        </View>
+        <Pressable
+          style={[styles.avatarBtn, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}
+          onPress={() => router.push('/settings')}
+          accessibilityLabel="设置与个人"
+        >
+          <Text style={{ fontSize: 16 }}>{avatarEmoji}</Text>
+          <View style={[styles.avatarDot, { backgroundColor: notifMissing ? t.red : t.green, borderColor: t.bg }]} />
+        </Pressable>
         <Text style={[styles.appName, { color: t.text }]}>周而复起</Text>
         <View style={{ flex: 1 }} />
+        <Pressable style={[styles.iconBtn, { backgroundColor: t.surface2 }]} onPress={() => router.push('/calendar')} accessibilityLabel="排班月历">
+          <Ionicons name="calendar-outline" size={18} color={t.text2} />
+        </Pressable>
         <Pressable style={[styles.iconBtn, { backgroundColor: t.surface2 }]} onPress={() => router.push('/group/new')} accessibilityLabel="新建班组">
           <Ionicons name="add" size={18} color={t.text2} />
-        </Pressable>
-        <Pressable style={[styles.iconBtn, { backgroundColor: t.surface2 }]} onPress={() => router.push('/guide')} accessibilityLabel="保活向导">
-          <Ionicons name="shield-checkmark-outline" size={17} color={t.text2} />
         </Pressable>
       </View>
 
@@ -215,7 +222,12 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      <Text style={[styles.sectionLabel, { color: t.text3 }]}>排班闹钟组 · {groups.length}</Text>
+      <View style={styles.secRow}>
+        <Text style={[styles.sectionLabel, { color: t.text3 }]}>排班闹钟组 · {groups.length}</Text>
+        <Pressable onPress={() => router.push('/calendar')} hitSlop={8}>
+          <Text style={{ color: t.primary, fontSize: 11.5, fontWeight: '700' }}>查看月历 ›</Text>
+        </Pressable>
+      </View>
 
       {groups.map((g) => (
         <View key={g.id} style={[styles.card, { backgroundColor: t.surface, borderColor: t.line, opacity: g.enabled ? 1 : 0.55 }]}>
@@ -279,6 +291,8 @@ const styles = StyleSheet.create({
   container: { padding: 16, paddingBottom: 48, gap: 12 },
   appbar: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingHorizontal: 2, gap: 10 },
   miniDial: { width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  avatarBtn: { width: 36, height: 36, borderRadius: 999, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  avatarDot: { position: 'absolute', right: -1, top: -1, width: 10, height: 10, borderRadius: 5, borderWidth: 2 },
   appName: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
   iconBtn: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   hero: { borderWidth: 1, borderRadius: 22, padding: 16 },
@@ -307,7 +321,8 @@ const styles = StyleSheet.create({
   wsWd: { fontSize: 10 },
   wsNum: { fontSize: 14, fontVariant: ['tabular-nums'] },
   wsBadge: { fontSize: 9.5, color: '#9CA3AF' },
-  sectionLabel: { fontSize: 11, letterSpacing: 1.5, marginHorizontal: 2, marginTop: 8, marginBottom: 2 },
+  sectionLabel: { fontSize: 11, letterSpacing: 1.5 },
+  secRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 2, marginTop: 8, marginBottom: 2 },
   card: { borderWidth: 1, borderRadius: 22, padding: 6 },
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 58, paddingHorizontal: 10 },
   gicon: { width: 39, height: 39, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
