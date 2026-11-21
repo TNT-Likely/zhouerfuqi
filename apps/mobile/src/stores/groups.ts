@@ -21,13 +21,13 @@ const SEED: AlarmGroup[] = [
   },
 ];
 
-function load(): AlarmGroup[] {
+function load(): AlarmGroup[] | null {
   try {
     const raw = mmkv.getString('groups');
-    const parsed = raw ? (JSON.parse(raw) as AlarmGroup[]) : [];
-    return parsed;
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    return Array.isArray(parsed) ? parsed as AlarmGroup[] : null;
   } catch {
-    return [];
+    return null;
   }
 }
 
@@ -45,9 +45,9 @@ interface GroupsState {
 
 export const useGroups = create<GroupsState>((set, get) => {
   const initial = load();
-  if (initial.length === 0) persist(SEED);
+  if (initial === null) persist(SEED);
   return {
-    groups: initial.length ? initial : SEED,
+    groups: initial ?? SEED,
     upsert: (group) => {
       const groups = [...get().groups.filter((g) => g.id !== group.id), group];
       persist(groups);

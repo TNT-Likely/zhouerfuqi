@@ -12,9 +12,8 @@ export type Prefs = {
   /** 外观模式:跟随系统 / 亮色 / 暗色 */
   mode: AppearanceMode;
   setMode: (m: AppearanceMode) => void;
-  /** 头像 emoji(设置页展示) */
-  avatarEmoji: string;
-  setAvatarEmoji: (e: string) => void;
+  avatarImage: string | null;
+  setAvatarImage: (image: string | null) => void;
   /** 界面语言(v0.2.x 仅中文,预留) */
   lang: 'zh-CN';
   setLang: (l: 'zh-CN') => void;
@@ -26,23 +25,6 @@ function load<T>(key: string, fallback: T): T {
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
-  }
-}
-
-/** 默认头像 v2.1:破晓 🌅;旧默认 ⏰ 一次性迁移(带标记,用户主动选回 ⏰ 不再覆盖) */
-function loadAvatar(): string {
-  const dflt = '🌅';
-  try {
-    const raw = mmkv.getString('avatarEmoji');
-    if (raw == null) return dflt;
-    const v = JSON.parse(raw) as string;
-    if (v === '⏰' && !mmkv.getString('avatarEmojiMigrated')) {
-      mmkv.set('avatarEmojiMigrated', JSON.stringify(true));
-      return dflt;
-    }
-    return v || dflt;
-  } catch {
-    return dflt;
   }
 }
 
@@ -61,12 +43,11 @@ export const usePrefs = create<Prefs>((set) => ({
     } catch {}
     set({ mode: m });
   },
-  avatarEmoji: loadAvatar(),
-  setAvatarEmoji: (e) => {
-    try {
-      mmkv.set('avatarEmoji', JSON.stringify(e));
-    } catch {}
-    set({ avatarEmoji: e });
+  avatarImage: load<string | null>('avatarImage', null),
+  setAvatarImage: (image) => {
+    // Persist the small processed photo, independent of picker caches and file paths.
+    mmkv.set('avatarImage', JSON.stringify(image));
+    set({ avatarImage: image });
   },
   lang: 'zh-CN',
   setLang: (l) => {

@@ -51,6 +51,7 @@ export const tokens = {
 } as const;
 
 export type Tokens = {
+  scheme: 'light' | 'dark';
   bg: string;
   surface: string;
   surface2: string;
@@ -65,12 +66,32 @@ export type Tokens = {
   red: string;
   heroBg: string;
   heroBorder: string;
+  panel: {
+    bg: string;
+    surface: string;
+    raised: string;
+    border: string;
+    muted: string;
+    action: string;
+    onAction: string;
+    accent: string;
+    scrim: string;
+    danger: string;
+    dangerSoft: string;
+    destructive: string;
+    onDestructive: string;
+    warning: string;
+    warningSoft: string;
+    success: string;
+    successSoft: string;
+  };
 };
 
 const ThemeContext = createContext<Tokens>(buildTokens('dark', 0));
 
 function buildTokens(scheme: 'dark' | 'light', themeIdx: number): Tokens {
   const base = tokens[scheme];
+  const dark = scheme === 'dark';
   const swatch = THEME_COLORS[themeIdx] ?? THEME_COLORS[0]!;
   const primary = scheme === 'dark' ? swatch.dark : swatch.light;
   const soft = scheme === 'dark' ? 0.16 : 0.10;
@@ -78,12 +99,41 @@ function buildTokens(scheme: 'dark' | 'light', themeIdx: number): Tokens {
   const heroB = scheme === 'dark' ? 0.34 : 0.24;
   return {
     ...base,
+    scheme,
     primary,
     line: scheme === 'dark' ? rgba(primary, 0.30) : '#ECEEEF',
     accentSoft: rgba(primary, soft),
     heroBg: rgba(primary, heroA),
     heroBorder: rgba(primary, heroB),
+    panel: {
+      bg: dark ? '#0C0D10' : '#F6F4EF',
+      surface: dark ? '#16181D' : '#FFFFFF',
+      raised: dark ? '#20232B' : '#EFEDE7',
+      border: dark ? '#FFFFFF14' : '#1C191718',
+      muted: dark ? '#B5B6B9' : '#57534E',
+      action: blend(primary, dark ? '#FFFFFF' : '#35231A', dark ? 0.18 : 0.26),
+      onAction: dark ? '#16181D' : '#FFFFFF',
+      accent: blend(primary, dark ? '#FFFFFF' : '#30241C', dark ? 0.14 : 0.30),
+      scrim: dark ? '#090A0DBB' : '#28201D66',
+      danger: dark ? '#FBA6B5' : '#A52C42',
+      dangerSoft: dark ? '#FB718524' : '#E11D4817',
+      destructive: dark ? '#EE919F' : '#AA3048',
+      onDestructive: dark ? '#2A1119' : '#FFFFFF',
+      warning: dark ? '#FFCB89' : '#855018',
+      warningSoft: dark ? '#F7B15624' : '#AE661117',
+      success: dark ? '#88E3BE' : '#12664E',
+      successSoft: dark ? '#34D39924' : '#0596691A',
+    },
   };
+}
+
+function blend(color: string, over: string, amount: number) {
+  const channels = [1, 3, 5].map((offset) => {
+    const first = parseInt(color.slice(offset, offset + 2), 16);
+    const second = parseInt(over.slice(offset, offset + 2), 16);
+    return Math.round(first * (1 - amount) + second * amount).toString(16).padStart(2, '0');
+  });
+  return `#${channels.join('')}`;
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {

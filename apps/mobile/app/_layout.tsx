@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, router } from 'expo-router';
-import { Alert, AppState, Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import notifee from 'react-native-notify-kit';
-import { ThemeProvider } from '@/theme';
+import { ThemeProvider, useTheme } from '@/theme';
+import { FeedbackProvider } from '@/components/Feedback';
+import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { gateway } from '@/gateway';
 import { syncAll } from '@/scheduler/sync';
 import { initHolidays } from '@/services/holidays';
@@ -12,6 +14,18 @@ import { consumeLastNotificationTap, onNotificationTap } from '../modules/zf-ala
 import { useGroups } from '@/stores/groups';
 
 export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <FeedbackProvider>
+        <AppNavigation />
+      </FeedbackProvider>
+    </ThemeProvider>
+  );
+}
+
+function AppNavigation() {
+  const t = useTheme();
+  const [startupError, setStartupError] = useState<string>();
   useEffect(() => {
     (async () => {
       try {
@@ -20,8 +34,8 @@ export default function RootLayout() {
         await syncAll();
         // 每日 03:30 自刷新(补偿 MIUI 对 7 天外精确闹钟的钳制)
         zfScheduleRefresher(3, 30);
-      } catch (e: any) {
-        Alert.alert('启动初始化失败', e?.message ?? String(e));
+      } catch (error) {
+        setStartupError(error instanceof Error ? error.message : String(error));
       }
 
       // 节假日缓存加载 + 静默尝试补次年数据(离线/未发布时静默)
@@ -55,11 +69,10 @@ export default function RootLayout() {
 
     // App 回前台时重排(架构 §4.1 触发点之一);
     // iOS 无 BOOT 广播/Headless 通道,前台重排 + 每次启动是仅有的补偿路径
-    const sub = useGroups.subscribe(() => {
-      void syncAll();
-    });
+    const resync = () => { void syncAll().catch((error) => console.warn('闹钟重排失败', error)); };
+    const sub = useGroups.subscribe(resync);
     const appStateSub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') void syncAll();
+      if (s === 'active') resync();
     });
     return () => {
       unsub();
@@ -70,10 +83,10 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <ThemeProvider>
-      <StatusBar style="auto" />
+    <>
+      <StatusBar style={t.scheme === 'light' ? 'dark' : 'light'} />
       {/* v2.1 单主屏架构:首页唯一常驻;月历/设置/关于为底部滑出的模态抽屉 */}
-      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: undefined } }}>
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg } }}>
         <Stack.Screen name="index" />
         <Stack.Screen name="calendar" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="settings" options={{ animation: 'slide_from_bottom' }} />
@@ -82,6 +95,12 @@ export default function RootLayout() {
         <Stack.Screen name="guide" />
         <Stack.Screen name="ring" options={{ presentation: 'fullScreenModal' }} />
       </Stack>
-    </ThemeProvider>
+      {startupError ? (
+        <AppDialog title="启动初始化失败" layout="center" tone="error" icon="alert-circle-outline"
+          onClose={() => setStartupError(undefined)}>
+          <DialogCopy centered>{startupError}</DialogCopy>
+        </AppDialog>
+      ) : null}
+    </>
   );
 }

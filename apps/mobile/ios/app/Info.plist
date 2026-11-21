@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.2.7</string>
+	<string>0.2.8</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -48,6 +48,8 @@
 	<true/>
 	<key>NSAlarmKitUsageDescription</key>
 	<string>周而复起需要系统闹钟权限,在排班设定的时刻用系统闹钟响铃。</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>选择一张照片用作周而复起的首页头像。</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

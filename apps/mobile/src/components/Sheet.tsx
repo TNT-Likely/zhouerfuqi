@@ -15,16 +15,20 @@ export function Sheet({
   right,
   onClose,
   children,
+  appearance = 'default',
 }: {
   title: string;
   right?: ReactNode;
   onClose?: () => void;
   children: ReactNode;
+  appearance?: 'default' | 'panel';
 }) {
   const t = useTheme();
+  const panel = appearance === 'panel';
   return (
-    <SafeAreaView edges={['top']} style={[styles.host, { backgroundColor: t.bg }]}>
-      <View style={[styles.sheet, { backgroundColor: t.surface, borderColor: t.line }]}>
+    <SafeAreaView edges={['top', 'bottom', 'left', 'right']}
+      style={[styles.host, { backgroundColor: panel ? t.panel.bg : t.bg }]}>
+      <View style={[styles.sheet, { backgroundColor: panel ? t.panel.bg : t.surface, borderColor: panel ? t.panel.border : t.line }]}>
         <View style={[styles.handle, { backgroundColor: t.text3 }]} />
         <View style={styles.head}>
           <Text style={[styles.title, { color: t.text }]}>{title}</Text>
@@ -33,8 +37,9 @@ export function Sheet({
             onPress={onClose ?? (() => router.back())}
             style={[styles.done, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}
             accessibilityLabel={`关闭${title}`}
+            accessibilityRole="button"
           >
-            <Text style={{ color: t.primary, fontSize: 12, fontWeight: '800' }}>完成</Text>
+            <Text style={{ color: t.panel.accent, fontSize: 12, fontWeight: '800' }}>完成</Text>
           </Pressable>
         </View>
         {children}
@@ -71,9 +76,10 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 17, fontWeight: '800', letterSpacing: -0.3, flex: 1 },
   done: {
-    borderRadius: 999,
+    borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    minHeight: 42,
+    justifyContent: 'center',
   },
 });

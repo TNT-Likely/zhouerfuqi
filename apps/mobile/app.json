@@ -2,7 +2,7 @@
   "expo": {
     "name": "周而复起",
     "slug": "zhouerfuqi",
-    "version": "0.2.7",
+    "version": "0.2.8",
     "scheme": "zhouerfuqi",
     "icon": "./assets/icon.png",
     "orientation": "portrait",
@@ -17,6 +17,7 @@
       "supportsTablet": false,
       "infoPlist": {
         "NSAlarmKitUsageDescription": "周而复起需要系统闹钟权限,在排班设定的时刻用系统闹钟响铃。",
+        "NSPhotoLibraryUsageDescription": "选择一张照片用作周而复起的首页头像。",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -35,7 +36,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "选择一张照片用作周而复起的首页头像。",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ]
   }
 }

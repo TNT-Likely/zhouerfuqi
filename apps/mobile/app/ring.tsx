@@ -1,81 +1,102 @@
 import { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { PanelButton } from '@/components/Panel';
+import { useFeedback } from '@/components/Feedback';
 import { syncAll, snooze } from '@/scheduler/sync';
 import { useTheme } from '@/theme';
 
 export default function RingScreen() {
   const t = useTheme();
-  const { top } = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ timeLabel?: string; groupId?: string }>();
+  const notify = useFeedback();
+  const { top, bottom } = useSafeAreaInsets();
+  const params = useLocalSearchParams<{ timeLabel?: string; groupId?: string; preview?: string }>();
+  const preview = params.preview === '1';
   const [state, setState] = useState<'ringing' | 'snoozed' | 'closed'>('ringing');
-
-  const time = params.timeLabel ?? nowLabel();
-  const groupLabel = params.groupId === 'work' ? '上班组' : (params.groupId ?? '闹钟');
+  const [initial] = useState(() => new Date());
+  const [delay, setDelay] = useState(0);
+  const sampleTime = new Date(initial.getTime() + delay * 60_000);
+  const time = preview || !params.timeLabel ? formatTime(sampleTime) : params.timeLabel;
+  const groupLabel = preview ? '试响预览' : params.groupId === 'work' ? '上班组' : params.groupId || '闹钟';
+  const close = () => {
+    if (preview) router.back();
+    else router.dismissAll();
+  };
 
   return (
-    <View style={[styles.root, { backgroundColor: '#0B1220' }]}>
-      <Text style={[styles.brand, { top: Math.max(44, top + 8) }]}>周 而 复 起 · 系统级响铃</Text>
+    <LinearGradient colors={[t.heroBorder, '#101117', '#090A0D']}
+      style={[styles.root, { paddingTop: top + 12, paddingBottom: bottom + 24 }]}>
+      <StatusBar style="light" />
+      <Text style={styles.brand}>周而复起</Text>
 
-      {state === 'closed' ? (
-        <View style={{ alignItems: 'center', gap: 12 }}>
-          <Text style={{ fontSize: 44, color: t.green }}>✓</Text>
-          <Text style={{ color: t.text2, fontSize: 13 }}>闹钟已关闭 · 其余兜底响铃保持待命</Text>
-          <Pressable onPress={() => router.dismissAll()}>
-            <Text style={{ color: t.primary, fontSize: 13, textDecorationLine: 'underline' }}>返回首页</Text>
-          </Pressable>
-        </View>
-      ) : (
-        <>
-          <Text style={{ color: t.text2, fontSize: 14, marginBottom: 6 }}>响铃中</Text>
-          <Text style={styles.time}>{time}</Text>
-          <View style={styles.label}>
-            <Text style={{ color: t.text, fontSize: 13 }}>{groupLabel}</Text>
-          </View>
-          <Text style={[styles.sub, { color: state === 'snoozed' ? t.primary : t.text3 }]}>
-            {state === 'snoozed' ? '已延后 9 分钟 → 稍后再响' : '音量渐强 · 静音/勿扰不影响'}
-          </Text>
-        </>
-      )}
+      <View style={styles.content}>
+        {state === 'closed' ? (
+          <>
+            <View style={styles.mark}><Ionicons name="checkmark" size={29} color="#88E3BE" /></View>
+            <Text style={styles.result}>闹钟已关闭</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.muted}>{sampleTime.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })}</Text>
+            <Text style={styles.time} adjustsFontSizeToFit numberOfLines={1}>{time}</Text>
+            <Text style={styles.label}>{groupLabel}</Text>
+            <Text style={styles.muted}>{state === 'snoozed' ? `已延后 ${delay} 分钟` : preview ? '用于查看响铃界面' : '响铃中 · 音量渐强'}</Text>
+          </>
+        )}
+      </View>
 
-      {state !== 'closed' ? (
-        <View style={styles.actions}>
-          <Pressable
-            style={[styles.btn, { backgroundColor: 'rgba(255,255,255,0.1)' }]}
-            onPress={() => {
-              void snooze(9, '⏰ 贪睡 · 周而复起');
-              setState('snoozed');
-            }}
-          >
-            <Text style={{ color: t.text, fontWeight: '700', fontSize: 14 }}>稍后 9 分钟</Text>
-          </Pressable>
-          <Pressable
-            style={[styles.btn, { backgroundColor: t.primary }]}
-            onPress={() => {
-              void syncAll();
+      <View style={styles.actions}>
+        {state === 'closed' ? (
+          <>
+            {preview ? <PanelButton label="重新预览" onPress={() => { setDelay(0); setState('ringing'); }} /> : null}
+            <PanelButton label={preview ? '返回' : '返回首页'} variant="primary" onPress={close} />
+          </>
+        ) : (
+          <>
+            <PanelButton label={preview && state === 'snoozed' ? '再延后 9 分钟' : '稍后 9 分钟'} onPress={() => {
+              if (preview) {
+                setDelay((minutes) => minutes + 9);
+                setState('snoozed');
+                return;
+              }
+              void snooze(9, '贪睡 · 周而复起').then(() => {
+                setDelay(9);
+                setState('snoozed');
+              }).catch(() => notify('无法延后响铃', '请检查系统闹钟权限。', 'error', 'alert-circle-outline'));
+            }} />
+            <PanelButton label="关闭本次闹钟" variant="primary" onPress={() => {
+              if (!preview) void syncAll().catch(() => {});
               setState('closed');
-            }}
-          >
-            <Text style={{ color: t.onPrimary, fontWeight: '800', fontSize: 14 }}>关闭</Text>
-          </Pressable>
-        </View>
-      ) : null}
-    </View>
+            }} />
+          </>
+        )}
+      </View>
+    </LinearGradient>
   );
 }
 
-function nowLabel(): string {
-  const d = new Date();
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+function formatTime(date: Date): string {
+  return [date.getHours(), date.getMinutes()].map((v) => String(v).padStart(2, '0')).join(':');
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  brand: { position: 'absolute', fontSize: 11, color: '#5B6E8F', letterSpacing: 3 },
-  time: { fontSize: 84, fontWeight: '200', color: '#EDF2FA', letterSpacing: 2, lineHeight: 100 },
-  label: { marginTop: 18, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.14)' },
-  sub: { marginTop: 10, fontSize: 11 },
-  actions: { position: 'absolute', bottom: 44, left: 24, right: 24, flexDirection: 'row', gap: 14 },
-  btn: { flex: 1, padding: 16, borderRadius: 14, alignItems: 'center' },
+  root: { flex: 1, backgroundColor: '#090A0D', paddingHorizontal: 24 },
+  brand: { fontSize: 13, color: '#C5C6CD', fontWeight: '600', textAlign: 'center', minHeight: 24 },
+  content: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10 },
+  time: {
+    maxWidth: '100%', fontSize: 86, lineHeight: 97, fontWeight: '300', color: '#F5F5F4',
+    letterSpacing: -3, fontVariant: ['tabular-nums'],
+  },
+  label: {
+    color: '#F5F5F4', fontSize: 13, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 30, overflow: 'hidden',
+    fontWeight: '600', backgroundColor: '#FFFFFF19',
+  },
+  muted: { color: '#C5C6CD', fontSize: 13, textAlign: 'center' },
+  mark: { width: 54, height: 54, borderRadius: 27, backgroundColor: '#57C59C30', alignItems: 'center', justifyContent: 'center' },
+  result: { fontSize: 22, fontWeight: '700', color: '#F5F5F4' },
+  actions: { gap: 9 },
 });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>周而复起 · 破晓时计 UI 设计稿 v2.1</title>
+<title>周而复起 · 页面细化确认稿</title>
 <style>
   /* 宿主/独立浏览双兼容变量底座(不覆盖 T3 注入的 :root 变量) */
   :where(:root) {
@@ -126,6 +126,7 @@
     scrollbar-width: none;
   }
   .zf-seg::-webkit-scrollbar { display: none; }
+  .zf-seg button:disabled { opacity: .45; cursor: default; }
 
   .zf-seg button {
     appearance: none;
@@ -201,7 +202,7 @@
   .zf-gallery {
     width: 100%;
     display: none;
-    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(310px, 100%), 1fr));
     gap: 20px;
     justify-items: center;
   }
@@ -318,12 +319,23 @@
     --p-ink-3: rgba(245, 245, 244, 0.40);
     --p-accent: var(--theme-dark, #fb923c);
     --p-accent-ink: #ffffff;
+    --p-control: color-mix(in srgb, var(--p-accent) 82%, #ffffff);
+    --p-on-control: #16181d;
+    --p-control-text: color-mix(in srgb, var(--p-accent) 86%, #ffffff);
+    --p-danger-text: #fba6b5;
+    --p-danger-line: #fb71855c;
     --p-accent-soft: color-mix(in srgb, var(--p-accent) 15%, transparent);
     --p-accent-border: color-mix(in srgb, var(--p-accent) 32%, transparent);
     --p-green: #34d399;
     --p-green-soft: rgba(52, 211, 153, 0.14);
+    --p-success-text: #88e3be;
+    --p-warning-text: #ffcb89;
+    --p-warning-soft: #f7b1561c;
     --p-red: #fb7185;
     --p-red-soft: rgba(251, 113, 133, 0.14);
+    --p-destructive: #ee919f;
+    --p-on-destructive: #2a1119;
+    --p-scrim: #090a0dc2;
     --p-nav-bg: rgba(22, 24, 29, 0.84);
     --p-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
     --p-bezel: #22252c;
@@ -360,12 +372,23 @@
     --p-ink-3: #a8a29e;
     --p-accent: var(--theme-light, #ea580c);
     --p-accent-ink: #ffffff;
+    --p-control: color-mix(in srgb, var(--p-accent) 74%, #35231a);
+    --p-on-control: #fff;
+    --p-control-text: color-mix(in srgb, var(--p-accent) 70%, #30241c);
+    --p-danger-text: #a52c42;
+    --p-danger-line: #ac304451;
     --p-accent-soft: color-mix(in srgb, var(--p-accent) 11%, transparent);
     --p-accent-border: color-mix(in srgb, var(--p-accent) 24%, transparent);
     --p-green: #059669;
     --p-green-soft: rgba(5, 150, 105, 0.10);
+    --p-success-text: #12664e;
+    --p-warning-text: #855018;
+    --p-warning-soft: #ae661114;
     --p-red: #e11d48;
     --p-red-soft: rgba(225, 29, 72, 0.09);
+    --p-destructive: #aa3048;
+    --p-on-destructive: #fff;
+    --p-scrim: #28201d66;
     --p-nav-bg: rgba(255, 255, 255, 0.86);
     --p-card-shadow: 0 4px 16px rgba(28, 25, 23, 0.045);
     --p-bezel: #dcd9d0;
@@ -1381,65 +1404,71 @@
     box-shadow: 0 10px 28px color-mix(in srgb, var(--p-accent) 45%, transparent);
   }
 
-  /* ============ 5. 保活向导 & 6. 设置 ============ */
-  .p-step-card {
-    border-radius: 18px;
-    background: var(--p-surface);
-    border: 1px solid var(--p-border);
-    padding: 13px 14px;
-    display: flex;
-    gap: 11px;
-    cursor: pointer;
-  }
-  .p-step-card.done {
-    border-color: var(--p-accent-border);
-    background: color-mix(in srgb, var(--p-accent) 6%, var(--p-surface));
-  }
-  .p-step-num {
-    width: 26px;
-    height: 26px;
-    border-radius: 999px;
-    background: var(--p-surface-2);
-    color: var(--p-ink-2);
-    font-size: 12px;
-    font-weight: 750;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-  .p-step-card.done .p-step-num {
-    background: var(--p-accent);
-    color: #fff;
-  }
-  .p-step-path {
-    margin-top: 6px;
-    padding: 5px 8px;
-    border-radius: 7px;
-    background: var(--p-surface-2);
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--p-ink-2);
-  }
-
+  /* 设置和关于共用的分区、列表与控件 */
+  .p-config-section { display: grid; gap: 8px; }
+  .p-section-title { margin: 3px 2px 0; color: var(--p-ink-2); font-size: 12px; font-weight: 720; }
   .p-list-card {
-    border-radius: 20px;
-    background: var(--p-surface);
-    border: 1px solid var(--p-border);
-    padding: 4px 14px;
+    border-radius: 18px; background: var(--p-surface); border: 1px solid var(--p-border);
+    box-shadow: var(--p-highlight); overflow: hidden;
   }
   .p-list-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 11px 0;
-    border-bottom: 1px solid var(--p-border);
-    cursor: pointer;
+    display: flex; width: 100%; min-height: 55px; padding: 10px 12px;
+    align-items: center; gap: 10px; text-align: left; color: var(--p-ink); text-decoration: none;
   }
-  .p-list-row:last-child { border-bottom: 0; }
-  .p-list-row b { font-size: 13px; font-weight: 650; display: block; }
-  .p-list-row span { font-size: 11px; color: var(--p-ink-2); display: block; margin-top: 2px; }
+  .p-list-row + .p-list-row { border-top: 1px solid var(--p-border); }
+  .p-appearance + .p-list-row { border-top: 1px solid var(--p-border); }
+  .p-list-row:where(button, a):hover { background-color: var(--p-surface-2); }
+  .p-row-icon {
+    flex: none; display: grid; place-items: center; width: 32px; height: 32px;
+    border-radius: 10px; background: var(--p-accent-soft); color: var(--p-control-text);
+  }
+  .p-row-icon .zf-ico { width: 16px; height: 16px; }
+  .p-row-copy { flex: 1; min-width: 0; }
+  .p-row-copy b { display: block; font-size: 13.5px; line-height: 1.25; font-weight: 730; }
+  .p-row-detail { display: block; margin-top: 3px; font-size: 11.5px; line-height: 1.42; color: var(--p-ink-2); overflow-wrap: anywhere; }
+  .p-row-value { flex: none; font-size: 11px; font-weight: 650; color: var(--p-ink-2); }
+  .p-row-arrow { display: grid; place-items: center; color: var(--p-ink-2); }
+  .p-row-arrow .zf-ico { width: 14px; height: 14px; }
+  .p-reliability-head {
+    display: flex; align-items: center; gap: 10px; min-height: 66px; padding: 11px 12px;
+    background: var(--p-accent-soft); border-bottom: 1px solid var(--p-border);
+  }
+  .p-reliability-head .p-row-icon { background: var(--p-surface); }
+  .p-status-dot { width: 7px; height: 7px; display: inline-block; border-radius: 50%; margin-inline-end: 5px; background: var(--p-green); }
+  .p-status-dot.warn { background: var(--p-accent); }
+
+  .p-button {
+    min-height: 38px; border: 1px solid var(--p-border); border-radius: 12px; padding: 8px 13px;
+    background: var(--p-surface-2); color: var(--p-ink); text-align: center;
+    font-size: 12.5px; font-weight: 730; line-height: 1.3;
+  }
+  .p-button:hover { filter: brightness(1.07); }
+  .p-button[disabled] { opacity: .5; cursor: default; }
+  .p-button.primary { color: var(--p-on-control); border-color: transparent; background: var(--p-control); }
+  .p-button.danger { color: var(--p-danger-text); border-color: var(--p-danger-line); background: var(--p-red-soft); }
+
+  .p-appearance { padding: 12px; }
+  .p-config-label { font-size: 12px; margin: 0 0 7px; font-weight: 720; }
+  .p-appearance .p-config-label + .p-palette { margin-top: 1px; }
+  .p-appearance .p-mode-controls { grid-template-columns: repeat(3, 1fr); margin-bottom: 13px; }
+  .p-mode-controls button { min-height: 34px; color: var(--p-ink-2); }
+  .p-mode-controls button[aria-pressed="true"] { color: var(--p-control-text); font-weight: 750; }
+  .p-palette { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; }
+  .p-palette button { display: grid; place-items: center; gap: 6px; color: var(--p-ink-2); font-size: 10.5px; padding: 5px 1px; border-radius: 10px; min-height: 51px; }
+  .p-palette button[aria-pressed="true"] { background-color: var(--p-accent-soft); color: var(--p-ink); font-weight: 720; }
+  .p-swatch-dot {
+    display: grid; place-items: center; width: 23px; height: 23px; border: 1px solid var(--p-border);
+    border-radius: 50%; background: var(--swatch); color: #fff;
+  }
+  .p-swatch-dot .zf-ico { width: 15px; height: 15px; filter: drop-shadow(0 1px 2px #000b); }
+  .p-guide-status { padding: 13px; border: 1px solid var(--p-accent-border); border-radius: 18px; background: var(--p-accent-soft); }
+  .p-guide-status .p-row-detail { margin-top: 5px; }
+  .p-guide-card .p-list-row { align-items: flex-start; }
+  .p-vendors { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0 9px; }
+  .p-vendors button { min-height: 30px; padding: 4px 8px; text-align: center; border: 1px solid var(--p-border); border-radius: 9px; background: var(--p-surface-2); color: var(--p-ink-2); font-size: 10.5px; }
+  .p-vendors button[aria-pressed="true"] { border-color: var(--p-accent-border); background: var(--p-accent-soft); color: var(--p-control-text); }
+  .p-vendor-card { padding: 12px; }
+  .p-vendor-card p { margin: 0; color: var(--p-ink-2); font-size: 11.5px; line-height: 1.55; }
 
   /* ============ v2.1 模态抽屉(sheet)与头像入口 ============ */
   .p-sheet {
@@ -1447,18 +1476,18 @@
     left: 0;
     right: 0;
     bottom: 0;
-    top: 46px;
+    top: 8px;
     background: var(--p-bg);
     border: 1px solid var(--p-border);
     border-bottom: 0;
     border-radius: 26px 26px 0 0;
-    box-shadow: 0 -14px 44px rgba(0, 0, 0, 0.30);
+    box-shadow: 0 -5px 18px rgba(0, 0, 0, 0.12);
     display: flex;
     flex-direction: column;
     overflow: hidden;
     z-index: 4;
   }
-  .p-screen.active .p-sheet { animation: zfSheetUp 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .p-screen.is-entering .p-sheet { animation: zfSheetUp 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
   @keyframes zfSheetUp {
     from { transform: translateY(56px); opacity: 0.35; }
     to { transform: translateY(0); opacity: 1; }
@@ -1476,18 +1505,21 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 18px 6px;
+    padding: 8px 18px 9px;
+    min-height: 48px;
     flex-shrink: 0;
   }
-  .p-sheet-title { font-size: 17px; font-weight: 750; letter-spacing: -0.3px; flex: 1; }
+  .p-sheet-title { margin: 0; font-size: 18px; font-weight: 780; letter-spacing: -.3px; flex: 1; }
+  .p-sheet-head .p-tag.accent { color: var(--p-control-text); }
   .p-sheet-done {
     font-size: 12px;
     font-weight: 700;
-    color: var(--p-accent);
+    color: var(--p-control-text);
     background: var(--p-accent-soft);
     border: 1px solid var(--p-accent-border);
-    padding: 6px 14px;
-    border-radius: 999px;
+    padding: 7px 14px;
+    min-height: 36px;
+    border-radius: 14px;
     flex-shrink: 0;
   }
 
@@ -1498,7 +1530,6 @@
     border-radius: 999px;
     background: var(--p-accent-soft);
     border: 1px solid var(--p-accent-border);
-    font-size: 16px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1516,55 +1547,223 @@
     border: 2px solid var(--p-bg);
   }
 
-  /* ============ 7. 关于页:v2.1 焕新 ============ */
+  /* 关于页 */
   .p-about-hero {
-    position: relative;
-    overflow: hidden;
-    text-align: center;
-    border-radius: 24px;
-    padding: 22px 16px 18px;
-    background:
-      radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--p-accent) 22%, transparent) 0%, transparent 62%),
-      var(--p-surface);
-    border: 1px solid var(--p-accent-border);
-    box-shadow: var(--p-highlight), var(--p-card-shadow);
+    overflow: hidden; text-align: center; border-radius: 22px; padding: 20px 14px 12px;
+    background: radial-gradient(100% 100% at 50% -12%, var(--p-accent-soft), transparent 70%), var(--p-surface);
+    border: 1px solid var(--p-accent-border); box-shadow: var(--p-highlight);
   }
-  .p-about-logo {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
-    margin: 0 auto 12px;
-    display: block;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
-  }
-  .p-about-name { font-size: 21px; font-weight: 800; letter-spacing: -0.6px; }
-  .p-about-tag { font-size: 12px; color: var(--p-ink-2); margin-top: 4px; font-weight: 500; }
-  .p-about-ver {
-    display: inline-flex;
-    margin-top: 10px;
-    padding: 4px 12px;
-    border-radius: 999px;
-    background: var(--p-accent-soft);
-    border: 1px solid var(--p-accent-border);
-    color: var(--p-accent);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-  }
-  .p-about-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
-  .p-about-stat {
-    border-radius: 16px;
-    background: var(--p-surface);
-    border: 1px solid var(--p-border);
-    box-shadow: var(--p-highlight);
-    padding: 10px 8px;
-    text-align: center;
-  }
-  .p-about-stat b { display: block; font-size: 15px; font-weight: 800; letter-spacing: -0.3px; }
-  .p-about-stat span { display: block; font-size: 9.5px; color: var(--p-ink-3); margin-top: 3px; font-weight: 600; }
-  .p-about-foot { text-align: center; font-size: 10.5px; color: var(--p-ink-3); padding: 6px 0 2px; line-height: 1.6; }
+  .p-about-logo { width: 57px; height: 57px; border-radius: 15px; margin: 0 auto 8px; display: block; }
+  .p-about-name { margin: 0; font-size: 21px; font-weight: 800; letter-spacing: -.45px; }
+  .p-about-tag { color: var(--p-ink-2); margin: 4px 0 0; font-size: 11.5px; line-height: 1.4; }
+  .p-about-ver { display: inline-flex; margin-top: 7px; padding: 3px 8px; border-radius: 7px; background: var(--p-accent-soft); color: var(--p-control-text); font-size: 10.5px; font-weight: 740; }
+  .p-about-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--p-border); padding-top: 11px; margin-top: 14px; }
+  .p-about-stat + .p-about-stat { border-inline-start: 1px solid var(--p-border); }
+  .p-about-stat b { display: block; font-size: 17px; font-weight: 780; }
+  .p-about-stat span { display: block; color: var(--p-ink-2); margin-top: 3px; font-size: 10px; }
+  .p-about-foot { text-align: center; font-size: 10.5px; color: var(--p-ink-2); line-height: 1.5; padding: 3px 0 1px; }
 
-  .p-phone-ringing .p-statusbar { color: #ffffff; }
+  /* 编辑与操作提示 */
+  .p-form-field { display: grid; gap: 6px; min-width: 0; color: var(--p-ink-2); font-size: 12px; font-weight: 650; }
+  .p-input {
+    width: 100%; min-height: 42px; padding: 8px 10px;
+    border-radius: 11px; border: 1px solid var(--p-border); background: var(--p-surface-2);
+    font-size: 13px; color: var(--p-ink); user-select: text;
+  }
+  .p-input::placeholder { color: var(--p-ink-2); opacity: .8; }
+  .p-edit-time { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+  .p-time-entry { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .p-time-entry b { font-size: 16px; white-space: nowrap; }
+  .p-time-entry span { color: var(--p-ink-2); font-size: 11px; overflow-wrap: anywhere; }
+  .p-time-remove { color: var(--p-danger-text); padding: 6px 3px; font-size: 11.5px; font-weight: 720; }
+  .zf-phone .p-custom-time {
+    display: inline-flex; align-items: center; justify-content: center; width: 100%; gap: 5px;
+    margin-top: 10px; border: 1px solid var(--p-accent-border); color: var(--p-control-text); background-color: var(--p-accent-soft);
+  }
+  .p-custom-time .zf-ico { width: 14px; height: 14px; }
+  .p-preset-list { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .p-preset-list button { padding: 5px 8px; border: 1px solid var(--p-border); border-radius: 8px; background: var(--p-surface-2); color: var(--p-ink-2); font-size: 11px; }
+  .p-preset-list button[aria-pressed="true"] { color: var(--p-control-text); border-color: var(--p-accent-border); background: var(--p-accent-soft); }
+
+  .p-phone-ringing .p-statusbar { color: #f6f4ee; background: #121318; }
+  .p-ring-top { background: transparent; border-color: transparent; font-size: 12px; letter-spacing: 1px; }
+  .p-ring-date { font-size: 12.5px; }
+  .p-ring-result-icon { width: 50px; height: 50px; display: grid; place-items: center; border-radius: 50%; color: #8be0bf; background: #57c59c2b; }
+  .p-ring-result-icon .zf-ico { width: 24px; height: 24px; }
+  .p-ring-result-title { font-size: 18px; font-weight: 760; margin-top: 10px; }
+  .p-nav-title { flex: 1; font-size: 16px; font-weight: 750; }
+  .p-nav-head { gap: 10px; }
+  .p-nav-head .p-nav-back { min-height: 36px; }
+  .p-nav-head .p-nav-save { min-height: 36px; color: var(--p-on-control); background: var(--p-control); }
+  .p-edit-calendar { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .p-ring-stop { color: #150e09; background: color-mix(in srgb, var(--theme-dark) 78%, #fff5eb); box-shadow: none; }
+
+  /* 抽屉、确认卡和轻提示都在状态栏下方的应用视口内 */
+  .p-overlay {
+    position: absolute; inset: 0; z-index: 12;
+    display: grid; grid-template-rows: minmax(0, 1fr); place-items: center;
+    padding: 16px 18px;
+    background: var(--p-scrim);
+    backdrop-filter: blur(3px);
+  }
+  .p-overlay[hidden] { display: none; }
+  .p-overlay:has(.p-dialog--sheet) { padding: 14px 5px 5px; align-items: end; }
+  .p-dialog {
+    --dialog-ink: var(--p-control-text);
+    --dialog-tint: var(--p-accent-soft);
+    width: 100%; max-height: 100%;
+    display: flex; flex-direction: column;
+    border: 1px solid var(--p-border); border-radius: 28px; overflow: hidden;
+    background: var(--p-surface);
+    box-shadow: var(--p-highlight), 0 18px 48px #0005;
+  }
+  .p-dialog:is([data-tone="danger"], [data-tone="error"]) { --dialog-ink: var(--p-danger-text); --dialog-tint: var(--p-red-soft); }
+  .p-dialog[data-tone="warning"] { --dialog-ink: var(--p-warning-text); --dialog-tint: var(--p-warning-soft); }
+  .p-dialog--confirm {
+    max-width: 326px;
+    background: radial-gradient(120% 180px at 50% 0, var(--dialog-tint), transparent), var(--p-surface);
+  }
+  .p-dialog:focus { outline: none; }
+  .p-dialog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none; padding: 8px 18px 14px; }
+  .p-dialog-head h4 { margin: 0; font-size: 21px; font-weight: 780; line-height: 1.2; letter-spacing: -.4px; }
+  .p-dialog--confirm .p-dialog-head { flex-direction: column; justify-content: center; gap: 13px; padding: 22px 18px 9px; text-align: center; }
+  .p-dialog-mark {
+    width: 49px; height: 49px; display: grid; place-items: center;
+    border-radius: 17px; color: var(--dialog-ink); background: var(--dialog-tint);
+    border: 1px solid color-mix(in srgb, var(--dialog-ink) 21%, transparent);
+    box-shadow: var(--p-highlight);
+  }
+  .p-dialog-mark .zf-ico { width: 22px; height: 22px; }
+  .p-dialog-grip { flex: none; margin: 9px auto 0; width: 34px; height: 4px; border-radius: 999px; background: var(--p-ink-3); opacity: .55; }
+  .p-dialog-close {
+    width: 44px; height: 44px; display: grid; place-items: center; flex: none;
+    border: 1px solid var(--p-border); border-radius: 50%; background: var(--p-surface-2); color: var(--p-ink-2);
+  }
+  .p-dialog-close .zf-ico { width: 17px; height: 17px; }
+  .p-dialog-body {
+    min-height: 0; overflow: auto; overscroll-behavior: contain;
+    display: flex; flex-direction: column; gap: 10px; padding: 0 18px 15px; scrollbar-width: thin;
+  }
+  .p-dialog-body > * { flex: none; }
+  .p-dialog-copy { margin: 0; color: var(--p-ink-2); font-size: 13px; line-height: 1.58; overflow-wrap: anywhere; }
+  .p-dialog--confirm .p-dialog-body > .p-dialog-copy { text-align: center; }
+  .p-dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; flex: none; padding: 12px 18px 16px; border-top: 1px solid var(--p-border); }
+  .p-dialog--confirm .p-dialog-actions { border-top: 0; padding-top: 0; }
+  .p-dialog-actions .p-button { flex: 1; min-width: 86px; min-height: 46px; border-radius: 15px; font-size: 13px; }
+  .p-dialog-actions .p-button.danger { background: var(--p-destructive); color: var(--p-on-destructive); border-color: transparent; }
+  .p-dialog-list { background: var(--p-surface-2); border-radius: 16px; box-shadow: none; }
+  .p-dialog-list .p-list-row { padding: 10px 11px; min-height: 54px; }
+  .p-dialog-list .p-row-icon { color: var(--dialog-ink); background: var(--dialog-tint); }
+  .p-dialog-pill { display: inline-flex; align-items: center; gap: 3px; border-radius: 999px; padding: 5px 7px; font-size: 10.5px; color: var(--p-success-text); background: var(--p-green-soft); white-space: nowrap; }
+  .p-dialog-pill.warn { color: var(--p-warning-text); background: var(--p-warning-soft); }
+  .p-dialog-pill .zf-ico { width: 12px; height: 12px; }
+  .p-dialog-subaction { display: flex; align-items: center; justify-content: center; min-height: 44px; width: 100%; gap: 5px; border-radius: 13px; color: var(--p-control-text); font-size: 13px; font-weight: 730; }
+  .p-dialog-subaction:hover { background: var(--p-accent-soft); }
+  .p-dialog-subaction .zf-ico { width: 15px; height: 15px; }
+  .p-dialog-summary {
+    display: grid; justify-items: center; gap: 5px; padding: 15px 12px;
+    background: radial-gradient(120% 140% at 50% 100%, var(--p-accent-soft), transparent 75%), var(--p-surface-2);
+    border: 1px solid var(--p-accent-border); border-radius: 19px;
+  }
+  .p-dialog-summary > b { font-size: 38px; line-height: 1; letter-spacing: -.045em; font-weight: 760; }
+  .p-dialog-summary > span { color: var(--p-ink-2); font-size: 12px; text-align: center; }
+  .p-version-pair {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 7px;
+    border: 1px solid var(--p-accent-border); border-radius: 18px;
+    background: linear-gradient(105deg, var(--p-surface-2) 20%, var(--p-accent-soft));
+    padding: 14px 8px; text-align: center;
+  }
+  .p-version-pair div { display: grid; justify-items: center; gap: 3px; }
+  .p-version-pair span { color: var(--p-ink-2); font-size: 11px; }
+  .p-version-pair b { font-size: 20px; letter-spacing: -.03em; }
+  .p-version-pair > .zf-ico, .p-version-pair div:last-child b { color: var(--p-control-text); }
+  .p-picktime-display {
+    position: relative; display: flex; align-items: center; justify-content: space-between; gap: 5px;
+    padding: 9px 11px 20px; border-radius: 19px; border: 1px solid var(--p-accent-border);
+    background: radial-gradient(90% 140% at 50% 100%, var(--p-accent-soft), transparent), var(--p-surface-2);
+  }
+  .p-picktime-display::after {
+    content: ""; position: absolute; bottom: 8px; left: 14px; right: 14px; height: 5px; opacity: .58;
+    background: repeating-linear-gradient(90deg, var(--p-control-text) 0 1px, transparent 1px 9px);
+    mask-image: linear-gradient(90deg, transparent, #000 33% 67%, transparent);
+  }
+  .p-picktime-display b { font-size: clamp(35px, 13vw, 49px); font-weight: 780; letter-spacing: -.055em; line-height: 1.08; color: var(--p-ink); }
+  .p-picktime-display button { width: 44px; min-height: 44px; padding: 4px; flex: none; color: var(--p-control-text); background: var(--p-surface); }
+  .p-time-field { padding: 0; border: 0; min-inline-size: 0; margin: 0; }
+  .p-time-field legend { padding: 0 0 6px; font-size: 12px; font-weight: 730; color: var(--p-ink-2); }
+  .p-timegrid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .p-timegrid button { min-height: 39px; border: 1px solid var(--p-border); border-radius: 10px; background: var(--p-surface-2); color: var(--p-ink); font-size: 13px; font-weight: 580; }
+  .p-timegrid button:hover { border-color: var(--p-accent-border); }
+  .p-timegrid button[aria-pressed="true"] { background: var(--p-accent-soft); color: var(--p-control-text); font-weight: 800; border-color: var(--p-accent-border); }
+  .p-dialog-error { color: var(--p-danger-text); font-size: 12px; line-height: 1.45; margin: 0; }
+  .p-field-card .p-dialog-error { margin-top: 8px; }
+  .p-input[aria-invalid="true"] { border-color: var(--p-danger-line); }
+  .p-feedback {
+    position: absolute; z-index: 11; bottom: 14px; left: 12px; right: 12px; pointer-events: none;
+  }
+  .p-feedback:not(:empty) {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 17px; border: 1px solid var(--p-border);
+    background: var(--p-surface); box-shadow: var(--p-highlight), 0 8px 25px #0004;
+  }
+  .p-feedback.is-success .p-row-icon { background: var(--p-green-soft); color: var(--p-success-text); }
+  .p-avatar-picture {
+    position: relative; display: grid; place-items: center; width: 100%; height: 100%;
+    overflow: hidden; border-radius: 50%;
+  }
+  .p-avatar-picture img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .p-avatar-picture.is-default {
+    isolation: isolate;
+    background: radial-gradient(ellipse at 63% 54%, #e68b778f, transparent 57%), linear-gradient(151deg, #101a35 8%, #233d63 60%, #87576d 100%);
+  }
+  .p-avatar-picture.is-default::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit;
+    box-shadow: inset 0 0 0 1px #e5ecff26; pointer-events: none;
+  }
+  .p-avatar-star {
+    position: absolute; left: 28%; top: 21%; width: 4%; aspect-ratio: 1; border-radius: 50%;
+    background: #e8f0ff; box-shadow: 0 0 4px #d2e6fb;
+  }
+  .p-avatar-sun {
+    position: absolute; left: 43%; top: 31%; width: 38%; aspect-ratio: 1; border-radius: 50%;
+    background: linear-gradient(170deg, #fff4ca 5%, #ffd398 70%, #f4a77d 100%);
+    box-shadow: 0 0 9px #ffd09c74;
+  }
+  .p-avatar-ridge {
+    position: absolute; inset: 42% -5% -8%;
+    background-color: #344964;
+    clip-path: polygon(0 42%, 18% 27%, 32% 49%, 49% 40%, 68% 58%, 86% 37%, 100% 52%, 100% 100%, 0 100%);
+  }
+  .p-avatar-ridge.near {
+    inset: 54% -5% -8%; background: linear-gradient(140deg, #253752, #0f1930);
+    clip-path: polygon(0 37%, 25% 54%, 48% 43%, 62% 52%, 82% 30%, 100% 43%, 100% 100%, 0 100%);
+  }
+  .p-row-avatar { display: block; width: 28px; height: 28px; border-radius: 50%; background: var(--p-accent-soft); }
+  .p-avatar-preview {
+    display: grid; justify-items: center; text-align: center; gap: 11px; padding: 18px 12px 14px;
+    border: 1px solid var(--p-border); border-radius: 19px;
+    background: radial-gradient(90% 120% at 50% 0, var(--p-accent-soft), transparent 85%), var(--p-surface-2);
+  }
+  .p-avatar-thumbnail {
+    display: block; width: 86px; height: 86px; border: 3px solid var(--p-surface); border-radius: 50%;
+    background: var(--p-accent-soft); box-shadow: 0 0 0 1px var(--p-accent-border), 0 7px 18px #0004;
+  }
+  .p-avatar-preview b { font-size: 14px; }
+  .p-avatar-controls { display: flex; gap: 7px; }
+  .p-avatar-controls .p-button, .p-avatar-controls .p-dialog-subaction { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; width: auto; }
+  .p-avatar-controls .p-button { flex: 1; }
+  .p-avatar-controls .p-button .zf-ico { width: 16px; height: 16px; }
+  .p-avatar-controls .p-dialog-subaction { padding-inline: 8px; flex: none; }
+
+  .zf-modal-select { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted-foreground); }
+  .zf-modal-select select { min-height: 33px; border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; background: var(--card); color: var(--foreground); }
+  .zf-phone[data-platform="android"] .p-island { width: 11px; height: 11px; top: 15px; padding: 0; }
+  .zf-phone[data-platform="android"] .p-island::after { display: none; }
+  .zf-phone :where(button, a, input):focus-visible { outline: 2px solid var(--p-control-text); outline-offset: -2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .p-screen.is-entering .p-sheet { animation: none; }
+  }
 </style>
 </head>
 <body>
@@ -1597,19 +1796,23 @@
           <circle id="logoDot" cx="60" cy="52" r="3.2" fill="#FB923C"/>
         </svg>
         <div>
-          <h1 class="zf-brand-title">周而复起 · 破晓时计 <span class="zf-badge-ver">DESIGN v2.1</span></h1>
-          <p class="zf-brand-sub">单主屏时计台 · 模态抽屉导航(告别底部 Tab)· 头像个人入口 · 关于页焕新</p>
+          <h1 class="zf-brand-title">周而复起 · 页面细化</h1>
+          <p class="zf-brand-sub">交互确认稿 · 使用样例排班</p>
         </div>
       </div>
 
       <div class="zf-palette-group">
         <div class="zf-seg" id="viewModeSeg" role="group" aria-label="画布视图">
           <button data-view="single" aria-pressed="true">单机交互</button>
-          <button data-view="gallery">六屏总览</button>
+          <button data-view="gallery">七屏总览</button>
         </div>
         <div class="zf-seg" id="appAppearanceSeg" role="group" aria-label="手机外观">
           <button data-app-theme="dark" aria-pressed="true">曜石暗色</button>
           <button data-app-theme="light">暖纸浅色</button>
+        </div>
+        <div class="zf-seg" id="platformSeg" role="group" aria-label="预览平台">
+          <button data-platform-choice="android" aria-pressed="true">Android</button>
+          <button data-platform-choice="ios" aria-pressed="false">iOS</button>
         </div>
         <div class="zf-swatches" id="swatchBar" title="切换主色调"></div>
       </div>
@@ -1617,14 +1820,41 @@
 
     <div class="zf-controls-row" id="sceneControlsRow">
       <div class="zf-seg" id="sceneSeg" role="group" aria-label="切换页面">
-        <button data-scene="home" aria-pressed="true">1 主屏</button>
-        <button data-scene="calendar">2 月历抽屉</button>
-        <button data-scene="edit">3 编辑班组</button>
-        <button data-scene="ring">4 锁屏响铃</button>
-        <button data-scene="guide">5 保活向导</button>
-        <button data-scene="settings">6 设置抽屉</button>
-        <button data-scene="about">7 关于</button>
+        <button data-scene="home" aria-pressed="true">首页</button>
+        <button data-scene="calendar">月历</button>
+        <button data-scene="edit">编辑</button>
+        <button data-scene="ring">响铃</button>
+        <button data-scene="guide">向导</button>
+        <button data-scene="settings">设置</button>
+        <button data-scene="about">关于</button>
       </div>
+      <label class="zf-modal-select">预览弹窗
+        <select id="modalSelect">
+          <option value="">选择弹窗</option>
+          <optgroup label="编辑与确认">
+            <option value="time">自定义响铃时间</option>
+            <option value="avatars">首页头像</option>
+            <option value="delete">删除班组</option>
+            <option value="import">导入恢复</option>
+            <option value="export">导出备份</option>
+          </optgroup>
+          <optgroup label="设置与引导">
+            <option value="trial">试响提醒</option>
+            <option value="permissions">权限状态</option>
+            <option value="permissions-missing">权限待开启</option>
+            <option value="lock">锁屏展示</option>
+            <option value="holidays">节假日数据</option>
+            <option value="resync">立即重排</option>
+            <option value="tech">技术说明</option>
+            <option value="update">发现新版本</option>
+          </optgroup>
+          <optgroup label="结果示例">
+            <option value="update-current">已是最新版本</option>
+            <option value="update-error">检查更新失败</option>
+            <option value="import-error">导入备份失败</option>
+          </optgroup>
+        </select>
+      </label>
     </div>
   </div>
 
@@ -1655,6 +1885,8 @@
           <div class="p-screen" data-screen="settings" id="scrSettings"></div>
           <!-- 7. 关于(模态抽屉 · v2.1 焕新) -->
           <div class="p-screen" data-screen="about" id="scrAbout"></div>
+          <div class="p-overlay" id="modalOverlay" hidden></div>
+          <div class="p-feedback" id="phoneFeedback" role="status" aria-atomic="true"></div>
         </div>
       </div>
     </div>
@@ -1662,31 +1894,16 @@
     <!-- 右:改版设计说明与动态设计令牌 -->
     <div class="zf-side-notes">
       <div class="zf-spec-card">
-        <h3>✦ 为什么重做:从「后台表单感」到「床头精密时计」</h3>
-        <p>
-          v2.0 回归品牌初心「7 段周循环 · 破晓而起」,以温润暖纸 / 曜石石墨配 1px 微高光边缘替代刺眼色框。
-          <b>v2.1 更进一步:底栏 Tab 退场</b>——闹钟应用的主任务只有「看下次什么时候响、改排班」,
-          一块常驻主屏 + 模态抽屉就足够,交互层级更浅、屏占比更高。
-        </p>
+        <h3>确认范围</h3>
+        <p>用「预览弹窗」直接查看时间面板、确认卡片和权限提示，也可以从页面内的对应入口操作。系统授权和安装使用样例状态。</p>
       </div>
-
       <div class="zf-spec-card">
-        <h3>✦ v2.1 四处关键信息架构升级</h3>
-        <p>
-          <b>1. 单主屏时计台 (Hub)</b>:首页是唯一常驻页,Hero + 七日节律带 + 全部班组一屏尽览;<br>
-          <b>2. 模态抽屉导航</b>:排班月历 / 设置 / 关于改为底部滑出的圆角抽屉(抓握条 + 「完成」),编辑班组与向导保持推入式——底部 Tab 及其玻璃胶囊底栏整体移除;<br>
-          <b>3. 头像个人入口</b>:顶栏左侧头像(右上角绿点 = 响铃健康度)直达设置抽屉,右侧保留「月历 / 新建」;<br>
-          <b>4. 关于页焕新</b>:独立抽屉页——破晓渐变英雄卡(logo + 版本胶囊)+ 实时数据芯片(启用班组 / 响铃道数 / 假日库)+ 社区链接行 + 技术声明,替代旧版设置里干瘪的一行。
-        </p>
-      </div>
-
-      <div class="zf-spec-card">
-        <h3>✦ 当前色彩与表面令牌 (点击顶部圆点实时换肤)</h3>
+        <h3>当前色板</h3>
         <div class="zf-token-strip" id="tokenStrip"></div>
       </div>
     </div>
 
-    <!-- 六屏总览画板 (切换至「六屏总览」时展示) -->
+    <!-- 七屏总览画板 (切换至「七屏总览」时展示) -->
     <div class="zf-gallery" id="galleryGrid"></div>
   </div>
 </div>
@@ -1695,6 +1912,23 @@
 (() => {
   /* ==================== 内联矢量图标库(零外部依赖) ==================== */
   const ICONS = {
+    check: '<path d="m5 12 4 4L19 6"/>',
+    close: '<path d="m6 6 12 12M18 6 6 18"/>',
+    alert: '<path d="M10.3 4.6 2.9 18a1.7 1.7 0 0 0 1.5 2.5h15.2a1.7 1.7 0 0 0 1.5-2.5L13.7 4.6a1.9 1.9 0 0 0-3.4 0Z"/><path d="M12 9v4m0 4h.01"/>',
+    arrowR: '<path d="M4 12h15m-6-6 6 6-6 6"/>',
+    file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6M8 13h8m-8 4h6"/>',
+    image: '<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 16-5-5L5 21"/>',
+    external: '<path d="M13 5h6v6m0-6-8 8"/><path d="M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/>',
+    user: '<circle cx="12" cy="8" r="3"/><path d="M5 20v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2"/>',
+    language: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/>',
+    refresh: '<path d="M20 7v5h-5m-11 5v-5h5"/><path d="M5 8a8 8 0 0 1 13-2l2 2M4 16l2 2a8 8 0 0 0 13-2"/>',
+    download: '<path d="M12 3v12m-4-4 4 4 4-4M5 15v4h14v-4"/>',
+    upload: '<path d="M12 15V3M8 7l4-4 4 4M5 15v4h14v-4"/>',
+    link: '<path d="m10 14 4-4m-7 7-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m4-1 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0" transform="translate(1 0)"/>',
+    chat: '<path d="M21 10.5a7.5 7.5 0 0 1-7.5 7.5H8l-4 3v-5.5a7.5 7.5 0 0 1-1-4 7.5 7.5 0 0 1 7.5-7.5h3a7.5 7.5 0 0 1 7.5 6.5Z"/><path d="M8 11h.01m4 0h.01m4 0h.01"/>',
+    lock: '<rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3m-4 4v2"/>',
+    trash: '<path d="M4 6h16M9 6V4h6v2M7 6l1 14h8l1-14M10 10v6m4-6v6"/>',
     wifi: '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/>',
     battery: '<rect x="2" y="7" width="16" height="10" rx="2.5"/><path d="M21 11v2"/><rect x="4" y="9" width="11" height="6" rx="1" fill="currentColor" stroke="none"/>',
     alarm: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/>',
@@ -1770,11 +2004,45 @@
   }
 
   /* ==================== 应用交互状态 ==================== */
+  const VERSION = '0.2.8';
+  const REPO = 'https://github.com/TNT-Likely/zhouerfuqi';
+  const DEFAULT_AVATAR = { kind: 'default' };
+  const AVATAR_STORAGE_KEY = 'zhouerfuqi.design.avatar.v1';
+  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[char]);
+
+  function readAvatar() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(AVATAR_STORAGE_KEY));
+      if (saved?.kind === 'image' && /^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(saved.value)) return saved;
+    } catch {
+      // A restricted preview can still keep the avatar for the current session.
+    }
+    return DEFAULT_AVATAR;
+  }
+
+  function avatarPicture(avatar) {
+    if (avatar.kind === 'image') return `<span class="p-avatar-picture"><img src="${escapeHtml(avatar.value)}" alt=""></span>`;
+    return `<span class="p-avatar-picture is-default" aria-hidden="true">
+      <i class="p-avatar-star"></i><i class="p-avatar-sun"></i>
+      <i class="p-avatar-ridge"></i><i class="p-avatar-ridge near"></i>
+    </span>`;
+  }
+
   const state = {
     viewMode: 'single',      // 'single' | 'gallery'
     appearance: 'dark',      // 'dark' | 'light'
     themeIdx: 0,
     scene: 'home',
+    platform: 'android',
+    groupName: '主力早班',
+    draftName: null,
+    primaryDeleted: false,
+    ringReturn: 'home',
+    modal: null,
+    pendingTime: { hour: 7, minute: 0, label: '' },
+    timeError: '',
     primaryOn: true,
     dutyOn: false,
     holidayOn: true,
@@ -1794,12 +2062,18 @@
     calY: 2026,
     calM: 11,
     calMode: 'rule',
+    calReturn: 'home',
     selDate: '2026-11-21',
-    ringState: 'ringing', // 'ringing' | 'snoozed' | 'stopped'
+    ringState: 'ringing',
+    ringDelay: 0,
     vendor: '华为 HarmonyOS',
     guideSteps: [true, false, false],
-    appMode: 'dark',        // 跟随系统 / 日间 / 暗黑(设置抽屉·外观卡)
-    avatarEmoji: '🌅',      // 默认头像:破晓(v2.1 起)
+    appMode: 'system',
+    systemAppearance: 'dark',
+    avatar: readAvatar(),
+    avatarDraft: DEFAULT_AVATAR,
+    avatarBusy: false,
+    avatarError: '',
   };
 
   const DUTY_GROUP = {
@@ -1848,7 +2122,7 @@
         const d = addDays(TODAY, i);
         const ev = evalDay(r, d, state.holidayOn);
         if (ev.ring) {
-          candidates.push({ date: d, groupName: '主力早班', times: state.times, ev, rule: r });
+          candidates.push({ date: d, groupName: state.groupName, times: state.times, ev, rule: r });
           break;
         }
       }
@@ -1912,13 +2186,13 @@
     const diff = nx ? diffDays(nx.date, TODAY) : 0;
     const leadLabel = !nx ? '全部班组已静音' : diff === 1 ? '明天破晓响铃' : `${diff} 天后响铃`;
     const shiftTag = nx
-      ? (nx.ev.reason === 'swap' ? '调休补班' : (dow(nx.date) === 6 && nx.rule.kind === 'everyNWeeks' ? '大周周六' : `${nx.groupName}`))
+      ? (nx.ev.reason === 'swap' ? '调休补班' : (dow(nx.date) === 6 && nx.rule.kind === 'everyNWeeks' ? '大周周六' : `${escapeHtml(nx.groupName)}`))
       : '待命';
 
     return `
       <div class="p-topbar">
         <div class="p-app-title">
-          <button class="p-avatar-btn" data-goto="settings" title="个人与设置">${state.avatarEmoji}</button>
+          <button class="p-avatar-btn" data-goto="settings" title="个人与设置" aria-label="个人与设置">${avatarPicture(state.avatar)}</button>
           <span>周而复起</span>
         </div>
         <div class="p-top-actions">
@@ -1950,17 +2224,18 @@
         </div>
 
         <div class="p-sec-head">
-          <span>排班闹钟组 · 2</span>
+          <span>排班闹钟组 · ${state.primaryDeleted ? 1 : 2}</span>
           <span style="color:var(--p-accent);cursor:pointer" data-goto="calendar">查看月历 ›</span>
         </div>
 
+        ${!state.primaryDeleted ? `
         <!-- 主力班组卡 -->
         <div class="p-group-card ${state.primaryOn ? '' : 'is-muted'}">
           <div class="p-group-top">
             <div class="p-group-ico">${ico('sun')}</div>
             <div class="p-group-info" data-goto="edit">
               <div class="p-group-name">
-                <span>主力早班</span>
+                <span>${escapeHtml(state.groupName)}</span>
                 ${state.holidayOn ? '<span class="p-tag accent" style="font-size:9.5px;padding:2px 6px">智能节假</span>' : ''}
               </div>
               <div class="p-group-rule">${ruleSummaryText()} · ${state.times.length} 道响铃</div>
@@ -1971,7 +2246,7 @@
             ${state.times.map((t, idx) => `
               <div class="p-time-pill ${idx === 0 && state.primaryOn ? 'first' : ''}">
                 <span class="p-tp-clock zf-num">${fmtT(t)}</span>
-                <span class="p-tp-label">${t.label || '闹钟'}</span>
+                <span class="p-tp-label">${escapeHtml(t.label || '闹钟')}</span>
               </div>
             `).join('')}
           </div>
@@ -1980,6 +2255,8 @@
             <span>编辑规则 ›</span>
           </div>
         </div>
+
+        ` : ''}
 
         <!-- 第二班组卡:展示多组并存能力 -->
         <div class="p-group-card ${state.dutyOn ? '' : 'is-muted'}">
@@ -2030,7 +2307,7 @@
       const bigFlag = isBigWeekRow(r, mon);
       const wkBadge = !editingManual && bigFlag !== null
         ? `<div class="p-wk-tag ${bigFlag ? 'big' : ''}">${bigFlag ? '大' : '小'}</div>`
-        : `<div class="p-wk-tag">周</div>`;
+        : '';
 
       const rowCells = slice.map((date) => {
         if (!date) return `<div></div>`;
@@ -2057,10 +2334,10 @@
           else if (ring) { cls += ' work-ring'; sub = `×${state.times.length}`; }
           else { cls += ' rest'; sub = '休'; }
         }
-        return `<div class="${cls}" data-cal-date="${date}">
+        return `<button type="button" class="${cls}" data-cal-date="${date}" aria-pressed="${date === state.selDate}" aria-label="${cnDate(date)} ${sub}">
           <span class="d-num zf-num">${dNum}</span>
           <span class="d-sub">${sub}</span>
-        </div>`;
+        </button>`;
       }).join('');
 
       gridRowsHtml += `<div style="display:flex;justify-content:center">${wkBadge}</div>` + rowCells;
@@ -2072,32 +2349,32 @@
     let traceText = '';
     if (editingManual) {
       traceText = state.customDates.has(state.selDate)
-        ? '手动点选权威生效 · 不受法定节假日跳过影响'
-        : '未加入手动排班 · 点击日历格子即可切换排班状态';
+        ? '已加入手动排班，当日按设置响铃。'
+        : '点选日期可将当天加入手动排班。';
     } else if (selEv.reason === 'skip-holiday') {
-      traceText = '规则层命中工作日 → 节假日层识别为法定假日 → 自动跳过不响';
+      traceText = '法定假日，开启节假日联动后自动跳过。';
     } else if (selEv.reason === 'swap') {
-      traceText = '规则层为周末休息 → 节假日层识别为全国调休补班 → 自动唤醒响铃';
+      traceText = '调休补班，已自动加入响铃。';
     } else if (selRing && dow(state.selDate) === 6 && r.kind === 'everyNWeeks') {
       traceText = `与锚点日 (${cnDate(state.anchor)}) 同属大周周期 → 周六正常响铃`;
     } else if (!selRing && dow(state.selDate) === 6 && r.kind === 'everyNWeeks') {
-      traceText = `距大周锚点隔周轮空 → 本周为小周周六,安心睡懒觉`;
+      traceText = `小周周六，按班组规则休息。`;
     } else {
-      traceText = selRing ? '常规工作日排班命中 · 连环闹钟按时待命' : '常规休息日 · 当日静音';
+      traceText = selRing ? '按班组规则响铃。' : '当天无排班响铃。';
     }
 
     return `
       <div class="p-sheet">
         <div class="p-sheet-handle"></div>
         <div class="p-sheet-head">
-          <span class="p-sheet-title">排班月历</span>
+          <h3 class="p-sheet-title">排班月历</h3>
           <span class="p-tag accent zf-num">本月响 ${ringDaysCount} 天</span>
-          <button class="p-sheet-done" data-goto="home">完成</button>
+          <button class="p-sheet-done" data-goto="${state.calReturn}">完成</button>
         </div>
         <div class="p-scroll">
         <div class="p-seg-bar">
           <button data-cal-mode="rule" aria-pressed="${!editingManual}">规则预览</button>
-          <button data-cal-mode="manual" aria-pressed="${editingManual}">手动点选排班</button>
+          <button data-cal-mode="manual" aria-pressed="${editingManual}">手动排班</button>
         </div>
 
         ${editingManual ? `
@@ -2105,6 +2382,7 @@
             <button data-quick="workdays">填充工作日</button>
             <button data-quick="all">填充全月</button>
             <button data-quick="clear">清空本月</button>
+            <button data-quick="clear-all">清空全部</button>
           </div>
         ` : ''}
 
@@ -2136,7 +2414,7 @@
           <div class="p-ticket-trace">${traceText}</div>
           ${selRing ? `
             <div class="p-ticket-times zf-num">
-              ${state.times.map((t) => `<span>${fmtT(t)} ${t.label || ''}</span>`).join('')}
+              ${state.times.map((t) => `<span>${fmtT(t)} ${escapeHtml(t.label || '')}</span>`).join('')}
             </div>
           ` : ''}
         </div>
@@ -2146,15 +2424,20 @@
   }
 
   function htmlEdit() {
+    const nameErrorId = state.viewMode === 'gallery' ? 'galleryGroupNameError' : 'groupNameError';
     return `
       <div class="p-nav-head">
         <button class="p-nav-back" data-goto="home">${ico('chevL')}<span>返回</span></button>
-        <span style="font-size:15px;font-weight:750">编辑主力早班</span>
-        <button class="p-nav-save" data-goto="home">保存</button>
+        <span class="p-nav-title">编辑班组</span>
+        <button class="p-nav-save" data-save-group>保存</button>
       </div>
       <div class="p-scroll">
         <div class="p-field-card">
-          <div class="p-field-title">班制模型 · RULE ENGINE</div>
+          <label class="p-form-field">班组名称<input class="p-input" data-group-name aria-describedby="${nameErrorId}" maxlength="24" value="${escapeHtml(state.draftName ?? state.groupName)}" placeholder="例如早班"></label>
+          <p id="${nameErrorId}" class="p-dialog-error" data-group-name-error role="alert" hidden>请输入班组名称。</p>
+        </div>
+        <div class="p-field-card">
+          <div class="p-field-title">排班规则</div>
           <div class="p-rule-tabs">
             <button data-rk="weekly" aria-pressed="${state.ruleKind === 'weekly'}">每周几</button>
             <button data-rk="everyNWeeks" aria-pressed="${state.ruleKind === 'everyNWeeks'}">每 N 周</button>
@@ -2173,14 +2456,14 @@
 
         ${state.ruleKind === 'everyNWeeks' ? `
           <div class="p-field-card">
-            <div class="p-field-title">大小周锚点 · 只答一个问题</div>
+            <div class="p-field-title">大周起点</div>
             <div class="p-stepper" style="margin-bottom:11px">
               <button class="p-step-btn" data-nstep="-1">−</button>
               <span class="zf-num" style="font-size:17px;font-weight:750;min-width:48px;text-align:center">${state.nWeeks} 周</span>
               <button class="p-step-btn" data-nstep="1">+</button>
               <span style="font-size:11px;color:var(--p-ink-2)">2 周 = 标准大小周</span>
             </div>
-            <div style="font-size:11.5px;color:var(--p-ink-2);margin-bottom:8px">最近哪一个周六需要上班(大周)?</div>
+            <div style="font-size:11.5px;color:var(--p-ink-2);margin-bottom:8px">选择一个需要响铃的大周周六。</div>
             <div class="p-anchor-grid">
               ${ANCHOR_SATS.map((s, idx) => `
                 <button class="p-anchor-chip zf-num" data-anchor="${s}" aria-pressed="${state.anchor === s}">
@@ -2193,270 +2476,201 @@
 
         ${state.ruleKind === 'everyNDays' ? `
           <div class="p-field-card">
-            <div class="p-field-title">轮班间隔 · 上 1 休 N-1</div>
+            <div class="p-field-title">轮班间隔</div>
             <div class="p-stepper">
               <button class="p-step-btn" data-ndstep="-1">−</button>
               <span class="zf-num" style="font-size:18px;font-weight:750;min-width:54px;text-align:center">每 ${state.nDays} 天</span>
               <button class="p-step-btn" data-ndstep="1">+</button>
-              <span style="font-size:11px;color:var(--p-ink-2)">锚点: 11月18日</span>
+              <span style="font-size:11px;color:var(--p-ink-2)">自 11 月 18 日起</span>
             </div>
           </div>
         ` : ''}
 
+        ${state.ruleKind === 'customDates' ? `
+          <div class="p-field-card p-edit-calendar">
+            <div><div class="p-config-label">手动排班</div><span class="p-row-detail">已选择 ${state.customDates.size} 天</span></div>
+            <button class="p-button" data-edit-calendar>打开月历</button>
+          </div>` : ''}
+
         <div class="p-field-card">
-          <div class="p-field-title">连环响铃时间轴 (${state.times.length} 道)</div>
+          <div class="p-field-title">响铃时间 · ${state.times.length} 次</div>
           ${state.times.map((t) => `
-            <div class="p-timeline-item">
-              <div>
-                <b class="zf-num" style="font-size:15px">${fmtT(t)}</b>
-                <span style="font-size:11px;color:var(--p-ink-2);margin-left:6px">${t.label || '兜底'}</span>
-              </div>
-              <button data-del-time="${t.id}" style="color:var(--p-red);font-size:12px;font-weight:700;padding:4px 6px">移除</button>
+            <div class="p-timeline-item p-edit-time">
+              <div class="p-time-entry"><b class="zf-num">${fmtT(t)}</b>${t.label ? `<span>${escapeHtml(t.label)}</span>` : ''}</div>
+              <button class="p-time-remove" data-del-time="${t.id}" aria-label="移除 ${fmtT(t)}">移除</button>
             </div>
           `).join('')}
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
+          <div class="p-preset-list">
             ${PRESETS.map((p) => {
-              const on = state.times.some((x) => x.id === p.id);
-              return `<button class="p-tag ${on ? 'accent' : ''} zf-num" data-preset="${p.id}" style="padding:5px 9px;cursor:pointer">${on ? '✓ ' : '+ '}${fmtT(p)}</button>`;
+              const on = state.times.some((x) => x.hour === p.hour && x.minute === p.minute);
+              return `<button class="zf-num" data-preset="${p.id}" aria-pressed="${on}">${fmtT(p)}</button>`;
             }).join('')}
           </div>
+          <button class="p-button p-custom-time" data-modal="time">${ico('plus')}自定义响铃时间</button>
+          <p class="p-dialog-error" data-last-time-error role="alert" hidden>至少保留一个响铃时间。加入新时间后即可移除这条。</p>
         </div>
 
         <div class="p-field-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
           <div>
-            <div style="font-size:13.5px;font-weight:700">法定节假日智能联动</div>
-            <div style="font-size:11px;color:var(--p-ink-2);margin-top:2px">法定假日自动跳过 · 调休补班周六日自动响</div>
+            <div style="font-size:13.5px;font-weight:700">节假日联动</div>
+            <div style="font-size:11px;color:var(--p-ink-2);margin-top:2px">${state.ruleKind === 'customDates' ? '按手动选择的日期响铃' : '法定假日跳过 · 调休补班自动响'}</div>
           </div>
           <button class="p-switch ${state.holidayOn ? '' : 'off'}" data-toggle="holiday" aria-label="节假日联动"></button>
         </div>
+        ${!state.primaryDeleted ? '<button class="p-button danger" data-modal="delete">删除班组</button>' : ''}
       </div>
     `;
+  }
+
+  function sheetScreen(title, content, closeTo = 'home', extra = '') {
+    return `
+      <div class="p-sheet">
+        <div class="p-sheet-handle" aria-hidden="true"></div>
+        <div class="p-sheet-head">
+          <h3 class="p-sheet-title">${title}</h3>${extra}
+          <button type="button" class="p-sheet-done" data-goto="${closeTo}" aria-label="关闭${title}">完成</button>
+        </div>
+        <div class="p-scroll">${content}</div>
+      </div>`;
+  }
+
+  function configSection(title, content) {
+    return `<section class="p-config-section"><h4 class="p-section-title">${title}</h4><div class="p-list-card">${content}</div></section>`;
+  }
+
+  function configRow(icon, title, detail, { goto, modal, href, value = '' } = {}) {
+    const actionable = goto || modal || href;
+    const content = `
+      <span class="p-row-icon">${ico(icon)}</span>
+      <span class="p-row-copy"><b>${title}</b>${detail ? `<span class="p-row-detail">${detail}</span>` : ''}</span>
+      ${value ? `<span class="p-row-value">${value}</span>` : ''}
+      ${actionable ? `<span class="p-row-arrow">${ico(href ? 'external' : 'chevR')}</span>` : ''}`;
+    if (href) return `<a class="p-list-row" href="${href}" target="_blank" rel="noopener noreferrer">${content}</a>`;
+    if (actionable) return `<button type="button" class="p-list-row" ${goto ? `data-goto="${goto}"` : `data-modal="${modal}"`}>${content}</button>`;
+    return `<div class="p-list-row">${content}</div>`;
   }
 
   function htmlRing() {
+    const alarm = state.times[0] ?? PRESETS[0];
+    const remaining = state.times.length - 1;
+    const snoozed = state.ringState === 'snoozed';
+    const minutes = (alarm.hour * 60 + alarm.minute + state.ringDelay) % 1440;
     if (state.ringState === 'stopped') {
       return `
-        <div class="p-ring-top">周 而 复 起 · 破 晓 时 计</div>
-        <div class="p-ring-center" style="gap:10px">
-          <div style="width:56px;height:56px;border-radius:999px;background:rgba(52,211,153,0.18);color:#34d399;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700">✓</div>
-          <div style="font-size:17px;font-weight:700">早安,第一道闹钟已关闭</div>
-          <div style="font-size:12px;color:rgba(255,255,255,0.6)">后续 06:50 / 07:00 兜底闹钟保持待命</div>
+        <div class="p-ring-top">周而复起</div>
+        <div class="p-ring-center">
+          <div class="p-ring-result-icon">${ico('check')}</div>
+          <div class="p-ring-result-title">闹钟已关闭</div>
+          ${remaining > 0 ? `<div class="p-ring-sub">此班组还有 ${remaining} 次后续响铃</div>` : ''}
         </div>
         <div class="p-ring-actions">
-          <button class="p-ring-snooze" data-ring-act="reset">重新演示响铃</button>
-          <button class="p-ring-stop" data-goto="home">返回应用首页</button>
-        </div>
-      `;
+          <button class="p-ring-snooze" data-ring-act="reset">重新预览</button>
+          <button class="p-ring-stop" data-goto="${state.ringReturn}">返回</button>
+        </div>`;
     }
     return `
-      <div class="p-ripples"><span></span><span></span><span></span></div>
-      <div class="p-ring-top">系统级精确闹钟 · 无视静音与勿扰</div>
+      <div class="p-ripples" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="p-ring-top">周而复起</div>
       <div class="p-ring-center">
-        <div class="p-ring-date">11 月 21 日 · 周六 · 大周上班日</div>
-        <div class="p-ring-clock zf-num">${state.ringState === 'snoozed' ? '06:49' : '06:40'}</div>
-        <div class="p-ring-badge">主力早班 · 第 1 / 4 道 · 第一道唤醒</div>
-        <div class="p-ring-sub">
-          ${state.ringState === 'snoozed' ? '已进入 9 分钟贪睡倒计时 · 06:49 再次渐强响起' : '30 秒渐强铃声 · 后续 06:50 / 07:00 兜底待命'}
-        </div>
+        <div class="p-ring-date">11 月 21 日 · 周六</div>
+        <div class="p-ring-clock zf-num">${snoozed ? `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}` : fmtT(alarm)}</div>
+        <div class="p-ring-badge">${escapeHtml(state.groupName)}${alarm.label ? ` · ${escapeHtml(alarm.label)}` : ''}</div>
+        <div class="p-ring-sub">${snoozed ? `已延后 ${state.ringDelay} 分钟` : '响铃中 · 音量渐强'}</div>
       </div>
       <div class="p-ring-actions">
-        <button class="p-ring-snooze" data-ring-act="snooze">稍后提醒 · 贪睡 9 分钟</button>
-        <button class="p-ring-stop" data-ring-act="stop">关闭本道闹钟</button>
-      </div>
-    `;
+        <button class="p-ring-snooze" data-ring-act="snooze">${snoozed ? '再延后 9 分钟' : '稍后 9 分钟'}</button>
+        <button class="p-ring-stop" data-ring-act="stop">关闭本次闹钟</button>
+      </div>`;
+  }
+
+  function guideCheck(icon, title, detail, step) {
+    return `<div class="p-list-row">
+      <span class="p-row-icon">${ico(icon)}</span>
+      <div class="p-row-copy"><b>${title}</b><span class="p-row-detail">${detail}</span></div>
+      <button type="button" class="p-button" data-gstep="${step}" aria-pressed="${state.guideSteps[step]}">${state.guideSteps[step] ? '已开启' : '去开启'}</button>
+    </div>`;
   }
 
   function htmlGuide() {
-    const stepsData = [
-      { title: '开启自启动与后台关联活动', path: '系统设置 → 应用 → 启动管理 → 周而复起 → 手动管理', desc: '允许自启动与后台运行,确保凌晨 03:30 定时刷新器稳定执行。' },
-      { title: '电池优化设为「无限制」', path: '系统设置 → 电池 → 应用耗电管理 → 不受限制', desc: '防止深度睡眠期间系统冻结精确闹钟广播。' },
-      { title: '最近任务卡片下拉加锁', path: '上滑多任务视图 → 下拉卡片出现锁头图标', desc: '避免睡前一键清理后台时误杀闹钟守护进程。' },
-    ];
-    const doneCount = state.guideSteps.filter(Boolean).length;
+    const checked = Number(state.guideSteps[0]) + Number(state.guideSteps[1]);
+    const tips = {
+      '华为 HarmonyOS': '在应用启动管理中允许自启动和后台活动，并检查通知的锁屏展示。',
+      '小米 HyperOS': '允许后台自启动，将省电策略设为无限制，并在最近任务中锁定应用。',
+      'OPPO / vivo': '允许后台启动和后台运行，再到应用通知设置中打开锁屏通知。',
+    };
     return `
       <div class="p-nav-head">
-        <button class="p-nav-back" data-goto="settings">${ico('chevL')}<span>设置</span></button>
-        <span style="font-size:15px;font-weight:750">厂商后台保活向导</span>
-        <span class="p-tag accent zf-num">${doneCount}/3</span>
+        <button class="p-nav-back" data-goto="settings">${ico('chevL')}设置</button>
+        <span class="p-nav-title">保活向导</span>
       </div>
       <div class="p-scroll">
-        <div class="p-field-card">
-          <div style="font-size:12px;color:var(--p-ink-2);line-height:1.55">
-            国产定制系统默认严格管控后台。花 <b>45 秒</b>核对以下三步(点击卡片标记已完成),即可获得与系统自带时钟同级的响铃可靠性。
-          </div>
-          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
-            ${['华为 HarmonyOS', '小米 HyperOS', 'OPPO / vivo'].map((v) => `
-              <button class="p-tag ${state.vendor === v ? 'accent' : ''}" data-vendor="${v}" style="padding:5px 9px;cursor:pointer">${v}</button>
-            `).join('')}
-          </div>
+        <div class="p-guide-status">
+          <b>已开启 ${checked} / 2 项系统设置</b>
+          <span class="p-row-detail">验证锁屏响铃前，先检查通知和后台运行权限。</span>
         </div>
-
-        ${stepsData.map((s, i) => `
-          <div class="p-step-card ${state.guideSteps[i] ? 'done' : ''}" data-gstep="${i}">
-            <div class="p-step-num">${state.guideSteps[i] ? '✓' : i + 1}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:13.5px;font-weight:700">${s.title}</div>
-              <div class="p-step-path">${s.path}</div>
-              <div style="font-size:11px;color:var(--p-ink-2);margin-top:6px;line-height:1.5">${s.desc}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
+        <div class="p-list-card p-guide-card">
+          ${guideCheck('bell', '通知权限', '允许通知在锁屏时显示。', 0)}
+          ${guideCheck('battery', '电池优化', '允许周而复起在后台按计划运行。', 1)}
+        </div>
+        <div class="p-list-card p-vendor-card">
+          <h4 class="p-config-label">厂商设置</h4>
+          <div class="p-vendors">${Object.keys(tips).map((vendor) => `<button type="button" data-vendor="${vendor}" aria-pressed="${state.vendor === vendor}">${vendor}</button>`).join('')}</div>
+          <p>${tips[state.vendor]}</p>
+        </div>
+        <div class="p-list-card">${configRow('lock', '锁屏展示', '查看系统通知设置中的选项', { modal: 'lock' })}</div>
+        <button class="p-button primary" data-modal="trial">试响</button>
+      </div>`;
   }
 
   function htmlSettings() {
-    const doneCount = state.guideSteps.filter(Boolean).length;
-    return `
-      <div class="p-sheet">
-        <div class="p-sheet-handle"></div>
-        <div class="p-sheet-head">
-          <span class="p-sheet-title">设置与可靠性</span>
-          <span class="p-tag green">调度健康 ✓</span>
-          <button class="p-sheet-done" data-goto="home">完成</button>
-        </div>
-        <div class="p-scroll">
-        <div class="p-field-card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--p-accent-soft);border-color:var(--p-accent-border)">
-          <div>
-            <div style="font-size:13.5px;font-weight:750;color:var(--p-accent)">系统精确闹钟已就绪</div>
-            <div style="font-size:11px;color:var(--p-ink-2);margin-top:2px">未来 14 天共 42 次响铃已写入系统时钟队列</div>
-          </div>
-          <button class="p-nav-save" data-goto="ring" style="flex-shrink:0">立即试响</button>
-        </div>
-
-        <div class="p-sec-head"><span>可靠性专项</span></div>
-        <div class="p-list-card">
-          <div class="p-list-row" data-goto="guide">
-            <div>
-              <b>厂商后台保活向导</b>
-              <span>当前进度 ${doneCount}/3 · 华为 / 小米 / OV 必做</span>
-            </div>
-            <span style="color:var(--p-ink-3)">›</span>
-          </div>
-          <div class="p-list-row" data-goto="ring">
-            <div>
-              <b>30 秒锁屏试响演练</b>
-              <span>真实验证 SET_ALARM_CLOCK + 全屏锁屏唤醒链路</span>
-            </div>
-            <span style="color:var(--p-ink-3)">›</span>
-          </div>
-          <div class="p-list-row">
-            <div>
-              <b>权限健康自检</b>
-              <span>精确闹钟已授权 ✓ · 全屏强提醒通知已授权 ✓</span>
-            </div>
-            <span class="p-tag green">正常</span>
-          </div>
-        </div>
-
-        <div class="p-sec-head"><span>外观</span></div>
-        <div class="p-field-card">
-          <div class="p-field-title">外观模式</div>
-          <div class="p-seg-bar" style="grid-template-columns:repeat(3,1fr)">
-            <button data-appmode="system" aria-pressed="${state.appMode === 'system'}">跟随系统</button>
-            <button data-appmode="light" aria-pressed="${state.appMode === 'light'}">日间</button>
-            <button data-appmode="dark" aria-pressed="${state.appMode === 'dark'}">暗黑</button>
-          </div>
-          <div class="p-field-title" style="margin-top:13px">主题色 · 全局换肤</div>
-          <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px">
-            ${THEMES.map((th, i) => `
-              <button data-tidx="${i}" style="display:flex;flex-direction:column;align-items:center;gap:5px;padding:7px 2px;border-radius:12px;background:${i === state.themeIdx ? 'var(--p-accent-soft)' : 'transparent'};border:1px solid ${i === state.themeIdx ? 'var(--p-accent-border)' : 'transparent'}">
-                <span style="width:22px;height:22px;border-radius:999px;background:linear-gradient(135deg, ${th.light} 50%, ${th.dark} 50%);border:2px solid ${i === state.themeIdx ? 'var(--p-ink)' : 'var(--p-border)'};box-sizing:border-box"></span>
-                <span style="font-size:8.5px;color:${i === state.themeIdx ? 'var(--p-accent)' : 'var(--p-ink-3)'};font-weight:${i === state.themeIdx ? 700 : 500}">${th.name}</span>
-              </button>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="p-sec-head"><span>个人</span></div>
-        <div class="p-field-card">
-          <div style="display:flex;align-items:center;gap:12px">
-            <span class="p-avatar-btn" style="width:46px;height:46px;font-size:22px">${state.avatarEmoji}</span>
-            <div style="flex:1;display:flex;flex-wrap:wrap;gap:6px">
-              ${['🌅', '⏰', '🔥', '🌙', '☕', '🦉'].map((e) => `
-                <button data-avatar="${e}" style="width:36px;height:36px;border-radius:12px;font-size:17px;background:${state.avatarEmoji === e ? 'var(--p-accent-soft)' : 'var(--p-surface-2)'};border:1px solid ${state.avatarEmoji === e ? 'var(--p-accent-border)' : 'transparent'}">${e}</button>
-              `).join('')}
-            </div>
-          </div>
-        </div>
-
-        <div class="p-sec-head"><span>本地数据与节假日</span></div>
-        <div class="p-list-card">
-          <div class="p-list-row">
-            <div>
-              <b>中国法定节假日库 (holiday-cn)</b>
-              <span>内置 2025–2026 离线快照 · 每年 11–12 月支持拉取新年度</span>
-            </div>
-            <span class="p-tag">已最新</span>
-          </div>
-          <div class="p-list-row">
-            <div>
-              <b>导出 / 恢复排班备份 (JSON)</b>
-              <span>纯本地零云端存储 · 换机一键迁移全部班组与规则</span>
-            </div>
-            <span style="color:var(--p-ink-3)">›</span>
-          </div>
-        </div>
-
-        <div class="p-sec-head"><span>应用更新</span></div>
-        <div class="p-list-card">
-          <div class="p-list-row">
-            <div>
-              <b>检查更新</b>
-              <span>当前 v0.2.6 · GitHub Releases 直连 · APK 渠道支持自更新</span>
-            </div>
-            <span style="color:var(--p-ink-3)">›</span>
-          </div>
-        </div>
-
-        <div class="p-sec-head"><span>语言 · Language</span></div>
-        <div class="p-list-card">
-          <div class="p-list-row">
-            <div>
-              <b>简体中文</b>
-              <span>当前语言 · 更多语言规划中(语义绑定中文排班语境)</span>
-            </div>
-            <span class="p-tag accent">默认</span>
-          </div>
-        </div>
-
-        <div class="p-sec-head"><span>关于</span></div>
-        <div class="p-list-card">
-          <div class="p-list-row" data-goto="about">
-            <div>
-              <b>关于周而复起</b>
-              <span>v0.2.6 · MIT 开源 · 设计与规则引擎自研</span>
-            </div>
-            <span style="color:var(--p-ink-3)">›</span>
-          </div>
-        </div>
-        </div>
+    const android = state.platform === 'android';
+    const permitted = state.guideSteps[0];
+    const appearances = [['system', '跟随系统'], ['light', '日间'], ['dark', '暗黑']];
+    const reliability = configSection('响铃与可靠性', `
+      <div class="p-reliability-head">
+        <span class="p-row-icon">${ico('shield')}</span>
+        <span class="p-row-copy"><b><i class="p-status-dot ${permitted ? '' : 'warn'}"></i>${permitted ? '响铃权限已开启' : '通知权限待检查'}</b>
+          <span class="p-row-detail">${android ? '使用试响验证锁屏提醒' : '使用试响检查闹钟提醒'}</span>
+        </span>
+        <button class="p-button primary" data-modal="trial">试响</button>
       </div>
-    `;
+      ${configRow('bell', '权限状态', permitted ? `通知与${android ? '精确闹钟' : '闹钟'}已开启` : '通知未开启', { modal: 'permissions' })}
+      ${android ? configRow('shield', '保活向导', '检查电池优化、后台运行与锁屏展示', { goto: 'guide' }) : ''}
+      ${configRow('refresh', '立即重排', '重新同步未来 14 天的响铃', { modal: 'resync' })}`);
+    const appearance = configSection('外观与个人', `
+      <div class="p-appearance">
+        <h5 class="p-config-label">外观模式</h5>
+        <div class="p-seg-bar p-mode-controls" aria-label="外观模式">${appearances.map(([key, name]) => `<button type="button" data-appmode="${key}" aria-pressed="${state.appMode === key}">${name}</button>`).join('')}</div>
+        <h5 class="p-config-label">主题色</h5>
+        <div class="p-palette">${THEMES.map((theme, i) => `
+          <button type="button" data-tidx="${i}" aria-pressed="${state.themeIdx === i}">
+            <span class="p-swatch-dot" style="--swatch:${theme[state.appearance]}">${state.themeIdx === i ? ico('check') : ''}</span>${theme.name}
+          </button>`).join('')}</div>
+      </div>
+      ${configRow('user', '首页头像', '', { modal: 'avatars', value: `<span class="p-row-avatar">${avatarPicture(state.avatar)}</span>` })}
+      ${configRow('language', '界面语言', '', { value: '简体中文' })}`);
+    const data = configSection('数据与备份', `
+      ${configRow('calendar', '法定节假日', 'holiday-cn · 本地数据', { modal: 'holidays' })}
+      ${configRow('upload', '导出备份', '生成排班和保活设置的 JSON 文件', { modal: 'export' })}
+      ${configRow('download', '导入恢复', '从备份文件恢复排班', { modal: 'import' })}`);
+    const application = configSection('应用', `
+      ${android
+        ? configRow('download', '检查更新', 'GitHub Releases', { modal: 'update', value: VERSION })
+        : configRow('download', '应用更新', '通过 TestFlight 或安装包更新', { value: VERSION })}
+      ${configRow('info', '关于周而复起', '版本、开源项目与隐私', { goto: 'about' })}`);
+    return sheetScreen('设置', reliability + appearance + data + application);
   }
 
-  /* ==================== 7. 关于页(v2.1 焕新):破晓英雄卡 + 实时数据 + 链接行 ==================== */
   function htmlAbout() {
-    const enabledCount = (state.primaryOn ? 1 : 0) + (state.dutyOn ? 1 : 0);
-    const totalTimes = (state.primaryOn ? state.times.length : 0) + (state.dutyOn ? DUTY_GROUP.times.length : 0);
-    const holDays = Object.keys(HOLIDAYS).length;
-    return `
-      <div class="p-sheet">
-        <div class="p-sheet-handle"></div>
-        <div class="p-sheet-head">
-          <span class="p-sheet-title">关于</span>
-          <button class="p-sheet-done" data-goto="settings">完成</button>
-        </div>
-        <div class="p-scroll">
-          <div class="p-about-hero">
-            <svg class="p-about-logo" viewBox="0 0 120 120" aria-hidden="true">
-              <defs>
-                <linearGradient id="abBg" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0" stop-color="#1c1d22"/>
-                  <stop offset="1" stop-color="#0d0e12"/>
-                </linearGradient>
-              </defs>
-              <rect width="120" height="120" rx="28" fill="url(#abBg)"/>
+    const enabled = Number(state.primaryOn) + Number(state.dutyOn);
+    const times = (state.primaryOn ? state.times.length : 0) + (state.dutyOn ? DUTY_GROUP.times.length : 0);
+    const ios = state.platform === 'ios';
+    const betaUrl = ios ? 'https://testflight.apple.com/join/9vNcHgha' : `${REPO}/issues/1`;
+    const hero = `
+      <div class="p-about-hero">
+        <svg class="p-about-logo" viewBox="0 0 120 120" aria-hidden="true">
+
+              <rect width="120" height="120" rx="28" fill="#13161c"/>
               <g fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="8.5" stroke-linecap="round">
                 <path d="M62.08 26.06 A34 34 0 0 1 85.29 37.27"/>
                 <path d="M87.83 40.46 A34 34 0 0 1 93.55 65.53"/>
@@ -2471,53 +2685,361 @@
               </g>
               <circle cx="60" cy="52" r="3.2" fill="var(--p-accent)"/>
             </svg>
-            <div class="p-about-name">周而复起</div>
-            <div class="p-about-tag">任意班制 · 破晓而起 · 系统级精确响铃</div>
-            <span class="p-about-ver zf-num">v0.2.6 · OFFLINE FIRST</span>
-          </div>
-
-          <div class="p-about-stats">
-            <div class="p-about-stat"><b class="zf-num">${enabledCount}</b><span>启用排班组</span></div>
-            <div class="p-about-stat"><b class="zf-num">${totalTimes}</b><span>连环响铃道数</span></div>
-            <div class="p-about-stat"><b class="zf-num">${holDays} 假 / 2 补</b><span>离线假日库</span></div>
-          </div>
-
-          <div class="p-sec-head"><span>项目与社区</span></div>
-          <div class="p-list-card">
-            <div class="p-list-row">
-              <div><b>GitHub 仓库</b><span>github.com/TNT-Likely/zhouerfuqi · 点 Star 支持开发</span></div>
-              <span style="color:var(--p-ink-3)">›</span>
-            </div>
-            <div class="p-list-row">
-              <div><b>问题反馈与需求</b><span>排班场景跑偏了?来 Issue 区聊聊</span></div>
-              <span style="color:var(--p-ink-3)">›</span>
-            </div>
-            <div class="p-list-row">
-              <div><b>加入内测</b><span>TestFlight(iOS)· Google Play 封闭测试(Android)</span></div>
-              <span style="color:var(--p-ink-3)">›</span>
-            </div>
-          </div>
-
-          <div class="p-sec-head"><span>技术与声明</span></div>
-          <div class="p-list-card">
-            <div class="p-list-row">
-              <div><b>规则引擎 @zhouerfuqi/core</b><span>四种班制模型 · 节假日联动推理可解释</span></div>
-              <span class="p-tag accent">自研</span>
-            </div>
-            <div class="p-list-row">
-              <div><b>本地优先 · 零云端</b><span>排班数据不出设备,备份与恢复走系统分享面板</span></div>
-              <span class="p-tag green">隐私</span>
-            </div>
-            <div class="p-list-row">
-              <div><b>Expo · React Native</b><span>一套代码双端交付 · 原生 AlarmActivity 全屏响铃</span></div>
-              <span class="p-tag">栈</span>
-            </div>
-          </div>
-
-          <div class="p-about-foot">MIT License © 2026 周而复起<br>为所有轮班的人而做 · 明早破晓见</div>
+        <h4 class="p-about-name">周而复起</h4>
+        <p class="p-about-tag">适合大小周、轮班与手动排班的本地闹钟</p>
+        <span class="p-about-ver zf-num">v${VERSION}</span>
+        <div class="p-about-stats">
+          <div class="p-about-stat"><b class="zf-num">${enabled}</b><span>启用班组</span></div>
+          <div class="p-about-stat"><b class="zf-num">${times}</b><span>启用响铃</span></div>
+          <div class="p-about-stat"><b class="zf-num">${Object.keys(HOLIDAYS).length}</b><span>假日与补班</span></div>
         </div>
+      </div>`;
+    const community = configSection('项目与社区', `
+      ${configRow('link', 'GitHub 仓库', '查看源码与发布记录', { href: REPO })}
+      ${configRow('chat', '反馈与建议', '报告问题或分享排班需求', { href: `${REPO}/issues` })}
+      ${configRow('user', '加入内测', ios ? 'TestFlight 公开内测' : 'Google Play 封闭测试', { href: betaUrl })}`);
+    const information = configSection('数据与隐私', `
+      ${configRow('shield', '排班数据保存在设备上', '备份通过系统文件与分享功能导出')}
+      ${configRow('lock', '隐私政策', '', { href: `${REPO}/blob/main/docs/privacy.md` })}
+      ${configRow('settings', '技术说明', '', { modal: 'tech' })}`);
+    return sheetScreen('关于', hero + community + information +
+      '<div class="p-about-foot">MIT License © 2026 周而复起</div>', 'settings');
+  }
+
+  const dialogScenes = {
+    time: 'edit', delete: 'edit', avatars: 'settings', import: 'settings', export: 'settings',
+    update: 'settings', 'update-current': 'settings', 'update-error': 'settings', 'import-error': 'settings',
+    trial: 'settings', permissions: 'settings', 'permissions-missing': 'settings', lock: 'guide',
+    holidays: 'settings', resync: 'settings', tech: 'about',
+  };
+  const androidDialogs = new Set(['lock', 'update', 'update-current', 'update-error']);
+  const backupFilename = 'zhouerfuqi-backup-20261118.json';
+  const sampleBackup = {
+    groupName: state.groupName, primaryOn: state.primaryOn, primaryDeleted: state.primaryDeleted,
+    dutyOn: state.dutyOn, holidayOn: state.holidayOn, ruleKind: state.ruleKind,
+    weekdays: { ...state.weekdays }, nWeeks: state.nWeeks, anchor: state.anchor,
+    nDays: state.nDays, customDates: [...state.customDates], times: state.times.map((time) => ({ ...time })),
+  };
+
+  function actionDialog(title, body, {
+    icon = 'info', tone = 'accent', sheet = true, confirm = '完成', cancel = false, busy = false,
+  } = {}) {
+    return `
+      <div class="p-dialog p-dialog--${sheet ? 'sheet' : 'confirm'}" data-tone="${tone}" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1">
+        ${sheet ? '<div class="p-dialog-grip" aria-hidden="true"></div>' : ''}
+        <div class="p-dialog-head">
+          ${sheet ? '' : `<span class="p-dialog-mark">${ico(icon)}</span>`}
+          <h4 id="dialogTitle">${title}</h4>
+          ${sheet ? `<button type="button" class="p-dialog-close" data-modal-act="cancel" aria-label="关闭弹窗">${ico('close')}</button>` : ''}
+        </div>
+        <div class="p-dialog-body">${body}</div>
+        <div class="p-dialog-actions">
+          ${cancel ? '<button type="button" class="p-button" data-modal-act="cancel">取消</button>' : ''}
+          <button type="button" class="p-button ${tone === 'danger' ? 'danger' : 'primary'}" data-modal-act="confirm"${busy ? ' disabled' : ''}>${confirm}</button>
+        </div>
+      </div>`;
+  }
+
+  const dialogCopy = (content) => `<p class="p-dialog-copy">${escapeHtml(content)}</p>`;
+  const dialogList = (rows) => `<div class="p-list-card p-dialog-list">${rows}</div>`;
+  const permissionPill = (enabled) => `<span class="p-dialog-pill ${enabled ? '' : 'warn'}">${ico(enabled ? 'check' : 'info')}${enabled ? '已开启' : '待开启'}</span>`;
+
+  function timeGrid(key, count, step, active) {
+    const hour = key === 'hour';
+    return `<fieldset class="p-time-field"><legend>${hour ? '小时' : '分钟'}</legend><div class="p-timegrid">${Array.from({ length: count }, (_, index) => {
+      const value = index * step;
+      return `<button type="button" class="zf-num" data-pick-${key}="${value}"
+        aria-label="${pad(value)} ${hour ? '时' : '分'}" aria-pressed="${active === value}">${pad(value)}</button>`;
+    }).join('')}</div></fieldset>`;
+  }
+
+  function avatarDialog() {
+    const avatar = state.avatarDraft;
+    const label = avatar.kind === 'image' ? '自定义图片' : '破晓 · 默认头像';
+    return actionDialog('首页头像', `
+      <div class="p-avatar-preview">
+        <span class="p-avatar-thumbnail">${avatarPicture(avatar)}</span>
+        <div><b>${label}</b><span class="p-row-detail">首页头像按正方形居中裁切，显示为圆形。</span></div>
       </div>
-    `;
+      <div class="p-avatar-controls">
+        <button type="button" class="p-button" data-avatar-pick aria-busy="${state.avatarBusy}">
+          ${ico('image')}${state.avatarBusy ? '读取图片中…' : '选择本机图片'}
+        </button>
+        <input type="file" data-avatar-file accept="image/*" hidden>
+        <button type="button" class="p-dialog-subaction" data-avatar-default>恢复默认</button>
+      </div>
+      ${state.avatarError ? `<p class="p-dialog-error" role="alert">${state.avatarError}</p>` : ''}
+    `, { confirm: '保存头像', cancel: true, busy: state.avatarBusy });
+  }
+
+  function htmlDialog() {
+    switch (state.modal) {
+      case 'time': {
+        const time = state.pendingTime;
+        return actionDialog('自定义响铃时间', `
+          <div class="p-picktime-display">
+            <button type="button" class="p-button" data-minute-step="-1" aria-label="减少一分钟">−1</button>
+            <b class="zf-num" aria-live="polite">${fmtT(time)}</b>
+            <button type="button" class="p-button" data-minute-step="1" aria-label="增加一分钟">+1</button>
+          </div>
+          ${timeGrid('hour', 24, 1, time.hour)}
+          ${timeGrid('minute', 12, 5, time.minute)}
+          <label class="p-form-field">标签（可选）<input class="p-input" data-time-label value="${escapeHtml(time.label)}" maxlength="24" placeholder="例如午休"></label>
+          ${state.timeError ? `<p class="p-dialog-error" role="alert" tabindex="-1">${state.timeError}</p>` : ''}
+        `, { confirm: '加入响铃', cancel: true });
+      }
+      case 'avatars':
+        return avatarDialog();
+      case 'delete':
+        return actionDialog('删除班组？',
+          dialogCopy('此班组的排班规则和响铃时间将被删除，已安排的后续响铃也会取消。') +
+          dialogList(configRow('alarm', escapeHtml(state.groupName), `${state.times.length} 个响铃时间`)),
+          { sheet: false, tone: 'danger', icon: 'trash', confirm: '删除班组', cancel: true });
+      case 'import':
+        return actionDialog('用备份恢复排班？',
+          dialogCopy('恢复后，当前班组和响铃计划会被备份中的数据覆盖。') +
+          dialogList(configRow('file', '样例备份', backupFilename)),
+          { sheet: false, tone: 'warning', icon: 'download', confirm: '恢复示例', cancel: true });
+      case 'export':
+        return actionDialog('导出备份',
+          dialogList(configRow('file', 'JSON 备份', backupFilename)) +
+          dialogCopy('包含班组、响铃时间和保活设置。导出后可在系统分享面板选择保存位置。'),
+          { confirm: '预览分享', cancel: true });
+      case 'update':
+        return actionDialog('发现新版本', `
+          <div class="p-version-pair">
+            <div><span>当前版本</span><b class="zf-num">v${VERSION}</b></div>
+            ${ico('arrowR')}
+            <div><span>样例新版本</span><b class="zf-num">v0.2.9</b></div>
+          </div>
+          ${dialogList(configRow('settings', '设置与关于', '整理设置分组，优化关于页。') +
+            configRow('bell', '应用内提示', '改进时间选择、确认与结果反馈。'))}
+        `, { confirm: '下载并安装', cancel: true });
+      case 'update-current':
+        return actionDialog('已是最新版本', dialogCopy(`你正在使用 v${VERSION}。`),
+          { sheet: false, icon: 'check' });
+      case 'update-error':
+        return actionDialog('检查更新失败', dialogCopy('暂时无法获取版本信息。请检查网络后重试。'),
+          { sheet: false, tone: 'error', icon: 'alert', confirm: '重新检查', cancel: true });
+      case 'import-error':
+        return actionDialog('导入备份失败', dialogCopy('文件内容不完整。请重新选择周而复起导出的 JSON 备份。'),
+          { sheet: false, tone: 'error', icon: 'alert', confirm: '重新选择', cancel: true });
+      case 'trial':
+        return actionDialog('锁屏试响', `
+          <div class="p-dialog-summary"><b class="zf-num">00:30</b><span>安排后 30 秒响铃</span></div>
+          ${dialogCopy('安排试响后可锁屏，检查通知和响铃界面。')}
+          <button type="button" class="p-dialog-subaction" data-modal-act="preview">${ico('external')}预览响铃</button>
+        `, { confirm: '安排试响', cancel: true });
+      case 'permissions':
+      case 'permissions-missing': {
+        const notification = state.modal === 'permissions' && state.guideSteps[0];
+        const title = state.platform === 'android' ? '精确闹钟' : '闹钟权限';
+        return actionDialog('响铃权限', dialogList(
+          configRow('bell', '通知权限', '显示响铃与锁屏提醒', { value: permissionPill(notification) }) +
+          configRow('alarm', title, '按排班时间触发闹钟', { value: permissionPill(true) }),
+        ) + (notification ? '' : dialogCopy('请在系统设置中开启周而复起的通知。')),
+        { confirm: notification ? '完成' : '打开系统设置', cancel: !notification });
+      }
+      case 'lock':
+        return actionDialog('锁屏展示',
+          dialogCopy('在周而复起的系统通知设置中，检查以下选项。') +
+          dialogList(configRow('bell', '允许通知', '允许周而复起发出提醒') +
+            configRow('lock', '锁屏展示', '在锁屏时显示通知') +
+            configRow('external', '横幅通知', '亮屏时显示通知横幅')),
+          { confirm: '打开系统设置' });
+      case 'holidays':
+        return actionDialog('节假日数据',
+          '<div class="p-dialog-summary"><b class="zf-num">2026</b><span>本地数据 · holiday-cn</span></div>' +
+          dialogCopy('开启节假日联动后，法定假日跳过响铃，调休补班日按排班提醒。'),
+          { confirm: '检查新年份', cancel: true });
+      case 'resync':
+        return actionDialog('重新同步响铃？', dialogCopy('将按当前排班重新计算未来 14 天的响铃，并同步到系统。'),
+          { sheet: false, icon: 'refresh', confirm: '重新同步', cancel: true });
+      case 'tech':
+        return actionDialog('技术说明', dialogList(
+          configRow('calendar', '排班引擎', '@zhouerfuqi/core 计算班制和节假日。') +
+          configRow('lock', '本地存储', '排班和外观设置保存在设备上。') +
+          configRow('alarm', '应用与响铃', '界面使用 Expo 和 React Native，响铃由系统调度。'),
+        ));
+      default:
+        return '';
+    }
+  }
+
+  function renderDialog(focusSelector) {
+    const overlay = $('modalOverlay');
+    const sameDialog = overlay.dataset.kind === state.modal;
+    const previousScroll = sameDialog ? overlay.querySelector('.p-dialog-body')?.scrollTop : 0;
+    overlay.dataset.kind = state.modal ?? '';
+    overlay.hidden = !state.modal;
+    overlay.innerHTML = state.modal ? htmlDialog() : '';
+    if (!state.modal) return;
+    overlay.querySelector('.p-dialog-body').scrollTop = previousScroll || 0;
+    if (focusSelector) (overlay.querySelector(focusSelector) ?? overlay.querySelector('.p-dialog'))?.focus();
+  }
+
+  let modalTrigger = null;
+  let avatarReadId = 0;
+  let feedbackTimer;
+
+  function announceFeedback(title, detail, icon = 'info') {
+    const feedback = $('phoneFeedback');
+    clearTimeout(feedbackTimer);
+    feedback.classList.toggle('is-success', icon === 'check');
+    feedback.innerHTML = `<span class="p-row-icon">${ico(icon)}</span>
+      <div class="p-row-copy"><b>${escapeHtml(title)}</b><span class="p-row-detail">${escapeHtml(detail)}</span></div>`;
+    feedbackTimer = setTimeout(() => feedback.replaceChildren(), 4800);
+  }
+
+  function resetAvatarDraft(avatar) {
+    avatarReadId += 1;
+    state.avatarDraft = avatar;
+    state.avatarBusy = false;
+    state.avatarError = '';
+  }
+
+  async function readAvatarFile(file) {
+    const request = ++avatarReadId;
+    const url = URL.createObjectURL(file);
+    state.avatarBusy = true;
+    state.avatarError = '';
+    renderDialog('[data-avatar-pick]');
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      if (request !== avatarReadId || state.modal !== 'avatars') return;
+      const side = Math.min(image.naturalWidth, image.naturalHeight);
+      if (!side) throw new Error('Empty image');
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 256;
+      canvas.getContext('2d').drawImage(image,
+        (image.naturalWidth - side) / 2, (image.naturalHeight - side) / 2, side, side, 0, 0, 256, 256);
+      state.avatarDraft = { kind: 'image', value: canvas.toDataURL('image/webp', 0.86) };
+    } catch {
+      if (request === avatarReadId && state.modal === 'avatars') {
+        state.avatarError = '无法读取这张图片，请试试 JPG、PNG 或 WebP。';
+      }
+    } finally {
+      URL.revokeObjectURL(url);
+      if (request === avatarReadId && state.modal === 'avatars') {
+        state.avatarBusy = false;
+        renderDialog('[data-avatar-pick]');
+      }
+    }
+  }
+
+  function openDialog(kind, trigger) {
+    modalTrigger = trigger?.closest('#mainPhone') ? { scene: state.scene, kind } : null;
+    $('phoneFeedback').replaceChildren();
+    state.viewMode = 'single';
+    state.modal = kind;
+    if (kind === 'time') {
+      state.pendingTime = { hour: 7, minute: 0, label: '' };
+      state.timeError = '';
+    }
+    if (kind === 'avatars') resetAvatarDraft(state.avatar);
+    renderAll();
+    const overlay = $('modalOverlay');
+    const initialFocus = overlay.querySelector('.p-dialog:is([data-tone="danger"], [data-tone="warning"]) [data-modal-act="cancel"]');
+    (initialFocus ?? overlay.querySelector('.p-dialog'))?.focus();
+  }
+
+  function closeDialog() {
+    if (state.modal === 'avatars') avatarReadId += 1;
+    state.modal = null;
+    renderAll();
+    const trigger = modalTrigger?.scene === state.scene
+      ? $('mainPhone').querySelector(`.p-screen.active [data-modal="${modalTrigger.kind}"]`)
+      : null;
+    (trigger ?? $('modalSelect')).focus({ preventScroll: true });
+    modalTrigger = null;
+  }
+
+  function previewTrialRing() {
+    state.ringReturn = state.scene;
+    state.ringState = 'ringing';
+    state.ringDelay = 0;
+    state.scene = 'ring';
+    closeDialog();
+  }
+
+  function confirmDialog() {
+    switch (state.modal) {
+      case 'avatars':
+        if (state.avatarBusy) return;
+        state.avatar = state.avatarDraft;
+        try {
+          localStorage.setItem(AVATAR_STORAGE_KEY, JSON.stringify(state.avatar));
+        } catch {
+          // The chosen avatar still applies until the preview is closed.
+        }
+        closeDialog();
+        return;
+      case 'time': {
+        const { hour, minute, label } = state.pendingTime;
+        if (state.times.some((time) => time.hour === hour && time.minute === minute)) {
+          state.timeError = '这个时间已经在班组里。';
+          renderDialog('[role="alert"]');
+          return;
+        }
+        state.times.push({ id: `custom-${hour}-${minute}`, hour, minute, label: label.trim() });
+        state.times.sort((a, b) => a.hour * 60 + a.minute - b.hour * 60 - b.minute);
+        closeDialog();
+        return;
+      }
+      case 'delete':
+        state.primaryDeleted = true;
+        state.primaryOn = false;
+        state.scene = 'home';
+        closeDialog();
+        announceFeedback('班组已删除', '此班组后续响铃已取消。', 'check');
+        return;
+      case 'import':
+        Object.assign(state, {
+          ...sampleBackup, weekdays: { ...sampleBackup.weekdays },
+          customDates: new Set(sampleBackup.customDates), times: sampleBackup.times.map((time) => ({ ...time })),
+        });
+        closeDialog();
+        announceFeedback('样例排班已恢复', '班组和响铃时间已更新。', 'check');
+        return;
+      case 'trial':
+        closeDialog();
+        announceFeedback('试响排期预览', '真机将在 30 秒后响铃，可以锁屏观察。', 'alarm');
+        return;
+      case 'update':
+        closeDialog();
+        announceFeedback('安装交接预览', '下载完成后，真机会打开系统安装器。', 'download');
+        return;
+      case 'update-error':
+        openDialog('update');
+        return;
+      case 'import-error':
+        openDialog('import');
+        return;
+      case 'export':
+        closeDialog();
+        announceFeedback('备份分享预览', '真机会打开系统分享面板。', 'upload');
+        return;
+      case 'resync':
+        closeDialog();
+        announceFeedback('响铃已重排', '已同步未来 14 天的样例响铃。', 'check');
+        return;
+      case 'holidays':
+        closeDialog();
+        announceFeedback('暂无新年份数据', '预览当前使用 2026 年样例数据。', 'calendar');
+        return;
+      case 'permissions':
+      case 'permissions-missing':
+      case 'lock': {
+        const opensSettings = state.modal !== 'permissions' || !state.guideSteps[0];
+        closeDialog();
+        if (opensSettings) announceFeedback('打开系统设置', '真机会进入周而复起的系统设置。', 'settings');
+        return;
+      }
+      default:
+        closeDialog();
+    }
   }
 
   /* ==================== 渲染与事件绑定 ==================== */
@@ -2546,246 +3068,340 @@
     el.style.setProperty('--theme-light', t.light);
     el.style.setProperty('--theme-dark', t.dark);
     el.dataset.appearance = state.appearance;
+    el.dataset.platform = state.platform;
   }
+
+  const screens = {
+    home: { title: '首页', id: 'scrHome', render: htmlHome },
+    calendar: { title: '排班月历', id: 'scrCalendar', render: htmlCalendar },
+    edit: { title: '编辑班组', id: 'scrEdit', render: htmlEdit },
+    ring: { title: '锁屏响铃', id: 'scrRing', render: htmlRing },
+    guide: { title: '保活向导', id: 'scrGuide', render: htmlGuide },
+    settings: { title: '设置', id: 'scrSettings', render: htmlSettings },
+    about: { title: '关于', id: 'scrAbout', render: htmlAbout },
+  };
+  const scrollOffsets = {};
 
   function renderMainPhone() {
     const phone = $('mainPhone');
+    const previous = phone.dataset.scene;
+    const scroll = phone.querySelector('.p-screen.active .p-scroll');
+    if (previous && scroll) scrollOffsets[previous] = scroll.scrollTop;
+    phone.dataset.scene = state.scene;
     applyThemeVars(phone);
     phone.classList.toggle('p-phone-ringing', state.scene === 'ring');
 
     $('statusIcons').innerHTML = `${ico('wifi')}${ico('battery')}`;
-    $('scrHome').innerHTML = htmlHome();
-    $('scrCalendar').innerHTML = htmlCalendar();
-    $('scrEdit').innerHTML = htmlEdit();
-    $('scrRing').innerHTML = htmlRing();
-    $('scrGuide').innerHTML = htmlGuide();
-    $('scrSettings').innerHTML = htmlSettings();
-    $('scrAbout').innerHTML = htmlAbout();
+    for (const [scene, screen] of Object.entries(screens)) {
+      const element = $(screen.id);
+      const active = scene === state.scene;
+      if (active) element.innerHTML = screen.render();
+      element.classList.toggle('active', active);
+      element.classList.toggle('is-entering', active && previous !== state.scene);
+      element.inert = !active || !!state.modal;
+      if (active) element.querySelector('.p-scroll')?.scrollTo(0, scrollOffsets[scene] || 0);
+    }
 
-    phone.querySelectorAll('.p-screen').forEach((s) => {
-      s.classList.toggle('active', s.dataset.screen === state.scene);
-    });
-
-    document.querySelectorAll('#sceneSeg button').forEach((b) => {
-      b.setAttribute('aria-pressed', String(b.dataset.scene === state.scene));
-    });
-
-    const t = THEMES[state.themeIdx];
-    $('logoArc').setAttribute('stroke', t.dark);
-    $('logoDot').setAttribute('fill', t.dark);
+    const theme = THEMES[state.themeIdx];
+    $('logoArc').setAttribute('stroke', theme.dark);
+    $('logoDot').setAttribute('fill', theme.dark);
     renderTokens();
+    renderDialog();
   }
 
   function renderGallery() {
     if (state.viewMode !== 'gallery') return;
-    const screens = [
-      { id: 'home', title: '01 · 主屏 (时计台 Hub + 七日节律带)', html: htmlHome() },
-      { id: 'calendar', title: '02 · 排班月历 (模态抽屉)', html: htmlCalendar() },
-      { id: 'edit', title: '03 · 规则编辑 (一问锚点 + 连环闹钟)', html: htmlEdit() },
-      { id: 'ring', title: '04 · 锁屏响铃 (声波场 + 兜底提示)', html: htmlRing(), isRing: true },
-      { id: 'guide', title: '05 · 厂商保活向导 (三步引导)', html: htmlGuide() },
-      { id: 'settings', title: '06 · 设置与可靠性 (模态抽屉)', html: htmlSettings() },
-      { id: 'about', title: '07 · 关于页 (破晓英雄卡 + 社区链接)', html: htmlAbout() },
-    ];
-    const t = THEMES[state.themeIdx];
-    $('galleryGrid').innerHTML = screens.map((s) => `
-      <div class="zf-gallery-item">
-        <div class="zf-phone is-mini ${s.isRing ? 'p-phone-ringing' : ''}" data-appearance="${state.appearance}" style="--theme-light:${t.light};--theme-dark:${t.dark}">
-          <div class="p-statusbar">
-            <span class="zf-num">09:41</span>
-            <div class="p-island"></div>
-            <div class="p-status-icons">${ico('wifi')}${ico('battery')}</div>
+    const theme = THEMES[state.themeIdx];
+    $('galleryGrid').innerHTML = Object.entries(screens)
+      .filter(([id]) => id !== 'guide' || state.platform === 'android')
+      .map(([id, screen]) => `
+        <div class="zf-gallery-item">
+          <div class="zf-phone is-mini ${id === 'ring' ? 'p-phone-ringing' : ''}" data-platform="${state.platform}"
+            data-appearance="${state.appearance}" style="--theme-light:${theme.light};--theme-dark:${theme.dark}">
+            <div class="p-statusbar">
+              <span class="zf-num">09:41</span><div class="p-island"></div>
+              <div class="p-status-icons">${ico('wifi')}${ico('battery')}</div>
+            </div>
+            <div class="p-viewport">
+              <div class="p-screen active ${id === 'ring' ? 'p-ring-screen' : ''}" data-screen="${id}">${screen.render()}</div>
+            </div>
           </div>
-          <div class="p-viewport">
-            <div class="p-screen active ${s.isRing ? 'p-ring-screen' : ''}">${s.html}</div>
-          </div>
-        </div>
-        <div class="zf-gallery-cap">${s.title}</div>
-      </div>
-    `).join('');
+          <div class="zf-gallery-cap">${screen.title}</div>
+        </div>`).join('');
+  }
+
+  function markControls(id, key, value) {
+    $(id).querySelectorAll('button').forEach((button) => {
+      button.setAttribute('aria-pressed', String(button.dataset[key] === value));
+    });
   }
 
   function renderAll() {
     $('zfStage').className = `zf-stage mode-${state.viewMode}`;
     $('sceneControlsRow').style.display = state.viewMode === 'single' ? '' : 'none';
+    $('sceneSeg').querySelector('[data-scene="guide"]').disabled = state.platform === 'ios';
+    const modalSelect = $('modalSelect');
+    for (const option of modalSelect.options) option.disabled = state.platform === 'ios' && androidDialogs.has(option.value);
+    modalSelect.value = Object.hasOwn(dialogScenes, state.modal) ? state.modal : '';
+    markControls('sceneSeg', 'scene', state.scene);
+    markControls('viewModeSeg', 'view', state.viewMode);
+    markControls('appAppearanceSeg', 'appTheme', state.appearance);
+    markControls('platformSeg', 'platformChoice', state.platform);
+    initSwatches();
     renderMainPhone();
     renderGallery();
   }
 
-  /* 渲染顶部主题色板 */
   function initSwatches() {
-    $('swatchBar').innerHTML = THEMES.map((t, i) => `
-      <button class="zf-swatch" data-tidx="${i}" style="background:${t.light}" aria-pressed="${i === state.themeIdx}" title="${t.name}"></button>
+    $('swatchBar').innerHTML = THEMES.map((theme, i) => `
+      <button class="zf-swatch" data-tidx="${i}" style="background:${theme[state.appearance]}" aria-pressed="${i === state.themeIdx}" title="${theme.name}" aria-label="${theme.name}"></button>
     `).join('');
   }
 
-  /* 事件委托:一处绑定全站生效 */
-  document.getElementById('zfApp').addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-scene],[data-goto],[data-view],[data-app-theme],[data-appmode],[data-avatar],[data-tidx],[data-toggle],[data-rk],[data-wd],[data-nstep],[data-ndstep],[data-anchor],[data-del-time],[data-preset],[data-cal-mode],[data-cal-date],[data-cal-step],[data-quick],[data-ring-act],[data-gstep],[data-vendor]');
-    if (!btn) return;
+  function navigate(scene, resetScroll = false) {
+    $('phoneFeedback').replaceChildren();
+    if (scene === 'ring') {
+      state.ringReturn = 'home';
+      state.ringState = 'ringing';
+      state.ringDelay = 0;
+    }
+    if (scene === 'calendar') state.calReturn = 'home';
+    if (scene === 'home' || (scene === 'edit' && resetScroll)) state.draftName = null;
+    if (resetScroll) scrollOffsets[scene] = 0;
+    state.viewMode = 'single';
+    state.modal = null;
+    state.scene = scene;
+  }
 
-    if (btn.dataset.view) {
-      state.viewMode = btn.dataset.view;
-      document.querySelectorAll('#viewModeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-      renderAll();
+  function togglePreset(id) {
+    const preset = PRESETS.find((time) => time.id === id);
+    const index = state.times.findIndex((time) => time.hour === preset.hour && time.minute === preset.minute);
+    if (index >= 0) {
+      state.times.splice(index, 1);
+    } else {
+      state.times.push({ ...preset });
+      state.times.sort((a, b) => a.hour * 60 + a.minute - b.hour * 60 - b.minute);
+    }
+  }
+
+  function changeMonth(step) {
+    if (!step) {
+      state.calY = 2026;
+      state.calM = 11;
+      state.selDate = TODAY;
       return;
     }
-    if (btn.dataset.appTheme) {
-      state.appearance = btn.dataset.appTheme;
-      document.querySelectorAll('#appAppearanceSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-      renderAll();
+    const date = new Date(state.calY, state.calM - 1 + step, 1);
+    state.calY = date.getFullYear();
+    state.calM = date.getMonth() + 1;
+    state.selDate = `${state.calY}-${pad(state.calM)}-01`;
+  }
+
+  function editMonth(action) {
+    if (action === 'clear-all') {
+      state.customDates.clear();
       return;
     }
-    if (btn.dataset.tidx !== undefined) {
-      state.themeIdx = +btn.dataset.tidx;
-      initSwatches();
-      renderAll();
+    const last = new Date(state.calY, state.calM, 0).getDate();
+    for (let day = 1; day <= last; day++) {
+      const date = `${state.calY}-${pad(state.calM)}-${pad(day)}`;
+      if (action === 'clear') state.customDates.delete(date);
+      if (action === 'all' || (action === 'workdays' && dow(date) <= 5)) state.customDates.add(date);
+    }
+  }
+
+  $('zfApp').addEventListener('click', (event) => {
+    const btn = event.target.closest('button, [data-goto]');
+    if (!btn || btn.disabled) return;
+    const data = btn.dataset;
+
+    if (data.modalAct) {
+      if (data.modalAct === 'confirm') confirmDialog();
+      else if (data.modalAct === 'preview') previewTrialRing();
+      else closeDialog();
       return;
     }
-    if (btn.dataset.scene) {
-      state.scene = btn.dataset.scene;
-      renderAll();
+    if (data.modal) {
+      const from = btn.closest('.p-screen')?.dataset.screen;
+      if (from) state.scene = from;
+      openDialog(data.modal, btn);
       return;
     }
-    if (btn.dataset.goto) {
-      if (state.viewMode === 'gallery') {
-        state.viewMode = 'single';
-        document.querySelectorAll('#viewModeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === 'single')));
-      }
-      state.scene = btn.dataset.goto;
-      renderAll();
-      return;
-    }
-    if (btn.dataset.toggle) {
-      const k = btn.dataset.toggle;
-      if (k === 'primary') state.primaryOn = !state.primaryOn;
-      if (k === 'duty') state.dutyOn = !state.dutyOn;
-      if (k === 'holiday') state.holidayOn = !state.holidayOn;
-      renderAll();
-      return;
-    }
-    if (btn.dataset.rk) {
-      state.ruleKind = btn.dataset.rk;
-      renderAll();
-      return;
-    }
-    if (btn.dataset.wd) {
-      const w = +btn.dataset.wd;
-      state.weekdays[w] = !state.weekdays[w];
-      renderAll();
-      return;
-    }
-    if (btn.dataset.nstep) {
-      state.nWeeks = Math.min(4, Math.max(1, state.nWeeks + (+btn.dataset.nstep)));
-      renderAll();
-      return;
-    }
-    if (btn.dataset.ndstep) {
-      state.nDays = Math.min(7, Math.max(2, state.nDays + (+btn.dataset.ndstep)));
-      renderAll();
-      return;
-    }
-    if (btn.dataset.anchor) {
-      state.anchor = btn.dataset.anchor;
-      renderAll();
-      return;
-    }
-    if (btn.dataset.delTime) {
-      if (state.times.length > 1) state.times = state.times.filter((x) => x.id !== btn.dataset.delTime);
-      renderAll();
-      return;
-    }
-    if (btn.dataset.preset) {
-      const p = PRESETS.find((x) => x.id === btn.dataset.preset);
-      if (state.times.some((x) => x.id === p.id)) {
-        if (state.times.length > 1) state.times = state.times.filter((x) => x.id !== p.id);
-      } else {
-        state.times = [...state.times, { ...p }].sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute));
-      }
-      renderAll();
-      return;
-    }
-    if (btn.dataset.calMode) {
-      const m = btn.dataset.calMode;
-      if (m === 'manual' && state.ruleKind !== 'customDates') state.ruleKind = 'customDates';
-      if (m === 'rule' && state.ruleKind === 'customDates') state.ruleKind = 'everyNWeeks';
-      state.calMode = m;
-      renderAll();
-      return;
-    }
-    if (btn.dataset.calDate) {
-      const d = btn.dataset.calDate;
-      state.selDate = d;
-      if (state.calMode === 'manual') {
-        state.customDates.has(d) ? state.customDates.delete(d) : state.customDates.add(d);
-      }
-      renderAll();
-      return;
-    }
-    if (btn.dataset.calStep !== undefined) {
-      const step = +btn.dataset.calStep;
-      if (step === 0) { state.calY = 2026; state.calM = 11; }
+    if (data.pickHour !== undefined || data.pickMinute !== undefined || data.minuteStep) {
+      const time = state.pendingTime;
+      const key = data.pickHour !== undefined ? 'pickHour' : data.pickMinute !== undefined ? 'pickMinute' : 'minuteStep';
+      if (key === 'pickHour') time.hour = Number(data.pickHour);
+      else if (key === 'pickMinute') time.minute = Number(data.pickMinute);
       else {
-        state.calM += step;
-        if (state.calM < 1) { state.calM = 12; state.calY--; }
-        if (state.calM > 12) { state.calM = 1; state.calY++; }
+        const minutesOfDay = mod(time.hour * 60 + time.minute + Number(data.minuteStep), 1440);
+        time.hour = Math.floor(minutesOfDay / 60);
+        time.minute = minutesOfDay % 60;
       }
-      renderAll();
+      state.timeError = '';
+      const attribute = { pickHour: 'pick-hour', pickMinute: 'pick-minute', minuteStep: 'minute-step' }[key];
+      renderDialog(`[data-${attribute}="${data[key]}"]`);
       return;
     }
-    if (btn.dataset.quick) {
-      const q = btn.dataset.quick;
-      const days = new Date(state.calY, state.calM, 0).getDate();
-      for (let d = 1; d <= days; d++) {
-        const dt = `${state.calY}-${pad(state.calM)}-${pad(d)}`;
-        if (q === 'workdays' && dow(dt) <= 5) state.customDates.add(dt);
-        if (q === 'all') state.customDates.add(dt);
-        if (q === 'clear') state.customDates.delete(dt);
+    if (data.avatarPick !== undefined) {
+      $('modalOverlay').querySelector('[data-avatar-file]')?.click();
+      return;
+    }
+    if (data.avatarDefault !== undefined) {
+      resetAvatarDraft(DEFAULT_AVATAR);
+      renderDialog('[data-avatar-default]');
+      return;
+    }
+
+    if (data.view) {
+      state.viewMode = data.view;
+      state.modal = null;
+    } else if (data.platformChoice) {
+      state.platform = data.platformChoice;
+      if (state.platform === 'ios' && state.scene === 'guide') state.scene = 'settings';
+      if (state.platform === 'ios' && androidDialogs.has(state.modal)) state.modal = null;
+    } else if (data.appTheme) {
+      state.systemAppearance = data.appTheme;
+      state.appMode = 'system';
+      state.appearance = data.appTheme;
+    } else if (data.appmode) {
+      state.appMode = data.appmode;
+      state.appearance = data.appmode === 'system' ? state.systemAppearance : data.appmode;
+    } else if (data.tidx !== undefined) {
+      state.themeIdx = Number(data.tidx);
+    } else if (data.scene) {
+      navigate(data.scene, true);
+    } else if (data.goto) {
+      navigate(data.goto);
+    } else if (data.saveGroup !== undefined) {
+      const name = (state.draftName ?? state.groupName).trim();
+      if (!name) {
+        const screen = btn.closest('.p-screen');
+        screen.querySelector('[data-group-name-error]').hidden = false;
+        const field = screen.querySelector('[data-group-name]');
+        field.setAttribute('aria-invalid', 'true');
+        field.focus();
+        return;
       }
-      renderAll();
-      return;
-    }
-    if (btn.dataset.ringAct) {
-      const a = btn.dataset.ringAct;
-      state.ringState = a === 'snooze' ? 'snoozed' : a === 'stop' ? 'stopped' : 'ringing';
-      renderAll();
-      return;
-    }
-    if (btn.dataset.gstep !== undefined) {
-      const idx = +btn.dataset.gstep;
-      state.guideSteps[idx] = !state.guideSteps[idx];
-      renderAll();
-      return;
-    }
-    if (btn.dataset.appmode) {
-      const m = btn.dataset.appmode;
-      state.appMode = m;
-      if (m !== 'system') state.appearance = m;
-      document.querySelectorAll('#appAppearanceSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.appTheme === state.appearance)));
-      renderAll();
-      return;
-    }
-    if (btn.dataset.avatar) {
-      state.avatarEmoji = btn.dataset.avatar;
-      renderAll();
-      return;
-    }
-    if (btn.dataset.vendor) {
-      state.vendor = btn.dataset.vendor;
-      renderAll();
+      state.groupName = name;
+      if (state.primaryDeleted) state.primaryOn = true;
+      state.primaryDeleted = false;
+      navigate('home');
+    } else if (data.editCalendar !== undefined) {
+      navigate('calendar');
+      state.calMode = 'manual';
+      state.calReturn = 'edit';
+    } else if (data.toggle) {
+      const key = { primary: 'primaryOn', duty: 'dutyOn', holiday: 'holidayOn' }[data.toggle];
+      state[key] = !state[key];
+    } else if (data.rk) {
+      state.ruleKind = data.rk;
+    } else if (data.wd) {
+      state.weekdays[data.wd] = !state.weekdays[data.wd];
+    } else if (data.nstep) {
+      state.nWeeks = Math.min(4, Math.max(1, state.nWeeks + Number(data.nstep)));
+    } else if (data.ndstep) {
+      state.nDays = Math.min(15, Math.max(2, state.nDays + Number(data.ndstep)));
+    } else if (data.anchor) {
+      state.anchor = data.anchor;
+    } else if (data.delTime) {
+      if (state.times.length <= 1) {
+        btn.closest('.p-field-card').querySelector('[data-last-time-error]').hidden = false;
+        return;
+      }
+      state.times = state.times.filter((time) => time.id !== data.delTime);
+    } else if (data.preset) {
+      if (state.times.length === 1 && btn.getAttribute('aria-pressed') === 'true') {
+        btn.closest('.p-field-card').querySelector('[data-last-time-error]').hidden = false;
+        return;
+      }
+      togglePreset(data.preset);
+    } else if (data.calMode) {
+      if (data.calMode === 'manual' && state.ruleKind !== 'customDates') state.ruleKind = 'customDates';
+      if (data.calMode === 'rule' && state.ruleKind === 'customDates') state.ruleKind = 'everyNWeeks';
+      state.calMode = data.calMode;
+    } else if (data.calDate) {
+      state.selDate = data.calDate;
+      if (state.calMode === 'manual') {
+        if (state.customDates.has(data.calDate)) state.customDates.delete(data.calDate);
+        else state.customDates.add(data.calDate);
+      }
+    } else if (data.calStep !== undefined) {
+      changeMonth(Number(data.calStep));
+    } else if (data.quick) {
+      editMonth(data.quick);
+    } else if (data.ringAct) {
+      state.scene = 'ring';
+      state.viewMode = 'single';
+      if (data.ringAct === 'snooze') state.ringDelay += 9;
+      if (data.ringAct === 'reset') state.ringDelay = 0;
+      state.ringState = { snooze: 'snoozed', stop: 'stopped', reset: 'ringing' }[data.ringAct];
+    } else if (data.gstep !== undefined) {
+      state.guideSteps[data.gstep] = !state.guideSteps[data.gstep];
+    } else if (data.vendor) {
+      state.vendor = data.vendor;
+    } else return;
+
+    renderAll();
+    if (data.calDate) $('mainPhone').querySelector(`.p-screen.active [data-cal-date="${data.calDate}"]`)?.focus({ preventScroll: true });
+  });
+
+  $('zfApp').addEventListener('input', (event) => {
+    if (event.target.hasAttribute('data-time-label')) state.pendingTime.label = event.target.value;
+    if (event.target.hasAttribute('data-group-name')) {
+      state.draftName = event.target.value;
+      if (state.draftName.trim()) {
+        event.target.closest('.p-field-card').querySelector('[data-group-name-error]').hidden = true;
+        event.target.removeAttribute('aria-invalid');
+      }
     }
   });
 
-  const qs = new URLSearchParams(location.search);
-  if (qs.get('view') === 'gallery') state.viewMode = 'gallery';
-  if (qs.get('appearance') === 'light') state.appearance = 'light';
-  if (qs.get('scene')) state.scene = qs.get('scene');
-  if (qs.get('color')) state.themeIdx = Math.min(3, Math.max(0, +qs.get('color') || 0));
+  $('modalSelect').addEventListener('change', (event) => {
+    const modal = event.target.value;
+    if (Object.hasOwn(dialogScenes, modal) && !(state.platform === 'ios' && androidDialogs.has(modal))) {
+      navigate(dialogScenes[modal], true);
+      openDialog(modal);
+    } else if (state.modal) closeDialog();
+  });
 
-  document.querySelectorAll('#viewModeSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === state.viewMode)));
-  document.querySelectorAll('#appAppearanceSeg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.appTheme === state.appearance)));
-  initSwatches();
-  renderAll();
+  $('modalOverlay').addEventListener('click', (event) => {
+    if (event.target === $('modalOverlay')) closeDialog();
+  });
+  $('modalOverlay').addEventListener('change', (event) => {
+    if (event.target.hasAttribute('data-avatar-file') && event.target.files[0]) {
+      void readAvatarFile(event.target.files[0]);
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (!state.modal) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeDialog();
+    }
+    if (event.key === 'Tab') {
+      const dialog = $('modalOverlay').querySelector('.p-dialog');
+      const elements = [...dialog.querySelectorAll('button:not(:disabled), input:not([hidden]), a[href]')];
+      const target = document.activeElement;
+      if (!dialog.contains(target) || target === dialog || target === elements[event.shiftKey ? 0 : elements.length - 1]) {
+        event.preventDefault();
+        elements[event.shiftKey ? elements.length - 1 : 0]?.focus();
+      }
+    }
+  });
+
+  const query = new URLSearchParams(location.search);
+  if (query.get('view') === 'gallery') state.viewMode = 'gallery';
+  if (Object.hasOwn(screens, query.get('scene'))) state.scene = query.get('scene');
+  if (query.get('appearance') === 'light') state.appearance = state.systemAppearance = 'light';
+  if (query.get('platform') === 'ios') state.platform = 'ios';
+  if (state.platform === 'ios' && state.scene === 'guide') state.scene = 'settings';
+  const themeIndex = Number.parseInt(query.get('color'), 10);
+  if (THEMES[themeIndex]) state.themeIdx = themeIndex;
+  const initialModal = query.get('modal');
+  if (Object.hasOwn(dialogScenes, initialModal) && !(state.platform === 'ios' && androidDialogs.has(initialModal))) {
+    navigate(dialogScenes[initialModal], true);
+    openDialog(initialModal);
+  } else renderAll();
 })();
 </script>
 </body>

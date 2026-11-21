@@ -19,11 +19,12 @@ import { checkNotificationPermission, requestNotificationPermission } from '@/se
 import { useTheme } from '@/theme';
 import { usePrefs } from '@/stores/prefs';
 import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
+import { Avatar } from '@/components/Avatar';
 
 export default function HomeScreen() {
   const t = useTheme();
   const groups = useGroups((s) => s.groups);
-  const { avatarEmoji } = usePrefs();
+  const avatarImage = usePrefs((s) => s.avatarImage);
   const setEnabled = useGroups((s) => s.setEnabled);
   const [notifMissing, setNotifMissing] = useState(false);
 
@@ -110,8 +111,10 @@ export default function HomeScreen() {
           style={[styles.avatarBtn, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}
           onPress={() => router.push('/settings')}
           accessibilityLabel="设置与个人"
+          accessibilityRole="button"
+          hitSlop={6}
         >
-          <Text style={{ fontSize: 16 }}>{avatarEmoji}</Text>
+          <Avatar image={avatarImage} size={34} />
           <View style={[styles.avatarDot, { backgroundColor: notifMissing ? t.red : t.green, borderColor: t.bg }]} />
         </Pressable>
         <Text style={[styles.appName, { color: t.text }]}>周而复起</Text>

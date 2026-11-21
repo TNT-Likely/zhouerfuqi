@@ -1,169 +1,95 @@
-import { View, Text, ScrollView, Pressable, Image, Platform, Linking, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { Image, Linking, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
+import { AppDialog, DialogCopy } from '@/components/AppDialog';
+import { PanelList, PanelRow, PanelSection } from '@/components/Panel';
 import { Sheet } from '@/components/Sheet';
-import { useTheme } from '@/theme';
-import { useGroups } from '@/stores/groups';
 import { holidayInfo } from '@/services/holidays';
+import { useGroups } from '@/stores/groups';
+import { useTheme } from '@/theme';
 
 const REPO = 'https://github.com/TNT-Likely/zhouerfuqi';
+const ios = Platform.OS === 'ios';
+const beta = ios ? 'https://testflight.apple.com/join/9vNcHgha' : REPO + '/issues/1';
 
-/** v2.1 关于页:破晓英雄卡 + 实时数据芯片 + 社区链接 + 技术声明(设计稿 07 号屏) */
 export default function AboutScreen() {
   const t = useTheme();
   const groups = useGroups((s) => s.groups);
-  const info = holidayInfo();
-  const enabled = groups.filter((g) => g.enabled).length;
-  const times = groups.filter((g) => g.enabled).reduce((n, g) => n + g.times.length, 0);
-  const ver = Constants.expoConfig?.version ?? '0.2.7';
-
-  const joinBeta =
-    Platform.OS === 'ios'
-      ? 'https://testflight.apple.com/join/9vNcHgha'
-      : `${REPO}/issues/1`;
-
+  const [showTech, setShowTech] = useState(false);
+  const [linkFailed, setLinkFailed] = useState(false);
+  const enabled = groups.filter((group) => group.enabled);
+  const version = Constants.expoConfig?.version;
   const stats = [
-    { n: String(enabled), label: '启用排班组' },
-    { n: String(times), label: '连环响铃道数' },
-    { n: `${info.days} 天`, label: '离线假日库' },
+    { value: enabled.length, label: '启用班组' },
+    { value: enabled.reduce((count, group) => count + group.times.length, 0), label: '启用响铃' },
+    { value: holidayInfo().days, label: '假日与补班' },
   ];
-
-  const links = [
-    {
-      icon: 'logo-github' as const,
-      label: 'GitHub 仓库',
-      sub: 'github.com/TNT-Likely/zhouerfuqi · 点 Star 支持开发',
-      url: REPO,
-    },
-    {
-      icon: 'chatbubble-ellipses-outline' as const,
-      label: '问题反馈与需求',
-      sub: '排班场景跑偏了?来 Issue 区聊聊',
-      url: `${REPO}/issues`,
-    },
-    {
-      icon: 'flask-outline' as const,
-      label: '加入内测',
-      sub: Platform.OS === 'ios' ? 'TestFlight 公开链接,限 10,000 人' : 'Google Play 封闭测试 · issue 区留邮箱白名单',
-      url: joinBeta,
-    },
-  ];
-
-  const tech = [
-    { label: '规则引擎 @zhouerfuqi/core', sub: '四种班制模型 · 节假日联动推理可解释', tag: '自研', tagColor: t.primary },
-    { label: '本地优先 · 零云端', sub: '排班数据不出设备,备份走系统分享面板', tag: '隐私', tagColor: t.green },
-    { label: 'Expo · React Native', sub: '一套代码双端交付 · 原生全屏响铃引擎', tag: '栈', tagColor: t.text2 },
-  ];
+  const open = (url: string) => () => { void Linking.openURL(url).catch(() => setLinkFailed(true)); };
 
   return (
-    <Sheet title="关于">
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* 破晓英雄卡:顶部径向主题色辉光 + logo + 字标 + 版本胶囊 */}
-        <View style={[styles.hero, { backgroundColor: t.heroBg, borderColor: t.heroBorder }]}>
-          <View style={[styles.glow, { backgroundColor: t.accentSoft }]} />
+    <Sheet title="关于" appearance="panel">
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <LinearGradient colors={[t.accentSoft, t.panel.surface]} style={[styles.hero, { borderColor: t.heroBorder }]}>
           <Image source={require('../assets/icon.png')} style={styles.logo} resizeMode="cover" />
           <Text style={[styles.name, { color: t.text }]}>周而复起</Text>
-          <Text style={[styles.tagline, { color: t.text2 }]}>任意班制 · 破晓而起 · 系统级精确响铃</Text>
-          <View style={[styles.verPill, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}>
-            <Text style={{ color: t.primary, fontSize: 11, fontWeight: '800', letterSpacing: 0.3 }}>
-              v{ver} · OFFLINE FIRST
-            </Text>
+          <Text style={[styles.tagline, { color: t.panel.muted }]}>适合大小周、轮班与手动排班的本地闹钟</Text>
+          {version ? <Text style={[styles.version, { color: t.panel.accent, backgroundColor: t.accentSoft }]}>v{version}</Text> : null}
+          <View style={[styles.stats, { borderTopColor: t.panel.border }]}>
+            {stats.map((item, i) => (
+              <View key={item.label} style={[
+                styles.stat, i > 0 && { borderLeftColor: t.panel.border, borderLeftWidth: 1 },
+              ]}>
+                <Text style={[styles.statValue, { color: t.text }]}>{item.value}</Text>
+                <Text style={[styles.statLabel, { color: t.panel.muted }]}>{item.label}</Text>
+              </View>
+            ))}
           </View>
-        </View>
+        </LinearGradient>
 
-        {/* 实时数据芯片 */}
-        <View style={styles.statRow}>
-          {stats.map((s) => (
-            <View key={s.label} style={[styles.stat, { backgroundColor: t.surface, borderColor: t.line }]}>
-              <Text style={[styles.statN, { color: t.text }]}>{s.n}</Text>
-              <Text style={[styles.statL, { color: t.text3 }]}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
+        <PanelSection title="项目与社区">
+          <PanelRow icon="logo-github" title="GitHub 仓库" detail="查看源码与发布记录" onPress={open(REPO)} external />
+          <PanelRow icon="chatbubble-ellipses-outline" title="反馈与建议" detail="报告问题或分享排班需求"
+            onPress={open(REPO + '/issues')} external divider />
+          <PanelRow icon="flask-outline" title="加入内测" detail={ios ? 'TestFlight 公开内测' : 'Google Play 封闭测试'}
+            onPress={open(beta)} external divider />
+        </PanelSection>
 
-        <Text style={[styles.sec, { color: t.text3 }]}>项目与社区</Text>
-        <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-          {links.map((l, i) => (
-            <Pressable
-              key={l.label}
-              style={[styles.row, i > 0 ? { borderTopWidth: 1, borderTopColor: t.line } : null]}
-              onPress={() => void Linking.openURL(l.url).catch(() => {})}
-            >
-              <View style={[styles.rowIco, { backgroundColor: t.accentSoft }]}>
-                <Ionicons name={l.icon} size={16} color={t.primary} />
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.rowLabel, { color: t.text }]}>{l.label}</Text>
-                <Text style={[styles.rowSub, { color: t.text2 }]}>{l.sub}</Text>
-              </View>
-              <Text style={{ color: t.text3, fontSize: 15 }}>›</Text>
-            </Pressable>
-          ))}
-        </View>
-
-        <Text style={[styles.sec, { color: t.text3 }]}>技术与声明</Text>
-        <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-          {tech.map((r, i) => (
-            <View key={r.label} style={[styles.row, i > 0 ? { borderTopWidth: 1, borderTopColor: t.line } : null]}>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.rowLabel, { color: t.text }]}>{r.label}</Text>
-                <Text style={[styles.rowSub, { color: t.text2 }]}>{r.sub}</Text>
-              </View>
-              <View style={[styles.tag, { backgroundColor: t.accentSoft }]}>
-                <Text style={{ color: r.tagColor, fontSize: 10, fontWeight: '800' }}>{r.tag}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
-
-        <Text style={[styles.foot, { color: t.text3 }]}>
-          MIT License © 2026 周而复起{'\n'}为所有轮班的人而做 · 明早破晓见
-        </Text>
+        <PanelSection title="数据与隐私">
+          <PanelRow icon="shield-checkmark-outline" title="排班数据保存在设备上" detail="备份通过系统文件与分享功能导出" />
+          <PanelRow icon="lock-closed-outline" title="隐私政策" onPress={open(REPO + '/blob/main/docs/privacy.md')} external divider />
+          <PanelRow icon="settings-outline" title="技术说明" onPress={() => setShowTech(true)} divider />
+        </PanelSection>
+        <Text style={[styles.footer, { color: t.panel.muted }]}>MIT License © 2026 周而复起</Text>
       </ScrollView>
+      {showTech ? (
+        <AppDialog title="技术说明" onClose={() => setShowTech(false)}>
+          <PanelList inset>
+            <PanelRow icon="calendar-outline" title="排班引擎" detail="@zhouerfuqi/core 计算班制和节假日。" />
+            <PanelRow icon="lock-closed-outline" title="本地存储" detail="排班和外观设置保存在设备上。" divider />
+            <PanelRow icon="alarm-outline" title="应用与响铃" detail="界面使用 Expo 和 React Native，响铃由系统调度。" divider />
+          </PanelList>
+        </AppDialog>
+      ) : null}
+      {linkFailed ? (
+        <AppDialog title="无法打开链接" layout="center" tone="error" icon="alert-circle-outline" onClose={() => setLinkFailed(false)}>
+          <DialogCopy centered>请检查设备上的浏览器设置后重试。</DialogCopy>
+        </AppDialog>
+      ) : null}
     </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 32, gap: 12 },
-  hero: {
-    position: 'relative',
-    overflow: 'hidden',
-    borderRadius: 24,
-    borderWidth: 1,
-    paddingVertical: 22,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  glow: {
-    position: 'absolute',
-    top: -70,
-    width: 260,
-    height: 200,
-    borderRadius: 100,
-    opacity: 0.8,
-  },
-  logo: { width: 64, height: 64, borderRadius: 18, marginBottom: 12 },
-  name: { fontSize: 21, fontWeight: '800', letterSpacing: -0.6 },
-  tagline: { fontSize: 12, marginTop: 4, fontWeight: '500' },
-  verPill: {
-    marginTop: 10,
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    overflow: 'hidden',
-  },
-  statRow: { flexDirection: 'row', gap: 7 },
-  stat: { flex: 1, borderRadius: 16, borderWidth: 1, paddingVertical: 10, alignItems: 'center' },
-  statN: { fontSize: 15, fontWeight: '800', letterSpacing: -0.3 },
-  statL: { fontSize: 9.5, marginTop: 3, fontWeight: '600' },
-  sec: { fontSize: 11, letterSpacing: 1.5, marginHorizontal: 2, marginTop: 6 },
-  card: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 14 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11 },
-  rowIco: { width: 30, height: 30, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  rowLabel: { fontSize: 13.5, fontWeight: '700' },
-  rowSub: { fontSize: 11, marginTop: 2 },
-  tag: { borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3, overflow: 'hidden' },
-  foot: { textAlign: 'center', fontSize: 10.5, lineHeight: 17, paddingTop: 6 },
+  container: { padding: 16, gap: 15, paddingBottom: 24 },
+  hero: { borderWidth: 1, borderRadius: 22, alignItems: 'center', padding: 17, paddingBottom: 12 },
+  logo: { width: 60, height: 60, borderRadius: 16 },
+  name: { marginTop: 9, fontSize: 23, fontWeight: '800', letterSpacing: -0.4 },
+  tagline: { fontSize: 12.5, marginTop: 4, textAlign: 'center' },
+  version: { marginTop: 8, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, overflow: 'hidden', fontSize: 11.5, fontWeight: '700' },
+  stats: { marginTop: 15, borderTopWidth: 1, paddingTop: 11, flexDirection: 'row', alignSelf: 'stretch' },
+  stat: { flex: 1, minWidth: 0, alignItems: 'center', paddingHorizontal: 4, gap: 3 },
+  statValue: { fontSize: 19, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  statLabel: { fontSize: 11, textAlign: 'center' },
+  footer: { textAlign: 'center', fontSize: 11, paddingVertical: 4 },
 });

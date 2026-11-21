@@ -1,325 +1,395 @@
-import { useEffect, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet, Alert, Platform, Linking } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { AppState, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { useGuide } from '@/stores/guide';
-import { holidayInfo, refreshHolidays } from '@/services/holidays';
-import { exportBackup, importBackup } from '@/services/backup';
-import { gateway } from '@/gateway';
-import { scheduleTestRing, syncAll } from '@/scheduler/sync';
-import { checkUpdate, downloadAndInstall } from '@/services/updater';
-import { getVersion, isUpdateSupported } from '../modules/zf-update/src';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router, useFocusEffect } from 'expo-router';
 import Constants from 'expo-constants';
-import { scheduleRefresher as zfScheduleRefresher } from '../modules/zf-alarm/src';
-import { useTheme, THEME_COLORS } from '@/theme';
-import { usePrefs } from '@/stores/prefs';
-import { useColorScheme } from 'react-native';
-import { requestNotificationPermission } from '@/services/permissions';
+import { AppDialog, DialogCopy, DialogSummary, type AppDialogContent } from '@/components/AppDialog';
+import { Avatar, AvatarEditor } from '@/components/Avatar';
+import { useFeedback } from '@/components/Feedback';
+import { PanelButton, PanelIconTile, PanelList, PanelRow, PanelSection } from '@/components/Panel';
 import { Sheet } from '@/components/Sheet';
+import { TrialDialog } from '@/components/TrialDialog';
+import { gateway } from '@/gateway';
+import type { AlarmPermissionStatus } from '@/gateway/types';
+import { syncAll } from '@/scheduler/sync';
+import { exportBackup, pickBackup, restoreBackup } from '@/services/backup';
+import { holidayInfo, refreshHolidays } from '@/services/holidays';
+import { requestNotificationPermission } from '@/services/permissions';
+import { checkUpdate, downloadAndInstall } from '@/services/updater';
+import { usePrefs } from '@/stores/prefs';
+import { THEME_COLORS, useTheme } from '@/theme';
+import { scheduleRefresher } from '../modules/zf-alarm/src';
+import { isAlarmKitAvailable } from '../modules/zf-alarm-ios/src';
+import { getVersion, isUpdateSupported } from '../modules/zf-update/src';
+
+const appearances = [
+  { mode: 'system', title: '跟随系统' },
+  { mode: 'light', title: '日间' },
+  { mode: 'dark', title: '暗黑' },
+] as const;
+const android = Platform.OS === 'android';
+const canUpdate = isUpdateSupported();
 
 export default function SettingsScreen() {
   const t = useTheme();
-  const scheme = useColorScheme();
-  const { themeIdx, setThemeIdx, mode, setMode, avatarEmoji, setAvatarEmoji } = usePrefs();
-  const effectiveScheme = mode === 'system' ? (scheme === 'light' ? 'light' : 'dark') : mode;
-  const steps = useGuide((s) => s.steps);
-  const info = holidayInfo();
-  const [perm, setPerm] = useState<{ notifications: boolean; exactAlarms: boolean } | null>(null);
-  const [ver, setVer] = useState<{ versionName: string; versionCode: number } | null>(null);
-  const [checking, setChecking] = useState(false);
-
-  useEffect(() => {
-    gateway.status().then(setPerm).catch(() => setPerm(null));
+  const p = t.panel;
+  const notify = useFeedback();
+  const { themeIdx, setThemeIdx, mode, setMode, avatarImage } = usePrefs();
+  const [permissions, setPermissions] = useState<AlarmPermissionStatus | null>(null);
+  const [attemptedPermission, setAttemptedPermission] = useState(false);
+  const [dialog, setDialog] = useState<AppDialogContent | 'permissions' | 'avatar' | 'trial' | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [repickAfterDismiss, setRepickAfterDismiss] = useState(false);
+  const pending = useRef(false);
+  const holiday = holidayInfo();
+  const exactAvailable = android || isAlarmKitAvailable();
+  const authorized = permissions?.notifications && (!exactAvailable || permissions.exactAlarms);
+  const [version] = useState(() => {
     try {
-      setVer(getVersion());
+      return canUpdate ? getVersion().versionName : Constants.expoConfig?.version;
     } catch {
-      setVer(null);
+      return Constants.expoConfig?.version;
     }
-  }, []);
+  });
+  const close = () => setDialog(null);
 
-  const onCheckUpdate = async () => {
-    if (checking) return;
-    setChecking(true);
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    const refresh = () => {
+      void gateway.status().then(
+        (value) => { if (active) setPermissions(value); },
+        () => { if (active) setPermissions(null); },
+      );
+    };
+    refresh();
+    const sub = AppState.addEventListener('change', (state) => { if (state === 'active') refresh(); });
+    return () => { active = false; sub.remove(); };
+  }, []));
+
+  function showError(title: string, reason: unknown, retry?: () => void) {
+    const message = reason instanceof Error ? reason.message : String(reason);
+    setDialog({
+      title, icon: 'alert-circle-outline', layout: 'center', tone: 'error',
+      children: <DialogCopy centered>{message}</DialogCopy>,
+      ...(retry ? { confirm: '重试', onConfirm: retry, cancel: true } : {}),
+    });
+  }
+
+  async function run(failureTitle: string, operation: () => Promise<void>, retry?: () => void) {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
     try {
-      const r = await checkUpdate();
-      if (r.status === 'available') {
-        Alert.alert(
-          `发现新版本 ${r.info.versionName}`,
-          `${r.info.notes || ' improvements'}\n\n当前 ${r.current.versionName} → 新版 ${r.info.versionName}`,
-          [
-            { text: '取消', style: 'cancel' },
-            {
-              text: '下载并安装',
-              onPress: () => {
-                void downloadAndInstall(r.info)
-                  .then(() => {
-                    Alert.alert('下载完成', '系统安装器已弹出,按提示安装即可(安装完成后请打开新版本)');
-                  })
-                  .catch((e: any) => Alert.alert('更新失败', e?.message ?? String(e)));
-              },
-            },
-          ],
-        );
-      } else if (r.status === 'up-to-date') {
-        Alert.alert('已是最新', `当前 ${r.current.versionName}(versionCode ${r.current.versionCode})`);
-      } else {
-        Alert.alert('检查失败', r.error);
-      }
+      await operation();
+    } catch (error) {
+      showError(failureTitle, error, retry);
     } finally {
-      setChecking(false);
+      pending.current = false;
+      setBusy(false);
     }
-  };
+  }
 
+  function checkVersion() {
+    void run('检查更新失败', async () => {
+      const result = await checkUpdate();
+      if (result.status === 'error') throw new Error('暂时无法获取版本信息。请检查网络后重试。');
+      const current = result.current.versionName;
+      if (result.status === 'up-to-date') {
+        setDialog({
+          title: '已是最新版本', layout: 'center', tone: 'success', icon: 'checkmark',
+          children: <DialogCopy centered>{'你正在使用 v' + current + '。'}</DialogCopy>,
+        });
+        return;
+      }
+      const info = result.info;
+      const install = () => void run('更新失败', async () => {
+        await downloadAndInstall(info);
+        close();
+        notify('安装包已下载', '请在系统安装器中完成更新。', 'success', 'download-outline');
+      }, install);
+      setDialog({
+        title: '发现新版本', confirm: '下载并安装', cancel: true, onConfirm: install,
+        children: <VersionDetails current={current} next={info.versionName} notes={info.notes} />,
+      });
+    }, checkVersion);
+  }
 
+  function openPermissions() {
+    setAttemptedPermission(false);
+    setDialog('permissions');
+    void gateway.status().then(setPermissions).catch(() => setPermissions(null));
+  }
+
+  const canRequest = !!permissions && !attemptedPermission && (
+    !permissions.notifications || (!android && exactAvailable && !permissions.exactAlarms)
+  );
+
+  function changePermissions() {
+    if (authorized) { close(); return; }
+    void run('无法打开响铃权限', async () => {
+      if (!permissions) {
+        setPermissions(await gateway.status());
+        return;
+      }
+      if (canRequest) {
+        setAttemptedPermission(true);
+        if (android) await requestNotificationPermission();
+        else await gateway.requestPermissions();
+        setPermissions(await gateway.status());
+        return;
+      }
+      await Linking.openSettings();
+      close();
+    }, openPermissions);
+  }
+
+  function confirmResync() {
+    const resync = () => void run('重新同步失败', async () => {
+      await syncAll();
+      close();
+      notify('响铃已重排', '未来 14 天的响铃已同步。');
+    }, resync);
+    setDialog({
+      title: '重新同步响铃？', layout: 'center', icon: 'refresh-outline', confirm: '重新同步', cancel: true,
+      children: <DialogCopy centered>将按当前排班重新计算未来 14 天的响铃，并同步到系统。</DialogCopy>,
+      onConfirm: resync,
+    });
+  }
+
+  function showHolidays() {
+    const refresh = () => void run('节假日更新失败', async () => {
+      const added = await refreshHolidays();
+      if (added) await syncAll();
+      close();
+      if (added) notify('节假日已更新', '新年份的数据已用于排班。');
+      else notify('暂无新年份数据', '可稍后再次检查。', 'accent', 'calendar-outline');
+    }, refresh);
+    setDialog({
+      title: '节假日数据', confirm: '检查新年份', cancel: true, onConfirm: refresh,
+      children: <>
+        <DialogSummary value={holiday.years.join(' · ')} detail={`holiday-cn · ${holiday.days} 条假日与补班记录`} />
+        <DialogCopy>开启节假日联动后，法定假日跳过响铃，调休补班日按排班提醒。</DialogCopy>
+      </>,
+    });
+  }
+
+  function showExport() {
+    const share = () => void run('导出备份失败', async () => {
+      await exportBackup(version);
+      close();
+    }, share);
+    setDialog({
+      title: '导出备份', confirm: '生成并分享', cancel: true, onConfirm: share,
+      children: <>
+        <PanelList inset><PanelRow icon="document-text-outline" title="JSON 备份"
+          detail="包含班组、响铃时间和保活设置" /></PanelList>
+        <DialogCopy>在系统分享面板选择保存位置。</DialogCopy>
+      </>,
+    });
+  }
+
+  function selectBackup() {
+    if (pending.current) return;
+    close();
+    void run('导入备份失败', async () => {
+      const selection = await pickBackup();
+      if (!selection) return;
+      const count = selection.backup.groups.length;
+      setDialog({
+        title: '用备份恢复排班？', layout: 'center', tone: 'warning', icon: 'download-outline',
+        confirm: '确认恢复', cancel: true,
+        children: <>
+          <DialogCopy centered>恢复后，当前班组和响铃计划会被备份中的数据覆盖。</DialogCopy>
+          <PanelList inset>
+            <PanelRow icon="document-text-outline" title={selection.name} detail={`${count} 个班组`} tone="warning" />
+          </PanelList>
+        </>,
+        onConfirm: () => void run('恢复排班失败', async () => {
+          restoreBackup(selection.backup);
+          try {
+            await syncAll();
+          } catch (error) {
+            showError('排班已恢复，响铃同步失败', error, confirmResync);
+            return;
+          }
+          close();
+          notify('排班已恢复', `已恢复 ${count} 个班组并同步响铃。`);
+        }),
+      });
+    }, () => {
+      if (android) selectBackup();
+      else setRepickAfterDismiss(true);
+    });
+  }
+
+  const permissionsLabel = permissions === null ? '查看通知与闹钟状态'
+    : authorized ? (exactAvailable ? '通知与闹钟权限已开启' : '通知权限已开启')
+      : '有权限待开启';
 
   return (
-    <Sheet title="设置">
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>可靠性</Text>
-        {Platform.OS === 'android' ? (
-          <Row label="保活向导" sub="响铃可靠性检查:权限 / 电池豁免 / 厂商设置" arrow onPress={() => router.push('/guide')} />
-        ) : null}
-        <Row
-          label="试响(30 秒后)"
-          sub="验证精确闹钟 + 全屏意图触发链"
-          arrow
-          onPress={() => {
-            void scheduleTestRing();
-            Alert.alert('已排期', '30 秒后将触发试响闹钟(可锁屏观察)');
-          }}
-        />
-        <Row
-          label="权限状态"
-          sub={perm ? `通知 ${perm.notifications ? '✓' : '✗'} · 精确闹钟 ${perm.exactAlarms ? '✓' : '需检查'}` : '检测中…'}
-          arrow
-          onPress={() => {
-            // 主动申请机制:缺什么直接拉系统弹窗;被永久拒绝才引导去系统设置
-            void (async () => {
-              const p = await gateway.status();
-              setPerm(p);
-              if (p && (!p.notifications || !p.exactAlarms)) {
-                if (!p.notifications) {
-                  const ok = await requestNotificationPermission();
-                  const after = await gateway.status();
-                  setPerm(after);
-                  if (ok || after.notifications) {
-                    Alert.alert('已授权', '响铃提醒通知已开启。');
-                    return;
-                  }
-                }
-                Alert.alert(
-                  '权限不完整',
-                  `${p.notifications ? '' : '通知未授权(降级提醒不可用)。'}${p.exactAlarms ? '' : '精确闹钟未授权(响铃不可靠)。'}\n系统弹窗已被永久拒绝,请到应用详情里手动开启。`,
-                  [
-                    { text: '知道了', style: 'cancel' },
-                    { text: '打开系统设置', onPress: () => Linking.openSettings() },
-                  ],
-                );
-              } else {
-                Alert.alert('权限完整', '通知与精确闹钟均已授权,响铃可达系统时钟级可靠性。');
-              }
-            })();
-          }}
-        />
-        <Row label="立即重排" sub="规则变更后通常自动执行;此按钮用于排查" arrow onPress={() => void syncAll().then(() => Alert.alert('已重排', '未来 14 天的响铃已同步到系统'))} />
-        {Platform.OS === 'android' && __DEV__ ? (
-          <Row label="注册 03:30 刷新器(调试)"
-            sub="单独调用原生 scheduleRefresher,验证注册链路"
-            arrow onPress={() => {
+    <Sheet title="设置" appearance="panel">
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}
+        pointerEvents={busy ? 'none' : 'auto'}>
+        <PanelSection title="响铃与可靠性">
+          <View style={[styles.reliability, { backgroundColor: t.accentSoft }]}>
+            <PanelIconTile icon="shield-checkmark-outline" />
+            <View style={styles.reliabilityCopy}>
+              <Text style={[styles.reliabilityTitle, { color: t.text }]}>
+                <Text style={{ color: authorized ? p.success : p.warning }}>{'● '}</Text>
+                {authorized ? '响铃权限已开启' : permissions ? '响铃权限待开启' : '响铃权限待检查'}
+              </Text>
+              <Text style={[styles.caption, { color: p.muted }]}>{android ? '使用试响验证锁屏提醒' : '使用试响检查闹钟提醒'}</Text>
+            </View>
+            <PanelButton label="试响" variant="primary" onPress={() => setDialog('trial')} disabled={busy} />
+          </View>
+          <PanelRow icon="notifications-outline" title="权限状态" detail={permissionsLabel} onPress={openPermissions} divider />
+          {android ? (
+            <PanelRow icon="shield-outline" title="保活向导" detail="检查电池优化、后台运行与锁屏展示"
+              onPress={() => router.push('/guide')} divider />
+          ) : null}
+          <PanelRow icon="refresh-outline" title="立即重排" detail="重新同步未来 14 天的响铃" onPress={confirmResync} divider />
+          {android && __DEV__ ? (
+            <PanelRow icon="construct-outline" title="注册 03:30 刷新器（调试）" divider onPress={() => {
               try {
-                zfScheduleRefresher(3, 30);
-                Alert.alert('已注册', '03:30 刷新器已提交系统(dumpsys 可验)');
-              } catch (e: any) {
-                Alert.alert('注册失败', e?.message ?? String(e));
+                scheduleRefresher(3, 30);
+                notify('刷新器已注册');
+              } catch (error) {
+                showError('注册失败', error);
               }
             }} />
-        ) : null}
-      </View>
+          ) : null}
+        </PanelSection>
 
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>数据</Text>
-        <Row
-          label="法定节假日"
-          sub={`${info.source} · ${info.years.join('/')} 年 · ${info.days} 天`}
-          arrow
-          onPress={() => {
-            Alert.alert(
-              '节假日数据',
-              `${info.years.join('、')} 年共 ${info.days} 天(holiday-cn 快照)。\n每年 11-12 月国务院发布次年安排后,可在此检查更新。`,
-              [
-                { text: '知道了', style: 'cancel' },
-                {
-                  text: '检查新年份',
-                  onPress: () => {
-                    void refreshHolidays().then((added) =>
-                      Alert.alert(added ? '已更新' : '暂无更新', added ? '新年度节假日已下载并生效。' : '下一年度安排尚未发布(通常 11-12 月发布),发布后这里会自动拉取。'),
-                    );
-                  },
-                },
-              ],
-            );
-          }}
-        />
-        <Row
-          label="导出备份"
-          sub="排班 + 保活向导 → JSON 分享面板"
-          arrow
-          onPress={() => {
-            void exportBackup(Constants.expoConfig?.version).catch((e: any) =>
-              Alert.alert('导出失败', e?.message ?? String(e)),
-            );
-          }}
-        />
-        <Row
-          label="导入恢复"
-          sub="选择备份 JSON,整量替换当前排班"
-          arrow
-          onPress={() => {
-            void importBackup()
-              .then((n) => {
-                if (n > 0) Alert.alert('已恢复', `导入 ${n} 条排班,系统闹钟已重排。`);
-              })
-              .catch((e: any) => Alert.alert('导入失败', e?.message ?? String(e)));
-          }}
-        />
-      </View>
-
-      {isUpdateSupported() ? (
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>应用更新</Text>
-        <Row
-          label={checking ? '检查中…' : '检查更新'}
-          sub={ver ? `当前 ${ver.versionName}(versionCode ${ver.versionCode})· 源:GitHub Releases` : '读取版本中…'}
-          arrow
-          onPress={() => void onCheckUpdate()}
-        />
-      </View>
-      ) : (
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>应用更新</Text>
-        <Row label="随版本安装" sub="iOS 当前以安装包/TestFlight 分发,更新随新包进行" />
-      </View>
-      )}
-
-      {/* 外观 · 模式 + 主题色(参考 design v2.0 色板) */}
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>外观</Text>
-        <View style={styles.modeSeg}>
-          {([
-            { k: 'system', label: '跟随系统' },
-            { k: 'light', label: '日间' },
-            { k: 'dark', label: '暗黑' },
-          ] as const).map((m) => {
-            const on = mode === m.k;
-            return (
-              <Pressable
-                key={m.k}
-                onPress={() => setMode(m.k)}
-                style={[styles.modeItem, on ? { backgroundColor: t.primary } : { backgroundColor: t.surface2 }]}
-              >
-                <Text style={{ fontSize: 12, color: on ? t.onPrimary : t.text2, fontWeight: on ? '800' : '400' }}>{m.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <Text style={[styles.cardTitle, { color: t.text3, marginTop: 16 }]}>主题色</Text>
-        <View style={styles.swatchRow}>
-          {THEME_COLORS.map((s, i) => {
-            const selected = themeIdx === i;
-            const color = effectiveScheme === 'light' ? s.light : s.dark;
-            return (
-              <Pressable
-                key={s.name}
-                onPress={() => setThemeIdx(i)}
-                style={styles.swatchItem}
-                accessibilityLabel={`主题色 ${s.name}`}
-              >
-                <View
-                  style={[
-                    styles.swatchDot,
-                    { backgroundColor: color, borderColor: selected ? t.text : t.line },
-                  ]}
-                >
-                  {selected ? <Ionicons name="checkmark" size={16} color="#FFFFFF" /> : null}
-                </View>
-                <Text style={{ fontSize: 10, color: selected ? t.text : t.text3, fontWeight: selected ? '700' : '400' }}>
-                  {s.name}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* 个人 · 头像 + 语言 */}
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>个人</Text>
-        <View style={styles.avatarRow}>
-          <View style={[styles.avatarPreview, { backgroundColor: t.heroBg, borderColor: t.heroBorder }]}>
-            <Text style={{ fontSize: 30 }}>{avatarEmoji}</Text>
+        <PanelSection title="外观与个人">
+          <View style={styles.appearance}>
+            <Text style={[styles.groupLabel, { color: t.text }]}>外观模式</Text>
+            <View style={[styles.segment, { backgroundColor: p.raised }]}>
+              {appearances.map((item) => {
+                const selected = item.mode === mode;
+                return (
+                  <Pressable key={item.mode} accessibilityRole="button" accessibilityState={{ selected }}
+                    onPress={() => setMode(item.mode)}
+                    style={[styles.mode, selected && { backgroundColor: p.surface }]}>
+                    <Text style={[styles.modeText, { color: selected ? p.accent : p.muted }]}>{item.title}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Text style={[styles.groupLabel, { color: t.text }]}>主题色</Text>
+            <View style={styles.palette}>
+              {THEME_COLORS.map((swatch, i) => {
+                const selected = themeIdx === i;
+                return (
+                  <Pressable key={swatch.name} accessibilityRole="button" accessibilityState={{ selected }}
+                    accessibilityLabel={`主题色 ${swatch.name}`} onPress={() => setThemeIdx(i)}
+                    style={[styles.swatch, selected && { backgroundColor: t.accentSoft }]}>
+                    <View style={[styles.dot, { backgroundColor: swatch[t.scheme] }]}>
+                      {selected ? <Ionicons name="checkmark-sharp" size={16} color="#151515" /> : null}
+                    </View>
+                    <Text style={[styles.swatchName, { color: selected ? t.text : p.muted }]}>{swatch.name}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-          <View style={styles.avatarChoices}>
-            {['⏰', '🌅', '🔥', '🌙', '☕', '🦉'].map((e) => {
-              const on = avatarEmoji === e;
-              return (
-                <Pressable
-                  key={e}
-                  onPress={() => setAvatarEmoji(e)}
-                  style={[styles.avatarChoice, { backgroundColor: on ? t.accentSoft : t.surface2, borderColor: on ? t.primary : t.line }]}
-                >
-                  <Text style={{ fontSize: 18 }}>{e}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      </View>
+          <PanelRow icon="person-outline" title="首页头像" value={<Avatar image={avatarImage} size={30} />}
+            onPress={() => setDialog('avatar')} divider />
+          <PanelRow icon="language-outline" title="界面语言" value="简体中文" divider />
+        </PanelSection>
 
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>语言 · Language</Text>
-        <Row label="简体中文" sub="当前语言 · 更多语言规划中" arrow={false} />
-      </View>
+        <PanelSection title="数据与备份">
+          <PanelRow icon="calendar-outline" title="法定节假日" detail={`holiday-cn · ${holiday.years.join(' / ')} 年`}
+            onPress={showHolidays} />
+          <PanelRow icon="share-outline" title="导出备份" detail="生成排班和保活设置的 JSON 文件" onPress={showExport} divider />
+          <PanelRow icon="download-outline" title="导入恢复" detail="从备份文件恢复排班" onPress={selectBackup} divider />
+        </PanelSection>
 
-      <View style={[styles.card, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <Text style={[styles.cardTitle, { color: t.text3 }]}>关于</Text>
-        <Row label="周而复起" sub={`v${Constants.expoConfig?.version ?? ''} · MIT 开源 · 设计与规则引擎自研`} arrow onPress={() => router.push('/about')} />
-      </View>
+        <PanelSection title="应用">
+          <PanelRow icon="cloud-download-outline" title={canUpdate ? '检查更新' : '应用更新'}
+            detail={canUpdate ? 'GitHub Releases' : '通过 TestFlight 或安装包更新'}
+            value={version ? 'v' + version : undefined} onPress={canUpdate ? checkVersion : undefined} />
+          <PanelRow icon="information-circle-outline" title="关于周而复起" detail="版本、开源项目与隐私"
+            onPress={() => router.push('/about')} divider />
+        </PanelSection>
       </ScrollView>
+
+      {dialog === 'avatar' ? <AvatarEditor onClose={close} /> : null}
+      {dialog === 'trial' ? <TrialDialog onClose={close} /> : null}
+      {dialog === 'permissions' ? (
+        <AppDialog title="响铃权限" onClose={close} busy={busy} onConfirm={changePermissions}
+          confirm={authorized ? '完成' : !permissions ? '重新检查' : canRequest ? '开启权限' : '打开系统设置'}>
+          <PanelList inset>
+            <PanelRow icon="notifications-outline" title="通知权限" detail="显示响铃与锁屏提醒"
+              value={<PermissionBadge enabled={permissions?.notifications} />} />
+            {exactAvailable ? <PanelRow icon="alarm-outline" title={android ? '精确闹钟' : '闹钟权限'}
+              detail="在排班时间触发闹钟" value={<PermissionBadge enabled={permissions?.exactAlarms} />} divider /> : null}
+          </PanelList>
+          {permissions && !authorized ? (
+            <DialogCopy>{canRequest ? '开启权限后，可用试响检查响铃。' : '请在系统设置中开启周而复起的响铃权限。'}</DialogCopy>
+          ) : null}
+        </AppDialog>
+      ) : null}
+      {dialog && typeof dialog === 'object' ? (
+        <AppDialog {...dialog} onClose={close} busy={busy} visible={!repickAfterDismiss}
+          onDismiss={repickAfterDismiss ? () => { setRepickAfterDismiss(false); selectBackup(); } : undefined} />
+      ) : null}
     </Sheet>
   );
 }
 
-function Row({ label, sub, arrow, onPress }: { label: string; sub: string; arrow?: boolean; onPress?: () => void }) {
+function PermissionBadge({ enabled }: { enabled?: boolean }) {
+  const { panel: p } = useTheme();
+  return (
+    <View style={[styles.permission, { backgroundColor: enabled ? p.successSoft : p.warningSoft }]}>
+      <Ionicons name={enabled ? 'checkmark' : 'information-circle-outline'} size={13} color={enabled ? p.success : p.warning} />
+      <Text style={[styles.permissionLabel, { color: enabled ? p.success : p.warning }]}>
+        {enabled === undefined ? '待检查' : enabled ? '已开启' : '待开启'}
+      </Text>
+    </View>
+  );
+}
+
+function VersionDetails({ current, next, notes }: { current: string; next: string; notes: string }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onPress} style={styles.row}>
-      <View style={{ flex: 1 }}>
-        <Text style={{ color: t.text, fontSize: 14, fontWeight: '600' }}>{label}</Text>
-        <Text style={{ color: t.text3, fontSize: 11, marginTop: 3 }}>{sub}</Text>
-      </View>
-      {arrow ? <Text style={{ color: t.text3 }}>›</Text> : null}
-    </Pressable>
+    <>
+      <LinearGradient colors={[t.panel.raised, t.accentSoft]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[styles.versions, { borderColor: t.heroBorder }]}>
+        <View style={styles.version}>
+          <DialogCopy centered>当前版本</DialogCopy>
+          <Text style={[styles.versionNumber, { color: t.text }]}>{'v' + current}</Text>
+        </View>
+        <Ionicons name="arrow-forward" color={t.panel.accent} size={18} />
+        <View style={styles.version}>
+          <DialogCopy centered>新版本</DialogCopy>
+          <Text style={[styles.versionNumber, { color: t.panel.accent }]}>{'v' + next}</Text>
+        </View>
+      </LinearGradient>
+      {notes.trim() ? <PanelList inset><PanelRow icon="list-outline" title="更新内容" detail={notes.trim()} /></PanelList> : null}
+      <DialogCopy>下载后将在系统安装器中完成更新。</DialogCopy>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48, gap: 14 },
-  title: { fontSize: 18, fontWeight: '800', paddingTop: 52, paddingHorizontal: 2 },
-  card: { borderWidth: 1, borderRadius: 20, padding: 16 },
-  cardTitle: { fontSize: 11, letterSpacing: 2, marginBottom: 6 },
-  modeSeg: { flexDirection: 'row', borderRadius: 999, borderWidth: 1, padding: 4, gap: 4 },
-  modeItem: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999 },
-  avatarRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  avatarPreview: { width: 62, height: 62, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  avatarChoices: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  avatarChoice: { width: 42, height: 42, borderRadius: 14, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  swatchRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4, marginTop: 6 },
-  swatchItem: { alignItems: 'center', gap: 6 },
-  swatchDot: {
-    width: 38, height: 38, borderRadius: 19, borderWidth: 2,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11 },
+  container: { padding: 16, paddingBottom: 26, gap: 15 },
+  reliability: { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 11 },
+  reliabilityCopy: { flex: 1, minWidth: 0 },
+  reliabilityTitle: { fontSize: 14, fontWeight: '700' },
+  caption: { fontSize: 12, marginTop: 3 },
+  appearance: { padding: 12, gap: 8 },
+  groupLabel: { fontSize: 13, fontWeight: '700' },
+  segment: { flexDirection: 'row', borderRadius: 13, padding: 3, gap: 3, marginBottom: 6 },
+  mode: { flex: 1, minHeight: 41, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 4, borderRadius: 10 },
+  modeText: { textAlign: 'center', fontSize: 12, fontWeight: '700' },
+  palette: { flexDirection: 'row', gap: 2 },
+  swatch: { flex: 1, minHeight: 56, alignItems: 'center', justifyContent: 'center', gap: 5, borderRadius: 10 },
+  dot: { height: 24, width: 24, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  swatchName: { fontSize: 10.5, textAlign: 'center' },
+  permission: { flexDirection: 'row', gap: 3, alignItems: 'center', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 18 },
+  permissionLabel: { fontSize: 11.5, fontWeight: '700' },
+  versions: { flexDirection: 'row', alignItems: 'center', borderRadius: 18, borderWidth: 1, paddingVertical: 13, gap: 4 },
+  version: { flex: 1, alignItems: 'center', gap: 2 },
+  versionNumber: { fontSize: 21, fontWeight: '800', fontVariant: ['tabular-nums'] },
 });
