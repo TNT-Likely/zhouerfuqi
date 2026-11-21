@@ -8,6 +8,7 @@ import { todayISO } from '@/scheduler/materialize';
 import { syncAll } from '@/scheduler/sync';
 import { cnDate, WD } from '@/lib/labels';
 import { useTheme, type Tokens } from '@/theme';
+import { Sheet } from '@/components/Sheet';
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -66,13 +67,15 @@ export default function CalendarScreen() {
   const selEv = g ? evaluateDay(g, getHolidayCalendar(), sel) : null;
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={styles.container}>
-      <View style={styles.topbar}>
-        <Text style={[styles.title, { color: t.text }]}>排班月历</Text>
+    <Sheet
+      title="排班月历"
+      right={
         <Text style={{ fontSize: 11, color: t.text2 }}>
           {editing ? '手动排班 · 编辑中' : manual ? '手动排班 · 预览' : '规则预览'}
         </Text>
-      </View>
+      }
+    >
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 
       {/* 模式切换 */}
       <View style={[styles.mode, { backgroundColor: t.surface2 }]}>
@@ -217,7 +220,8 @@ export default function CalendarScreen() {
           );
         })()}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </Sheet>
   );
 }
 
