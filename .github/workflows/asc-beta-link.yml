@@ -4,9 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       make_public_link:
-        description: '创建/更新公开链接(external group + latest build)'
+        description: '关联外测组并提交 Beta 审核'
         type: boolean
         default: true
+      build_number:
+        description: '指定构建号(留空则使用最新可用构建)'
+        required: false
+        default: ''
 
 jobs:
   asc:
@@ -15,6 +19,7 @@ jobs:
       APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+      TARGET_BUILD_NUMBER: ${{ inputs.build_number }}
     steps:
       - name: Query TestFlight status & public link
         run: |
@@ -56,10 +61,17 @@ jobs:
           app_id = apps[0]['id']
           print(f'APP {app_id} {apps[0]["attributes"]["name"]}')
 
-          builds = req('GET', '/v1/builds?filter[app]=' + app_id +
-                       '&limit=5&sort=-uploadedDate'
-                       '&fields[builds]=version,uploadedDate,processingState')['data']
-          print('--- TestFlight builds (latest 5) ---')
+          build_number = os.environ.get('TARGET_BUILD_NUMBER', '').strip()
+          build_query = {
+              'filter[app]': app_id,
+              'limit': 5,
+              'sort': '-uploadedDate',
+              'fields[builds]': 'version,uploadedDate,processingState',
+          }
+          if build_number:
+              build_query['filter[version]'] = build_number
+          builds = req('GET', '/v1/builds', params=build_query)['data']
+          print('--- TestFlight builds ---')
           for bld in builds:
               print('v%s  %s  %s' % (bld['attributes']['version'],
                                      bld['attributes']['uploadedDate'][:10],
@@ -67,6 +79,8 @@ jobs:
           ready = [b for b in builds if b['attributes']['processingState'] == 'VALID']
           if not ready:
               print('NO_READY_BUILD')
+              if MAKE_LINK and build_number:
+                  sys.exit(f'Build {build_number} is not ready for TestFlight submission')
           build_id = ready[0]['id'] if ready else None
 
           # Beta App Review 状态:公开链接必须等首个外测构建过审

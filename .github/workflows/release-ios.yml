@@ -8,6 +8,10 @@ on:
         description: 'versionName(留空则取 app.json 版本)'
         required: false
         default: ''
+      upload:
+        description: '上传签名构建到 TestFlight'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -15,6 +19,7 @@ permissions:
 jobs:
   unsigned-ipa:
     # unsigned 包:开源用户可自行签名;TestFlight 签名上传见 testflight job
+    if: github.ref_type == 'tag' || inputs.upload != true
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -100,7 +105,7 @@ jobs:
   testflight:
     # 签名构建并直传 TestFlight(与本地验证过的流程一致)
     # secrets 命名遵循 ~/Documents/apple/README.md 账号级材料惯例
-    if: github.ref_type == 'tag'
+    if: github.ref_type == 'tag' || inputs.upload == true
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -120,8 +125,14 @@ jobs:
 
       - name: Compute version
         id: ver
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
         run: |
-          VN="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            VN="${GITHUB_REF_NAME#v}"
+          else
+            VN="${VERSION_NAME:-$(node -p "require('./apps/mobile/app.json').expo.version")}"
+          fi
           VC=$(date +%s)
           echo "version_name=$VN" >> "$GITHUB_OUTPUT"
           echo "version_code=$VC" >> "$GITHUB_OUTPUT"
