@@ -1,6 +1,19 @@
-# 周而复起
+<h1 align="center">
+  <img src="apps/mobile/assets/icon.png" alt="" width="40" height="40" align="middle" />
+  周而复起
+</h1>
 
-> 闹钟周而复起，班表从不掉链子。
+<p align="center"><strong>闹钟周而复起，班表从不掉链子。</strong></p>
+
+<p align="center">
+  <a href="docs/screens/calendar.png"><img src="docs/screens/calendar.png" alt="排班月历与当天响铃安排" width="31%" /></a>
+  <a href="docs/screens/promo.gif"><img src="docs/screens/promo.gif" alt="周而复起 0.3.0 的首页、排班月历和设置演示" width="31%" /></a>
+  <a href="docs/screens/settings-theme.png"><img src="docs/screens/settings-theme.png" alt="试响、权限和外观设置" width="31%" /></a>
+</p>
+
+<p align="center">
+  <a href="#下载">下载</a> · <a href="#从班表到响铃">使用方式</a> · <a href="#支持开发">支持开发</a>
+</p>
 
 为大小周、轮班和自定义月历排班设计的开源闹钟。按班表安排响铃，数据保存在设备上，支持备份和恢复。
 
@@ -28,10 +41,6 @@
 | 自定义月历 | 直接选中需要响铃的日期，适合每月变化的班表。 |
 
 开启节假日联动后，周期班表会跳过放假日期，并在调休补班日响铃。自定义月历以手动点选为准。节假日数据来自 [holiday-cn](https://github.com/NateScarlet/holiday-cn)。
-
-<p align="center">
-  <a href="docs/screens/promo.gif"><img src="docs/screens/promo.gif" alt="周而复起 0.3.0 的首页、排班月历和设置演示" width="380" /></a>
-</p>
 
 ## 响铃、外观与备份
 
