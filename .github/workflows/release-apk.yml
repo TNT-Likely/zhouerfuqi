@@ -38,12 +38,14 @@ jobs:
 
       - name: Compute version
         id: ver
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           if [ -n "$TAG" ] && [ "${{ github.ref_type }}" = "tag" ]; then
             VN="$TAG"
           else
-            VN="${{ inputs.version_name }}"
+            VN="$VERSION_NAME"
             if [ -z "$VN" ]; then VN=$(node -p "require('./apps/mobile/app.json').expo.version"); fi
           fi
           VC=$(date +%s)   # 单调递增,2038 年前均小于 versionCode 上限
@@ -65,7 +67,7 @@ jobs:
           VN: ${{ steps.ver.outputs.version_name }}
           VC: ${{ steps.ver.outputs.version_code }}
           REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
+          TAG: v${{ steps.ver.outputs.version_name }}
         run: |
           mkdir -p dist
           for ABI in arm64-v8a armeabi-v7a x86_64; do
@@ -86,6 +88,7 @@ jobs:
         with:
           # 手动 dispatch 无 tag 上下文:显式指定 tag_name(不存在时 softprops 会自动建)
           tag_name: v${{ steps.ver.outputs.version_name }}
+          target_commitish: ${{ github.sha }}
           files: |
             dist/zhouerfuqi-${{ steps.ver.outputs.version_name }}-arm64-v8a.apk
             dist/zhouerfuqi-${{ steps.ver.outputs.version_name }}-armeabi-v7a.apk
@@ -98,6 +101,8 @@ jobs:
             - 已装旧版的用户可在 App 内「设置 → 检查更新」自助升级
 
       - name: Commit update manifest to main
+        env:
+          TAG: v${{ steps.ver.outputs.version_name }}
         run: |
           git config user.name "zhouerfuqi-ci"
           git config user.email "ci@zhouerfuqi.local"
@@ -109,7 +114,7 @@ jobs:
               && mkdir -p updates \
               && cp dist/update.json updates/update.json \
               && git add updates/update.json \
-              && git commit -m "ci: update manifest ${{ github.ref_name }}" \
+              && git commit -m "ci: update manifest $TAG" \
               && git push origin HEAD:main; then
               echo "manifest written & pushed (attempt $i)"
               exit 0
