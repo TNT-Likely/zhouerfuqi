@@ -1,18 +1,23 @@
 import { useCallback, useState } from 'react';
-import { AppState, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { PanelButton, PanelList, PanelRow } from '@/components/Panel';
 import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
 import { TrialDialog } from '@/components/TrialDialog';
 import { useTheme } from '@/theme';
-import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
+import {
+  checkNotificationPermission,
+  openAppNotificationSettings,
+  requestNotificationPermission,
+  supportsNotificationPermissionPrompt,
+} from '@/services/permissions';
 import { isIgnoringBatteryOptimizations, requestIgnoreBatteryOptimization } from '@/services/battery';
 
 const vendorTips = [
   {
     name: '华为 / 荣耀',
-    detail: '在应用启动管理中允许自启动和后台活动，并检查通知的锁屏展示。',
+    detail: '在系统设置中搜索「应用启动管理」，手动允许周而复起自启动和后台活动。',
   },
   {
     name: '小米',
@@ -20,7 +25,7 @@ const vendorTips = [
   },
   {
     name: 'OPPO / vivo',
-    detail: '允许后台启动和后台运行，再到应用通知设置中开启锁屏通知。',
+    detail: '在系统设置中允许周而复起后台启动和后台运行。',
   },
 ] as const;
 
@@ -30,9 +35,9 @@ export default function GuideScreen() {
   const [permission, setPermission] = useState<boolean | null>(null);
   const [battery, setBattery] = useState(isIgnoringBatteryOptimizations);
   const [vendor, setVendor] = useState(0);
-  const [dialog, setDialog] = useState<'lock' | 'test' | null>(null);
+  const [dialog, setDialog] = useState<'notifications' | 'test' | null>(null);
   const [error, setError] = useState('');
-  const [settingsOnly, setSettingsOnly] = useState(false);
+  const [attemptedPermission, setAttemptedPermission] = useState(false);
   const close = () => { setError(''); setDialog(null); };
 
   const refresh = useCallback(() => {
@@ -47,19 +52,20 @@ export default function GuideScreen() {
 
   async function openSettings() {
     try {
-      await Linking.openSettings();
+      await openAppNotificationSettings();
       close();
     } catch {
-      setError('请从设备设置打开周而复起的应用详情。');
+      setError('请在系统设置中打开周而复起的通知设置。');
     }
   }
 
   function requestPermission() {
-    if (settingsOnly) { void openSettings(); return; }
-    void requestNotificationPermission().then((allowed) => {
-      setPermission(allowed);
-      setSettingsOnly(!allowed);
-    });
+    if (!supportsNotificationPermissionPrompt || attemptedPermission) {
+      void openSettings();
+      return;
+    }
+    setAttemptedPermission(true);
+    void requestNotificationPermission().then(refresh);
   }
 
   return (
@@ -70,10 +76,10 @@ export default function GuideScreen() {
       </View>
       <View style={[styles.status, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}>
         <Text style={[styles.statusTitle, { color: t.text }]}>{`已开启 ${Number(permission === true) + Number(battery)} / 2 项系统设置`}</Text>
-        <Text style={[styles.detail, { color: p.muted }]}>验证锁屏响铃前，先检查通知和后台运行权限。</Text>
+        <Text style={[styles.detail, { color: p.muted }]}>查看通知和后台运行状态，可用试响检查锁屏时的效果。</Text>
       </View>
       <PanelList>
-        <PanelRow icon="notifications-outline" title="通知权限" detail="允许通知在锁屏时显示"
+        <PanelRow icon="notifications-outline" title="通知权限" detail="允许发出闹钟响铃通知"
           value={permission ? '已开启' : undefined}
           onPress={permission ? undefined : requestPermission}
           tone={permission ? 'success' : 'warning'} />
@@ -106,23 +112,23 @@ export default function GuideScreen() {
           </View>
           <Text style={[styles.detail, { color: p.muted }]}>{vendorTips[vendor]!.detail}</Text>
         </View>
-        <PanelRow icon="lock-closed-outline" title="锁屏展示" detail="查看系统通知设置中的选项" divider onPress={() => setDialog('lock')} />
+        <PanelRow icon="notifications-outline" title="闹钟通知" detail="查看系统提供的通知方式" divider onPress={() => setDialog('notifications')} />
       </PanelList>
       <PanelButton label="试响" variant="primary" onPress={() => setDialog('test')} />
 
       {dialog === 'test' ? <TrialDialog onClose={close} /> : null}
-      {dialog === 'lock' ? (
-        <AppDialog title="锁屏展示" confirm="打开系统设置" onClose={close} onConfirm={() => void openSettings()}>
-          <DialogCopy>在周而复起的系统通知设置中，检查以下选项。</DialogCopy>
+      {dialog === 'notifications' ? (
+        <AppDialog title="闹钟通知" confirm="打开通知设置" onClose={close} onConfirm={() => void openSettings()}>
+          <DialogCopy>允许周而复起发送通知，并检查「闹钟响铃」类别。手机没有单独的锁屏通知选项时，可直接用试响验证锁屏效果。</DialogCopy>
           <PanelList inset>
             <PanelRow icon="notifications-outline" title="允许通知" detail="允许应用发出提醒" />
-            <PanelRow icon="lock-closed-outline" title="锁屏展示" detail="在锁屏时显示通知" divider />
-            <PanelRow icon="browsers-outline" title="横幅通知" detail="亮屏时显示通知横幅" divider />
+            <PanelRow icon="lock-closed-outline" title="锁屏通知（如有）" detail="锁屏时显示通知卡片" divider />
+            <PanelRow icon="browsers-outline" title="横幅通知（如有）" detail="亮屏时显示通知横幅" divider />
           </PanelList>
           {error ? <Text accessibilityLiveRegion="polite" style={{ color: p.danger }}>{error}</Text> : null}
         </AppDialog>
       ) : null}
-      {error && dialog !== 'lock' ? (
+      {error && dialog !== 'notifications' ? (
         <AppDialog title="无法打开系统设置" icon="alert-circle-outline" tone="error" layout="center" onClose={() => setError('')}>
           <DialogCopy centered>{error}</DialogCopy>
         </AppDialog>

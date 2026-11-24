@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import com.facebook.react.HeadlessJsTaskService
 import com.facebook.react.bridge.Arguments
@@ -72,8 +73,7 @@ class ZfAlarmModule : Module() {
     }
 
     /**
-     * 原生闹钟调度:setAlarmClock(operation = AlarmActivity 直达)。
-     * 与系统时钟同源:状态栏出现闹钟图标、Doze/OEM 豁免、全屏响铃不依赖通知渠道。
+     * setAlarmClock 到点触发 ZfAlarmFireReceiver，由闹钟通知打开 AlarmActivity。
      * requestCode = epochMs/1000(确定性,取消可重算);id→epochMs 存 SharedPreferences。
      */
     Function("scheduleAlarms") { alarms: List<Map<String, Any?>>, accent: String ->
@@ -173,6 +173,22 @@ class ZfAlarmModule : Module() {
       val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
       val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) nm.areNotificationsEnabled() else true
+    }
+
+    Function("ensureAlarmNotificationChannel") {
+      val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
+      ZfAlarmFireReceiver.ensureChannel(context)
+    }
+
+    Function("openNotificationSettings") {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return@Function false
+      val context = appContext.reactContext?.applicationContext ?: throw Exception("React context unavailable")
+      context.startActivity(
+        Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+          .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+          .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      )
+      true
     }
   }
 

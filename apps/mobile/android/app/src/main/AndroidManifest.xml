@@ -38,7 +38,7 @@
         <data android:scheme="exp+zhouerfuqi"/>
       </intent-filter>
     </activity>
-    <!-- 原生全屏响铃:锁屏接管 + 亮屏(由 setAlarmClock operation 直达,不依赖通知渠道) -->
+    <!-- 用闹钟通知的全屏意图打开锁屏响铃界面。 -->
     <activity android:name="expo.modules.zfalarm.AlarmActivity" android:exported="false" android:showWhenLocked="true" android:turnScreenOn="true" android:launchMode="singleTop" android:taskAffinity="" android:excludeFromRecents="true" android:configChanges="orientation|screenSize"/>
   </application>
 </manifest>

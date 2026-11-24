@@ -3,6 +3,7 @@ import {
   cancelAlarm,
   requestPermissions,
   status,
+  pruneOrphanedAlarms,
 } from '../../modules/zf-alarm-ios/src';
 import type { AlarmGateway, AlarmPermissionStatus, MaterializedAlarm } from './types';
 
@@ -15,6 +16,8 @@ export const alarmKitGateway: AlarmGateway = {
   async init() {
     // 通知权限在 requestPermissions 里请求;iOS 无需 Android 式 channel 预建
   },
+
+  pruneOrphanedAlarms,
 
   async schedule(alarms: MaterializedAlarm[]) {
     for (const a of alarms) {

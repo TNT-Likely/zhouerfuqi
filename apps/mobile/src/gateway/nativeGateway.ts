@@ -4,9 +4,8 @@ import type { AlarmGateway, AlarmPermissionStatus, MaterializedAlarm } from './t
 
 /**
  * [v2.2] Android 实现:zf-alarm 原生调度(替代 notify-kit)。
- * - setAlarmClock(operation = AlarmActivity 直达):锁屏全屏接管 + 循环铃声 + 原生贪睡/关闭
- * - 与系统时钟同源:状态栏闹钟图标、Doze/OEM 豁免
- * - 通知渠道不再参与响铃(原生 Activity 就是响铃体验)
+ * - setAlarmClock 到点发布闹钟通知，由全屏意图或点按通知打开 AlarmActivity。
+ * - AlarmActivity 循环响铃，提供原生贪睡和关闭操作。
  */
 const ZfAlarm = Platform.OS === 'android' ? requireNativeModule('ZfAlarm') : null;
 
@@ -26,7 +25,9 @@ function accentHex(): string {
 }
 
 export const nativeGateway: AlarmGateway = {
-  async init() {},
+  async init() {
+    ZfAlarm?.ensureAlarmNotificationChannel?.();
+  },
 
   async schedule(alarms: MaterializedAlarm[]) {
     if (!ZfAlarm) return;

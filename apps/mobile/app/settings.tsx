@@ -15,7 +15,11 @@ import type { AlarmPermissionStatus } from '@/gateway/types';
 import { syncAll } from '@/scheduler/sync';
 import { exportBackup, pickBackup, restoreBackup } from '@/services/backup';
 import { holidayInfo, refreshHolidays } from '@/services/holidays';
-import { requestNotificationPermission } from '@/services/permissions';
+import {
+  openAppNotificationSettings,
+  requestNotificationPermission,
+  supportsNotificationPermissionPrompt,
+} from '@/services/permissions';
 import { checkUpdate, downloadAndInstall } from '@/services/updater';
 import { usePrefs } from '@/stores/prefs';
 import { THEME_COLORS, useTheme } from '@/theme';
@@ -122,7 +126,9 @@ export default function SettingsScreen() {
   }
 
   const canRequest = !!permissions && !attemptedPermission && (
-    !permissions.notifications || (!android && exactAvailable && !permissions.exactAlarms)
+    android
+      ? supportsNotificationPermissionPrompt && !permissions.notifications
+      : !permissions.notifications || (exactAvailable && !permissions.exactAlarms)
   );
 
   function changePermissions() {
@@ -139,7 +145,8 @@ export default function SettingsScreen() {
         setPermissions(await gateway.status());
         return;
       }
-      await Linking.openSettings();
+      if (android) await openAppNotificationSettings();
+      else await Linking.openSettings();
       close();
     }, openPermissions);
   }
@@ -245,7 +252,7 @@ export default function SettingsScreen() {
           </View>
           <PanelRow icon="notifications-outline" title="权限状态" detail={permissionsLabel} onPress={openPermissions} divider />
           {android ? (
-            <PanelRow icon="shield-outline" title="保活向导" detail="检查电池优化、后台运行与锁屏展示"
+            <PanelRow icon="shield-outline" title="保活向导" detail="检查通知和后台运行设置"
               onPress={() => router.push('/guide')} divider />
           ) : null}
           <PanelRow icon="refresh-outline" title="立即重排" detail="重新同步未来 14 天的响铃" onPress={confirmResync} divider />

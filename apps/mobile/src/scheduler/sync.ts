@@ -17,8 +17,7 @@ function enqueue(operation: () => Promise<void>): Promise<void> {
  *
  * ⚠️ 强制全量重排:App 更新/重装会清空系统闹钟,而注册表(mmkv)无感——
  * 若按 diff 增量,「registry 说有、系统里没有」的洞永远填不上。
- * 原生 setAlarmClock 用 FLAG_UPDATE_CURRENT + 确定性 requestCode,
- * 同 id 同时刻原地更新(无重复),所以全量重排是幂等且便宜的。
+ * Android 按固定 requestCode 更新，iOS 核对系统注册并复用未变化的条目。
  */
 export function syncAll(): Promise<void> {
   return enqueue(syncSchedule);
@@ -29,7 +28,9 @@ async function syncSchedule(): Promise<void> {
   const desired = materialize(groups, todayISO(), HORIZON_DAYS);
   const current = registry.get();
 
-  // 全量重排:desired 原地更新(幂等),registry 里多余的取消
+  // 先清理旧版 iOS 丢失 UUID 映射的闹钟，释放系统注册额度。
+  await gateway.pruneOrphanedAlarms?.();
+  // 全量重排:desired 幂等注册,registry 里多余的取消
   if (desired.length) await gateway.schedule(desired);
   const desiredIds = new Set(desired.map((a) => a.id));
   const map: Record<string, { epochMs: number; title: string }> = {};

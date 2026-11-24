@@ -19,6 +19,7 @@ interface ZfAlarmIosNative {
   isAlarmKitAvailable(): boolean;
   requestPermissions(): Promise<ZfAlarmPermissionStatus>;
   status(): Promise<ZfAlarmPermissionStatus>;
+  pruneOrphanedAlarms?(): Promise<void>;
   scheduleAlarm(id: string, epochMs: number, title: string, body: string): Promise<ZfAlarmBackend>;
   cancelAlarm(id: string): Promise<boolean>;
   consumeLastNotificationTap(): ZfNotificationTap | null;
@@ -56,6 +57,10 @@ export function status(): Promise<ZfAlarmPermissionStatus> {
   const n = native();
   if (!n) return Promise.resolve({ notifications: false, exactAlarms: false });
   return n.status();
+}
+
+export async function pruneOrphanedAlarms(): Promise<void> {
+  await native()?.pruneOrphanedAlarms?.();
 }
 
 export function scheduleAlarm(id: string, epochMs: number, title: string, body: string): Promise<ZfAlarmBackend> {

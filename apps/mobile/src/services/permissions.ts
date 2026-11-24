@@ -1,28 +1,22 @@
 import { Platform, PermissionsAndroid, Linking } from 'react-native';
+import { requireNativeModule } from 'expo-modules-core';
+import { nativeGateway } from '../gateway/nativeGateway';
 
-/**
- * 权限主动检测/申请(Android;iOS 的通知权限随排班动作触发系统弹窗,不在此处理)。
- * - POST_NOTIFICATIONS(API 33+ 运行时):通知是「响铃提醒」的前置,未授权时横幅+弹窗主动申请
- * - SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM:清单声明 USE_EXACT_ALARM,安装即授权,无需运行时申请
- * - USE_FULL_SCREEN_INTENT:安装即授权(Android 14+ 用户可在设置撤销,降级为悬浮横幅,不阻塞)
- */
+export const supportsNotificationPermissionPrompt = Platform.OS === 'android' && Number(Platform.Version) >= 33;
 
 export async function checkNotificationPermission(): Promise<boolean | null> {
-  if (Platform.OS !== 'android') return null; // iOS 不在此通道管理
-  if (Number(Platform.Version) < 33) return true; // API<33 安装即有
+  if (Platform.OS !== 'android') return null;
   try {
-    return await PermissionsAndroid.check(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS as never,
-    );
+    // Android 12 及以下没有运行时弹窗，用户仍可在系统设置里关闭应用通知。
+    return (await nativeGateway.status()).notifications;
   } catch {
     return null;
   }
 }
 
-/** 主动拉起系统授权弹窗;被永久拒绝时返回 false(调用方应引导去系统设置) */
+/** Android 13 起可以主动拉起通知授权弹窗。 */
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (Platform.OS !== 'android') return false;
-  if (Number(Platform.Version) < 33) return true;
+  if (!supportsNotificationPermissionPrompt) return (await checkNotificationPermission()) === true;
   try {
     const r = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS as never,
@@ -33,9 +27,15 @@ export async function requestNotificationPermission(): Promise<boolean> {
   }
 }
 
-/** 跳系统设置的应用详情页(永久拒绝后的兜底引导) */
-export function openAppNotificationSettings(): void {
-  Linking.openSettings();
+export async function openAppNotificationSettings(): Promise<void> {
+  if (Platform.OS === 'android') {
+    try {
+      if (requireNativeModule('ZfAlarm').openNotificationSettings?.() === true) return;
+    } catch {
+      // 部分系统不提供独立的应用通知设置页。
+    }
+  }
+  await Linking.openSettings();
 }
 
 /** 是否需要弹横幅:有启用中的班组 且 通知权限明确未授 */

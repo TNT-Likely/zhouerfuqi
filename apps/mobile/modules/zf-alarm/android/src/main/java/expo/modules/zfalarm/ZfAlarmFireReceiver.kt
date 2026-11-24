@@ -1,6 +1,5 @@
 package expo.modules.zfalarm
 
-import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -10,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.media.RingtoneManager
+import android.os.Build
 import androidx.core.app.NotificationCompat
 
 /**
@@ -54,6 +54,7 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
       .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
       .setCategory(NotificationCompat.CATEGORY_ALARM)
       .setPriority(NotificationCompat.PRIORITY_MAX)
+      .setContentIntent(contentIntent)
       .setFullScreenIntent(contentIntent, true)
       .setAutoCancel(true)
       .setOngoing(true)
@@ -69,6 +70,7 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
     const val CHANNEL_ID = "zf_ring_v2"
 
     fun ensureChannel(context: Context) {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
       val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       val channel = NotificationChannel(
         CHANNEL_ID,

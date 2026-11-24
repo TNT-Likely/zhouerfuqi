@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, Switch, StyleSheet } from 'react-native';
+import { AppState, View, Text, Pressable, Switch, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import {
@@ -15,7 +15,12 @@ import { getHolidayCalendar } from '@/services/holidays';
 import { todayISO } from '@/scheduler/materialize';
 import { syncAll } from '@/scheduler/sync';
 import { cnDate, WD, ruleDesc, ringReasonLabel } from '@/lib/labels';
-import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
+import {
+  checkNotificationPermission,
+  openAppNotificationSettings,
+  requestNotificationPermission,
+  supportsNotificationPermissionPrompt,
+} from '@/services/permissions';
 import { useTheme } from '@/theme';
 import { usePrefs } from '@/stores/prefs';
 import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
@@ -31,7 +36,14 @@ export default function HomeScreen() {
   // 主动检测:有启用中的班组但通知权限未授 → 首页横幅引导(不依赖用户去向导里手动标记)
   useEffect(() => {
     const anyEnabled = groups.some((g) => g.enabled);
-    void checkNotificationPermission().then((ok) => setNotifMissing(anyEnabled && ok === false));
+    const refresh = () => {
+      void checkNotificationPermission().then((ok) => setNotifMissing(anyEnabled && ok === false));
+    };
+    refresh();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    return () => subscription.remove();
   }, [groups]);
   const cal = useMemo(() => getHolidayCalendar(), []);
 
@@ -127,20 +139,24 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* 主动权限横幅:检测到未授权时引导,点击拉起系统弹窗 */}
+      {/* 有启用的闹钟时，提示用户开启闹钟通知。 */}
       {notifMissing ? (
         <Pressable
           style={[styles.permBanner, { backgroundColor: t.heroBg, borderColor: t.red }]}
           onPress={() => {
-            void requestNotificationPermission().then((ok) => setNotifMissing(!ok));
+            if (supportsNotificationPermissionPrompt) {
+              void requestNotificationPermission().then((ok) => setNotifMissing(!ok));
+            } else {
+              void openAppNotificationSettings().catch(() => router.push('/guide'));
+            }
           }}
         >
           <Ionicons name="notifications-off-outline" size={16} color={t.red} />
           <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontSize: 12.5, fontWeight: '700' }}>响铃通知未授权</Text>
-            <Text style={{ color: t.text2, fontSize: 11, marginTop: 2 }}>点此授权,否则闹钟只静默不提醒 · 点「允许」即可</Text>
+            <Text style={{ color: t.text, fontSize: 12.5, fontWeight: '700' }}>闹钟通知已关闭</Text>
+            <Text style={{ color: t.text2, fontSize: 11, marginTop: 2 }}>开启通知后，系统才能发出闹钟响铃提醒。</Text>
           </View>
-          <Text style={{ color: t.primary, fontSize: 12, fontWeight: '800' }}>去授权</Text>
+          <Text style={{ color: t.primary, fontSize: 12, fontWeight: '800' }}>去开启</Text>
         </Pressable>
       ) : null}
 

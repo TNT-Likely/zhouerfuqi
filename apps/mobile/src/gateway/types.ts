@@ -18,6 +18,7 @@ export interface AlarmPermissionStatus {
 
 export interface AlarmGateway {
   init(): Promise<void>;
+  pruneOrphanedAlarms?(): Promise<void>;
   schedule(alarms: MaterializedAlarm[]): Promise<void>;
   cancel(ids: string[]): Promise<void>;
   requestPermissions(): Promise<AlarmPermissionStatus>;
