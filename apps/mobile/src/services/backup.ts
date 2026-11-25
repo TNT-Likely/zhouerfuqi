@@ -4,6 +4,8 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useGroups } from '../stores/groups';
 import { useGuide } from '../stores/guide';
 import type { AlarmGroup } from '@core';
+import { getLocale } from '../i18n';
+import { systemMessages } from '../i18n/system';
 
 /**
  * 整包备份/恢复(M1 补,原「规划中」项):
@@ -96,21 +98,22 @@ function validGroup(value: unknown): value is AlarmGroup {
 }
 
 function parseBackup(raw: string): BackupFile {
+  const copy = systemMessages[getLocale()];
   let obj: unknown;
   try {
     obj = JSON.parse(raw);
   } catch {
-    throw new Error('无法读取 JSON，请选择完整的周而复起备份文件。');
+    throw new Error(copy.unreadableBackup);
   }
   if (!record(obj) || obj.app !== 'zhouerfuqi' || !Array.isArray(obj.groups)) {
-    throw new Error('不是周而复起的备份文件');
+    throw new Error(copy.invalidBackup);
   }
   if (obj.schema !== undefined && obj.schema !== 1 && obj.schema !== BACKUP_SCHEMA) {
-    throw new Error('备份使用了当前版本无法读取的格式。');
+    throw new Error(copy.unsupportedBackup);
   }
-  if (!obj.groups.every(validGroup)) throw new Error('备份包含不完整的班组、响铃时间或排班规则。');
+  if (!obj.groups.every(validGroup)) throw new Error(copy.incompleteBackup);
   if (new Set(obj.groups.map((group) => group.id)).size !== obj.groups.length) {
-    throw new Error('备份包含重复的班组标识。');
+    throw new Error(copy.duplicateBackupGroups);
   }
   const guideSteps = Array.isArray(obj.guideSteps) && obj.guideSteps.every((step) => typeof step === 'boolean')
     ? obj.guideSteps as boolean[] : undefined;
@@ -126,15 +129,16 @@ function parseBackup(raw: string): BackupFile {
 const stamp = () => new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
 
 export async function exportBackup(appVersion?: string): Promise<void> {
+  const copy = systemMessages[getLocale()];
   if (!(await Sharing.isAvailableAsync())) {
-    throw new Error('当前设备不支持分享面板');
+    throw new Error(copy.backupShareUnavailable);
   }
   const json = JSON.stringify(buildBackup(appVersion), null, 2);
   const file = `${FileSystem.cacheDirectory}zhouerfuqi-backup-${stamp()}.json`;
   await FileSystem.writeAsStringAsync(file, json, { encoding: FileSystem.EncodingType.UTF8 });
   await Sharing.shareAsync(file, {
     mimeType: 'application/json',
-    dialogTitle: '导出周而复起备份',
+    dialogTitle: copy.backupShareTitle,
     UTI: 'public.json',
   });
 }
@@ -158,7 +162,7 @@ export async function pickBackup(): Promise<{ name: string; backup: BackupFile }
 }
 
 function recoveryPath(): string {
-  if (!FileSystem.documentDirectory) throw new Error('无法找到本地备份目录。');
+  if (!FileSystem.documentDirectory) throw new Error(systemMessages[getLocale()].recoveryDirectoryUnavailable);
   return FileSystem.documentDirectory + 'zhouerfuqi-before-restore.json';
 }
 

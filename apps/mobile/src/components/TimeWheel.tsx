@@ -1,5 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLocale } from '@/i18n';
+import { alarmUiCopy } from '@/i18n/alarmUi';
 import { useTheme } from '@/theme';
 
 export type DraftTime = { hour: number; minute: number; label: string };
@@ -8,9 +10,9 @@ const MINUTES = Array.from({ length: 12 }, (_, index) => index * 5);
 const TICKS = Array.from({ length: 29 }, (_, index) => index);
 const pad = (value: number) => String(value).padStart(2, '0');
 
-function TimeGrid({ label, unit, values, value, onChange }: {
+function TimeGrid({ label, optionLabel, values, value, onChange }: {
   label: string;
-  unit: '时' | '分';
+  optionLabel: (value: string) => string;
   values: number[];
   value: number;
   onChange: (value: number) => void;
@@ -24,7 +26,7 @@ function TimeGrid({ label, unit, values, value, onChange }: {
           {values.slice(row * 6, row * 6 + 6).map((item) => {
             const selected = value === item;
             return (
-              <Pressable key={item} accessibilityRole="button" accessibilityLabel={pad(item) + ' ' + unit}
+              <Pressable key={item} accessibilityRole="button" accessibilityLabel={optionLabel(pad(item))}
                 accessibilityState={{ selected }} onPress={() => onChange(item)}
                 style={({ pressed }) => [
                   styles.cell,
@@ -49,6 +51,7 @@ export function TimeGridPicker({ value, onChange }: {
   onChange: (value: DraftTime) => void;
 }) {
   const t = useTheme();
+  const copy = alarmUiCopy[useLocale()].timePicker;
   const { width, fontScale } = useWindowDimensions();
   const { hour, minute, label } = value;
   const dialSize = Math.min(50, width * 0.127, (width - 138) / (3 * fontScale));
@@ -61,14 +64,14 @@ export function TimeGridPicker({ value, onChange }: {
     <>
       <LinearGradient colors={[t.panel.raised, t.accentSoft]} style={[styles.dial, { borderColor: t.heroBorder }]}>
         <View style={styles.dialRow}>
-          <Pressable accessibilityRole="button" accessibilityLabel="减少一分钟" onPress={() => step(-1)}
+          <Pressable accessibilityRole="button" accessibilityLabel={copy.minusMinute} onPress={() => step(-1)}
             style={[styles.adjust, { backgroundColor: t.panel.surface }]}>
             <Text style={[styles.stepText, { color: t.panel.accent }]}>−1</Text>
           </Pressable>
           <Text accessibilityLiveRegion="polite" style={[styles.time, { color: t.text, fontSize: dialSize }]}>
             {pad(hour)}:{pad(minute)}
           </Text>
-          <Pressable accessibilityRole="button" accessibilityLabel="增加一分钟" onPress={() => step(1)}
+          <Pressable accessibilityRole="button" accessibilityLabel={copy.plusMinute} onPress={() => step(1)}
             style={[styles.adjust, { backgroundColor: t.panel.surface }]}>
             <Text style={[styles.stepText, { color: t.panel.accent }]}>+1</Text>
           </Pressable>
@@ -78,12 +81,14 @@ export function TimeGridPicker({ value, onChange }: {
             style={{ width: 1, height: index % 4 === 0 ? 7 : 4, backgroundColor: t.panel.accent, opacity: 0.43 }} />)}
         </View>
       </LinearGradient>
-      <TimeGrid label="小时" unit="时" values={HOURS} value={hour} onChange={(hour) => onChange({ ...value, hour })} />
-      <TimeGrid label="分钟" unit="分" values={MINUTES} value={minute} onChange={(minute) => onChange({ ...value, minute })} />
+      <TimeGrid label={copy.hour} optionLabel={copy.hourOption} values={HOURS} value={hour}
+        onChange={(hour) => onChange({ ...value, hour })} />
+      <TimeGrid label={copy.minute} optionLabel={copy.minuteOption} values={MINUTES} value={minute}
+        onChange={(minute) => onChange({ ...value, minute })} />
       <View style={styles.group}>
-        <Text style={[styles.fieldLabel, { color: t.panel.muted }]}>标签（可选）</Text>
-        <TextInput accessibilityLabel="响铃标签" value={label} maxLength={24} onChangeText={(label) => onChange({ ...value, label })}
-          placeholder="例如午休" placeholderTextColor={t.panel.muted}
+        <Text style={[styles.fieldLabel, { color: t.panel.muted }]}>{copy.optionalLabel}</Text>
+        <TextInput accessibilityLabel={copy.alarmLabel} value={label} maxLength={24} onChangeText={(label) => onChange({ ...value, label })}
+          placeholder={copy.labelExample} placeholderTextColor={t.panel.muted}
           style={[styles.input, { backgroundColor: t.panel.raised, borderColor: t.panel.border, color: t.text }]} />
       </View>
     </>

@@ -57,9 +57,12 @@ public class ZfAlarmIosModule: Module {
     Events("zfNotificationTap")
 
     Function("updateWidgetPlan") { (json: String) in
-      guard let defaults = UserDefaults(suiteName: "group.com.tntlikely.zhouerfuqi"),
-            defaults.string(forKey: "zf.next.alarms.v1") != json else { return }
+      guard let defaults = UserDefaults(suiteName: "group.com.tntlikely.zhouerfuqi") else { return }
+      let language = Bundle.main.preferredLocalizations.first ?? "en"
+      guard defaults.string(forKey: "zf.next.alarms.v1") != json ||
+            defaults.string(forKey: "zf.next.alarms.language") != language else { return }
       defaults.set(json, forKey: "zf.next.alarms.v1")
+      defaults.set(language, forKey: "zf.next.alarms.language")
       WidgetCenter.shared.reloadTimelines(ofKind: "ZhouerfuqiNextAlarm")
     }
 

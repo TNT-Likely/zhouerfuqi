@@ -14,9 +14,6 @@ export type Prefs = {
   setMode: (m: AppearanceMode) => void;
   avatarImage: string | null;
   setAvatarImage: (image: string | null) => void;
-  /** 界面语言(v0.2.x 仅中文,预留) */
-  lang: 'zh-CN';
-  setLang: (l: 'zh-CN') => void;
 };
 
 function load<T>(key: string, fallback: T): T {
@@ -48,12 +45,5 @@ export const usePrefs = create<Prefs>((set) => ({
     // Persist the small processed photo, independent of picker caches and file paths.
     mmkv.set('avatarImage', JSON.stringify(image));
     set({ avatarImage: image });
-  },
-  lang: 'zh-CN',
-  setLang: (l) => {
-    try {
-      mmkv.set('lang', JSON.stringify(l));
-    } catch {}
-    set({ lang: l });
   },
 }));

@@ -5,7 +5,9 @@ import Constants from 'expo-constants';
 import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { PanelList, PanelRow, PanelSection } from '@/components/Panel';
 import { Sheet } from '@/components/Sheet';
-import { holidayInfo } from '@/services/holidays';
+import { useLocale } from '@/i18n';
+import { commonCopy } from '@/i18n/settings';
+import { aboutCopy } from '@/i18n/support';
 import { useTheme } from '@/theme';
 import { getVersion } from '../modules/zf-update/src';
 
@@ -15,49 +17,53 @@ const beta = ios ? 'https://testflight.apple.com/join/9vNcHgha' : REPO + '/issue
 
 export default function AboutScreen() {
   const t = useTheme();
+  const locale = useLocale();
+  const { appName } = commonCopy[locale];
+  const copy = aboutCopy[locale];
   const [showTech, setShowTech] = useState(false);
   const [linkFailed, setLinkFailed] = useState(false);
   const version = ios ? Constants.expoConfig?.version : getVersion().versionName;
   const open = (url: string) => () => { void Linking.openURL(url).catch(() => setLinkFailed(true)); };
 
   return (
-    <Sheet title="关于" appearance="panel">
+    <Sheet title={copy.title} appearance="panel">
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <LinearGradient colors={[t.accentSoft, t.panel.surface]} style={[styles.hero, { borderColor: t.heroBorder }]}>
           <Image source={require('../assets/icon.png')} style={styles.logo} resizeMode="cover" />
-          <Text style={[styles.name, { color: t.text }]}>周而复起</Text>
-          <Text style={[styles.tagline, { color: t.panel.muted }]}>适合大小周、轮班与手动排班的本地闹钟</Text>
+          <Text style={[styles.name, { color: t.text }]}>{appName}</Text>
+          <Text style={[styles.tagline, { color: t.panel.muted }]}>{copy.tagline}</Text>
           {version ? <Text style={[styles.version, { color: t.panel.accent, backgroundColor: t.accentSoft }]}>v{version}</Text> : null}
         </LinearGradient>
 
-        <PanelSection title="项目与社区">
-          <PanelRow icon="time-outline" title="更新记录" detail="查看版本变化和下载" onPress={open(REPO + '/releases')} external />
-          <PanelRow icon="chatbubble-ellipses-outline" title="反馈与建议" detail="报告问题或分享排班需求"
+        <PanelSection title={copy.community}>
+          <PanelRow icon="time-outline" title={copy.releases} detail={copy.releasesDetail} onPress={open(REPO + '/releases')} external />
+          <PanelRow icon="chatbubble-ellipses-outline" title={copy.feedback} detail={copy.feedbackDetail}
             onPress={open(REPO + '/issues')} external divider />
-          <PanelRow icon="flask-outline" title="加入内测" detail={ios ? 'TestFlight 公开内测' : 'Google Play 封闭测试'}
+          <PanelRow icon="flask-outline" title={copy.joinBeta} detail={ios ? copy.testFlight : copy.googlePlay}
             onPress={open(beta)} external divider />
-          <PanelRow icon="logo-github" title="源代码" onPress={open(REPO)} external divider />
+          <PanelRow icon="logo-github" title={copy.sourceCode} onPress={open(REPO)} external divider />
         </PanelSection>
 
-        <PanelSection title="数据与隐私">
-          <PanelRow icon="shield-checkmark-outline" title="排班数据保存在设备上" detail="备份通过系统文件与分享功能导出" />
-          <PanelRow icon="lock-closed-outline" title="隐私政策" onPress={open(REPO + '/blob/main/docs/privacy.md')} external divider />
-          <PanelRow icon="settings-outline" title="技术说明" onPress={() => setShowTech(true)} divider />
+        <PanelSection title={copy.privacy}>
+          <PanelRow icon="shield-checkmark-outline" title={copy.localSchedules} detail={copy.localSchedulesDetail} />
+          <PanelRow icon="lock-closed-outline" title={copy.privacyPolicy}
+            onPress={open(REPO + '/blob/main/docs/privacy.md' + (locale === 'en' ? '#privacy-policy-english' : ''))} external divider />
+          <PanelRow icon="settings-outline" title={copy.technicalNotes} onPress={() => setShowTech(true)} divider />
         </PanelSection>
-        <Text style={[styles.footer, { color: t.panel.muted }]}>MIT License © 2026 周而复起</Text>
+        <Text style={[styles.footer, { color: t.panel.muted }]}>MIT License © 2026 {appName}</Text>
       </ScrollView>
       {showTech ? (
-        <AppDialog title="技术说明" onClose={() => setShowTech(false)}>
+        <AppDialog title={copy.technicalNotes} onClose={() => setShowTech(false)}>
           <PanelList inset>
-            <PanelRow icon="calendar-outline" title="排班引擎" detail="@zhouerfuqi/core 计算班制和节假日。" />
-            <PanelRow icon="lock-closed-outline" title="本地存储" detail="排班和外观设置保存在设备上。" divider />
-            <PanelRow icon="alarm-outline" title="应用与响铃" detail="界面使用 Expo 和 React Native，响铃由系统调度。" divider />
+            <PanelRow icon="calendar-outline" title={copy.scheduleEngine} detail={copy.scheduleEngineDetail} />
+            <PanelRow icon="lock-closed-outline" title={copy.localStorage} detail={copy.localStorageDetail} divider />
+            <PanelRow icon="alarm-outline" title={copy.alarms} detail={copy.alarmsDetail} divider />
           </PanelList>
         </AppDialog>
       ) : null}
       {linkFailed ? (
-        <AppDialog title="无法打开链接" layout="center" tone="error" icon="alert-circle-outline" onClose={() => setLinkFailed(false)}>
-          <DialogCopy centered>请检查设备上的浏览器设置后重试。</DialogCopy>
+        <AppDialog title={copy.linkFailed} layout="center" tone="error" icon="alert-circle-outline" onClose={() => setLinkFailed(false)}>
+          <DialogCopy centered>{copy.linkFailedDetail}</DialogCopy>
         </AppDialog>
       ) : null}
     </Sheet>

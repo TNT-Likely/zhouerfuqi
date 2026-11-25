@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "周而复起";
+"NSAlarmKitUsageDescription" = "周而复起使用系统闹钟，在班表设定的时刻响铃。";
+"NSPhotoLibraryUsageDescription" = "选择一张照片作为周而复起的首页头像。";

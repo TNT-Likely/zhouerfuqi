@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zf_alarm_brand">周而复起</string>
+    <string name="zf_alarm_name">闹钟</string>
+    <string name="zf_alarm_ringing">响铃中 · 音量渐强</string>
+    <string name="zf_alarm_snooze">稍后 9 分钟</string>
+    <string name="zf_alarm_snooze_failed">无法延后，请检查闹钟权限。</string>
+    <string name="zf_alarm_snoozed">稍后响铃</string>
+    <string name="zf_alarm_stop">停止本次</string>
+    <string name="zf_alarm_notification">响铃 · %1$s</string>
+    <string name="zf_alarm_channel">闹钟响铃</string>
+    <string name="zf_alarm_channel_description">班制闹钟响铃通道（全屏响铃）</string>
+</resources>

@@ -7,6 +7,8 @@ import { ThemeProvider, useTheme } from '@/theme';
 import { FeedbackProvider } from '@/components/Feedback';
 import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { gateway } from '@/gateway';
+import { useLocale } from '@/i18n';
+import { settingsCopy } from '@/i18n/settings';
 import { syncAll } from '@/scheduler/sync';
 import { initHolidays } from '@/services/holidays';
 import { consumeLastNotificationTap, onNotificationTap } from '../modules/zf-alarm-ios/src';
@@ -26,6 +28,7 @@ export default function RootLayout() {
 
 function AppNavigation() {
   const t = useTheme();
+  const copy = settingsCopy[useLocale()];
   const router = useRouter();
   const navigationKey = useRootNavigationState()?.key;
   const [ringRoute, setRingRoute] = useState<RingRoute | null>(null);
@@ -103,7 +106,7 @@ function AppNavigation() {
         <Stack.Screen name="ring" options={{ presentation: 'fullScreenModal' }} />
       </Stack>
       {startupError ? (
-        <AppDialog title="启动初始化失败" layout="center" tone="error" icon="alert-circle-outline"
+        <AppDialog title={copy.startupFailed} layout="center" tone="error" icon="alert-circle-outline"
           onClose={() => setStartupError(undefined)}>
           <DialogCopy centered>{startupError}</DialogCopy>
         </AppDialog>

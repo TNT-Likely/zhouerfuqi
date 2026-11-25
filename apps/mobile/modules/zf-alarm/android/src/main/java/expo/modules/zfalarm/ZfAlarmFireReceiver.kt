@@ -23,12 +23,15 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
     val id = intent.getStringExtra(AlarmActivity.EXTRA_ID) ?: return
     val epochMs = intent.getLongExtra(AlarmActivity.EXTRA_EPOCH, 0L)
     if (epochMs <= 0L || !ZfAlarmSchedule.isCurrent(context, id, epochMs)) return
-    val title = intent.getStringExtra(AlarmActivity.EXTRA_TITLE) ?: "闹钟"
-    val body = intent.getStringExtra(AlarmActivity.EXTRA_BODY) ?: ""
+    val title = intent.getStringExtra(AlarmActivity.EXTRA_TITLE).orEmpty()
     val groupId = intent.getStringExtra(AlarmActivity.EXTRA_GROUP) ?: ""
     val timeId = intent.getStringExtra(AlarmActivity.EXTRA_TIME_ID) ?: ""
     val timeLabel = intent.getStringExtra(AlarmActivity.EXTRA_TIME_LABEL) ?: ""
     val accent = intent.getStringExtra(AlarmActivity.EXTRA_ACCENT) ?: "#4096FF"
+    val body = intent.getStringExtra(AlarmActivity.EXTRA_BODY).orEmpty().ifBlank {
+      if (groupId == "snooze") context.getString(R.string.zf_alarm_snoozed)
+      else context.getString(R.string.zf_alarm_notification, ZfAlarmDisplay.time(context, epochMs))
+    }
 
     ensureChannel(context)
 
@@ -50,9 +53,9 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
     )
 
     val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-      .setContentTitle(title)
-      .setContentText(if (body.isNotEmpty()) body else "响铃 · $timeLabel")
-      .setStyle(NotificationCompat.BigTextStyle().bigText(if (body.isNotEmpty()) body else "响铃 · $timeLabel"))
+      .setContentTitle(title.ifBlank { context.getString(R.string.zf_alarm_name) })
+      .setContentText(body)
+      .setStyle(NotificationCompat.BigTextStyle().bigText(body))
       .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
       .setCategory(NotificationCompat.CATEGORY_ALARM)
       .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -78,10 +81,10 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
       val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
       val channel = NotificationChannel(
         CHANNEL_ID,
-        "闹钟响铃",
+        context.getString(R.string.zf_alarm_channel),
         NotificationManager.IMPORTANCE_HIGH,
       ).apply {
-        description = "班制闹钟响铃通道(全屏响铃)"
+        description = context.getString(R.string.zf_alarm_channel_description)
         enableVibration(true)
         vibrationPattern = longArrayOf(0, 400, 300, 400, 300)
         val sound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)

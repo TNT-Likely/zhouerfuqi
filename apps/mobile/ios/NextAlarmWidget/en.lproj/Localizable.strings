@@ -1,0 +1,5 @@
+"widget.name" = "Next Alarm";
+"widget.caption" = "Next alarm";
+"widget.empty" = "No upcoming alarms";
+"widget.description" = "See your next RosterWake alarm on your Home Screen.";
+"widget.example" = "Early shift · Wake up";

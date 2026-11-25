@@ -1,22 +1,69 @@
 import type { AlarmGroup } from '@core';
+import { formattingLocale, getLocale } from '../i18n';
 
-export const WD = ['一', '二', '三', '四', '五', '六', '日'] as const;
+const labels = {
+  'zh-CN': {
+    weekdays: ['一', '二', '三', '四', '五', '六', '日'],
+    separator: '',
+    cycleSeparator: '、',
+    off: '休',
+    notSelected: '未选',
+    weekly: '每周',
+    weeks: (n: number) => `每 ${n} 周`,
+    days: (n: number) => `每 ${n} 天`,
+    cycle: (n: number) => `${n} 天轮班`,
+    manual: (n: number) => `手动 ${n} 天`,
+  },
+  en: {
+    weekdays: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    separator: ', ',
+    cycleSeparator: ', ',
+    off: 'Off',
+    notSelected: 'No days selected',
+    weekly: 'Weekly',
+    weeks: (n: number) => n === 1 ? 'Weekly' : `Every ${n} weeks`,
+    days: (n: number) => n === 1 ? 'Daily' : `Every ${n} days`,
+    cycle: (n: number) => `${n}-day rotation`,
+    manual: (n: number) => n === 1 ? '1 selected date' : `${n} selected dates`,
+  },
+};
 
-export function cnDate(date: string): string {
-  const [, m, d] = date.split('-');
-  return `${parseInt(m!, 10)}月${parseInt(d!, 10)}日`;
+export function weekdayNames(locale = getLocale()): readonly string[] {
+  return labels[locale].weekdays;
 }
 
-export function weekdayLabel(list: number[]): string {
-  return list.length ? [...list].sort().map((d) => WD[d - 1]).join('') : '未选';
+export function dateLabel(date: string, locale = getLocale()): string {
+  const utc = new Date(`${date}T12:00:00Z`);
+  if (!Number.isFinite(utc.getTime())) return date;
+  return new Intl.DateTimeFormat(formattingLocale(locale), {
+    month: locale === 'en' ? 'short' : 'long', day: 'numeric', timeZone: 'UTC', calendar: 'gregory',
+  }).format(utc);
 }
 
-/** 规则摘要,如「每 2 周 · 一二三四五六」 */
-export function ruleDesc(group: AlarmGroup): string {
-  const r = group.rule;
-  if (r.kind === 'weekly') return `每周 · ${weekdayLabel(r.weekdays)}`;
-  if (r.kind === 'everyNWeeks') return `每 ${r.n} 周 · ${weekdayLabel(r.weekdays)}`;
-  if (r.kind === 'everyNDays') return `每 ${r.n} 天`;
-  if (r.kind === 'cycle') return `${r.days.length} 天轮班 · ${r.days.map((id) => r.shifts.find((shift) => shift.id === id)?.name || '休').join('、')}`;
-  return `手动 ${r.dates.length} 天`;
+export function monthLabel(year: number, month: number, locale = getLocale()): string {
+  return new Intl.DateTimeFormat(formattingLocale(locale), {
+    year: 'numeric', month: 'long', timeZone: 'UTC', calendar: 'gregory',
+  }).format(new Date(Date.UTC(year, month - 1, 1)));
+}
+
+export function weekdayLabel(list: number[], locale = getLocale()): string {
+  const copy = labels[locale];
+  return list.length ? [...list].sort().map((day) => copy.weekdays[day - 1]).join(copy.separator) : copy.notSelected;
+}
+
+export function ruleDesc(group: AlarmGroup, locale = getLocale()): string {
+  const { rule } = group;
+  const copy = labels[locale];
+  switch (rule.kind) {
+    case 'weekly':
+      return `${copy.weekly} · ${weekdayLabel(rule.weekdays, locale)}`;
+    case 'everyNWeeks':
+      return `${copy.weeks(rule.n)} · ${weekdayLabel(rule.weekdays, locale)}`;
+    case 'everyNDays':
+      return copy.days(rule.n);
+    case 'cycle':
+      return `${copy.cycle(rule.days.length)} · ${rule.days.map((id) => rule.shifts.find((shift) => shift.id === id)?.name || copy.off).join(copy.cycleSeparator)}`;
+    case 'customDates':
+      return copy.manual(rule.dates.length);
+  }
 }

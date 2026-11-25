@@ -32,14 +32,18 @@ class ZfPlanWidget : AppWidgetProvider() {
       val now = System.currentTimeMillis()
       val next = (0 until items.length()).asSequence().map { items.getJSONObject(it) }
         .firstOrNull { it.getLong("epochMs") > now }
+      val timestamp = next?.getLong("epochMs")
+      val time = timestamp?.let { ZfAlarmDisplay.time(context, it) } ?: "—"
+      val date = timestamp?.let { ZfAlarmDisplay.format(context, it, "MMMd") }.orEmpty()
+      val title = next?.optString("title") ?: context.getString(R.string.zf_widget_empty)
+      val caption = context.getString(R.string.zf_widget_caption)
       return RemoteViews(context.packageName, R.layout.zf_widget).apply {
-        setTextViewText(R.id.zf_widget_time, next?.optString("time") ?: "—")
-        setTextViewText(R.id.zf_widget_title, next?.optString("title") ?: context.getString(R.string.zf_widget_empty))
-        setTextViewText(R.id.zf_widget_date, next?.optString("date").orEmpty())
-        setContentDescription(R.id.zf_widget_root, listOfNotNull(
-          context.getString(R.string.zf_widget_caption),
-          next?.optString("date"), next?.optString("time"), next?.optString("title"),
-        ).joinToString("，"))
+        setTextViewText(R.id.zf_widget_caption, caption)
+        setTextViewText(R.id.zf_widget_time, time)
+        setTextViewText(R.id.zf_widget_title, title)
+        setTextViewText(R.id.zf_widget_date, date)
+        setContentDescription(R.id.zf_widget_root, if (next != null)
+          context.getString(R.string.zf_widget_accessibility, caption, date, time, title) else title)
         context.packageManager.getLaunchIntentForPackage(context.packageName)?.let { launch ->
           val tap = PendingIntent.getActivity(context, 43, launch, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
           setOnClickPendingIntent(R.id.zf_widget_root, tap)

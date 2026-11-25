@@ -3,6 +3,8 @@ import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleShee
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useLocale } from '@/i18n';
+import { commonCopy } from '@/i18n/settings';
 import { useTheme } from '@/theme';
 import { PanelButton, panelTone, type PanelIcon, type PanelTone } from './Panel';
 
@@ -19,9 +21,10 @@ export type AppDialogContent = {
 
 export function AppDialog({
   title, children, layout = 'sheet', tone = 'accent', icon = 'information-circle-outline',
-  confirm = '完成', onConfirm, cancel = false, onClose, busy = false, visible = true, onDismiss,
+  confirm, onConfirm, cancel = false, onClose, busy = false, visible = true, onDismiss,
 }: AppDialogContent & { onClose: () => void; busy?: boolean; visible?: boolean; onDismiss?: () => void }) {
   const t = useTheme();
+  const copy = commonCopy[useLocale()];
   const p = t.panel;
   const centered = layout === 'center';
   const [ink, fill] = panelTone(t, tone);
@@ -55,7 +58,7 @@ export function AppDialog({
                   {title}
                 </Text>
                 {!centered ? (
-                  <Pressable accessibilityRole="button" accessibilityLabel="关闭弹窗"
+                  <Pressable accessibilityRole="button" accessibilityLabel={copy.closeDialog}
                     accessibilityState={{ disabled: busy }} onPress={dismiss} disabled={busy}
                     style={[styles.close, { backgroundColor: p.raised, borderColor: p.border, opacity: busy ? 0.48 : 1 }]}>
                     <Ionicons name="close" size={19} color={p.muted} />
@@ -75,8 +78,8 @@ export function AppDialog({
                 </ScrollView>
               ) : null}
               <View style={[styles.footer, centered ? styles.cardFooter : { borderTopWidth: 1, borderTopColor: p.border }]}>
-                {cancel ? <PanelButton label="取消" onPress={dismiss} disabled={busy} grow /> : null}
-                <PanelButton label={busy ? '请稍候…' : confirm} onPress={onConfirm ?? dismiss}
+                {cancel ? <PanelButton label={copy.cancel} onPress={dismiss} disabled={busy} grow /> : null}
+                <PanelButton label={busy ? copy.pleaseWait : (confirm ?? copy.done)} onPress={onConfirm ?? dismiss}
                   variant={tone === 'danger' ? 'danger' : 'primary'} disabled={busy} grow />
               </View>
             </View>

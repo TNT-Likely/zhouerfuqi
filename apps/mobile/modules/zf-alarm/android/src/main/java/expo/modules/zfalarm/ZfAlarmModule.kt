@@ -47,6 +47,10 @@ class ZfAlarmReceiver : BroadcastReceiver() {
         if (ZfAlarmModule.refresherEnabled(context)) ZfAlarmModule.scheduleRefresherAt(context)
         startResync(context)
       }
+      Intent.ACTION_LOCALE_CHANGED -> {
+        ZfAlarmFireReceiver.ensureChannel(context)
+        ZfPlanWidget.refresh(context)
+      }
       Intent.ACTION_BOOT_COMPLETED,
       Intent.ACTION_TIME_CHANGED,
       Intent.ACTION_TIMEZONE_CHANGED,

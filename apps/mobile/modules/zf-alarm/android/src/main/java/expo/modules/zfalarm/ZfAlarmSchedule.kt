@@ -23,7 +23,7 @@ internal object ZfAlarmSchedule {
     val epochMs = (alarm["epochMs"] as? Number)?.toLong() ?: return null
     if (epochMs <= System.currentTimeMillis()) return null
     val prefs = prefs(context)
-    val title = alarm["title"] as? String ?: "闹钟"
+    val title = (alarm["title"] as? String).orEmpty()
     val body = alarm["body"] as? String ?: ""
     val groupId = alarm["groupId"] as? String ?: ""
     val timeId = alarm["timeId"] as? String ?: ""
@@ -81,7 +81,7 @@ internal object ZfAlarmSchedule {
       }
       schedule(context, mapOf(
         "id" to id, "epochMs" to target, "date" to date,
-        "title" to prefs.getString("$id:title", "闹钟"), "body" to prefs.getString("$id:body", ""),
+        "title" to prefs.getString("$id:title", ""), "body" to prefs.getString("$id:body", ""),
         "groupId" to prefs.getString("$id:group", ""), "timeId" to prefs.getString("$id:timeId", ""),
         "timeLabel" to time,
       ), prefs.getString("$id:accent", "#4096FF") ?: "#4096FF")

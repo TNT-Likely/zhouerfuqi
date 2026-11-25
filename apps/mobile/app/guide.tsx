@@ -6,6 +6,9 @@ import { PanelButton, PanelList, PanelRow } from '@/components/Panel';
 import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
 import { TrialDialog } from '@/components/TrialDialog';
 import { TrialStatus } from '@/components/TrialStatus';
+import { useLocale } from '@/i18n';
+import { commonCopy } from '@/i18n/settings';
+import { guideCopy } from '@/i18n/support';
 import { useTheme } from '@/theme';
 import { gateway } from '@/gateway';
 import type { AlarmPermissionStatus } from '@/gateway/types';
@@ -17,24 +20,12 @@ import {
 } from '@/services/permissions';
 import { isIgnoringBatteryOptimizations, requestIgnoreBatteryOptimization } from '@/services/battery';
 
-const vendorTips = [
-  {
-    name: '华为 / 荣耀',
-    detail: '在系统设置中搜索「应用启动管理」，手动允许周而复起自启动和后台活动。',
-  },
-  {
-    name: '小米',
-    detail: '允许自启动，将省电策略设为无限制，并在最近任务中锁定周而复起。',
-  },
-  {
-    name: 'OPPO / vivo',
-    detail: '在系统设置中允许周而复起后台启动和后台运行。',
-  },
-] as const;
-
 export default function GuideScreen() {
   const router = useRouter();
   const t = useTheme();
+  const locale = useLocale();
+  const common = commonCopy[locale];
+  const copy = guideCopy[locale];
   const p = t.panel;
   const [permissions, setPermissions] = useState<AlarmPermissionStatus | null>(null);
   const permission = permissions?.notifications;
@@ -63,7 +54,7 @@ export default function GuideScreen() {
       await openAppNotificationSettings();
       close();
     } catch {
-      setError('请在系统设置中打开周而复起的通知设置。');
+      setError(copy.openNotificationSettingsFailed);
     }
   }
 
@@ -79,43 +70,44 @@ export default function GuideScreen() {
   return (
     <SafeAreaScrollView backgroundColor={p.bg} contentContainerStyle={styles.container}>
       <View style={styles.nav}>
-        <PanelButton label="设置" icon="chevron-back" variant="text" onPress={() => router.back()} />
-        <Text style={[styles.title, { color: t.text }]}>保活向导</Text>
+        <PanelButton label={common.settings} icon="chevron-back" variant="text" onPress={() => router.back()} />
+        <Text style={[styles.title, { color: t.text }]}>{copy.title}</Text>
       </View>
       <View style={[styles.status, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}>
-        <Text style={[styles.statusTitle, { color: t.text }]}>锁屏响铃检查</Text>
-        <Text style={[styles.detail, { color: p.muted }]}>不同机型的锁屏设置可能不同。可用下方试响检查实际表现。</Text>
+        <Text style={[styles.statusTitle, { color: t.text }]}>{copy.lockScreenCheck}</Text>
+        <Text style={[styles.detail, { color: p.muted }]}>{copy.lockScreenCheckDetail}</Text>
       </View>
       <PanelList>
-        <PanelRow icon="notifications-outline" title="通知权限" detail="允许发出闹钟响铃通知"
-          value={permission ? '已开启' : undefined}
+        <PanelRow icon="notifications-outline" title={common.notifications} detail={copy.allowAlarmNotifications}
+          value={permission ? common.enabled : undefined}
           onPress={permission ? undefined : requestPermission}
           tone={permission ? 'success' : 'warning'} />
-        <PanelRow icon="alarm-outline" title="精确闹钟" detail="允许在排班设定的时刻触发"
-          value={permissions ? permissions.exactAlarms ? '已开启' : '待开启' : '待检查'}
+        <PanelRow icon="alarm-outline" title={common.exactAlarms} detail={copy.allowExactAlarms}
+          value={permissions ? permissions.exactAlarms ? common.enabled : common.needsPermission : common.needsCheck}
           onPress={permissions?.exactAlarms === false ? () => void openAlarmPermissionSettings('exact')
-            .catch(() => setError('请在系统设置里开启精确闹钟。')) : undefined} divider />
+            .catch(() => setError(copy.openExactAlarmSettingsFailed)) : undefined} divider />
         {Platform.OS === 'android' && Number(Platform.Version) >= 34 ?
-          <PanelRow icon="expand-outline" title="锁屏全屏提醒" value={permissions ? permissions.fullScreen ? '已开启' : '待开启' : '待检查'}
+          <PanelRow icon="expand-outline" title={copy.fullScreen}
+            value={permissions ? permissions.fullScreen ? common.enabled : common.needsPermission : common.needsCheck}
             onPress={permissions?.fullScreen === false ? () => void openAlarmPermissionSettings('fullScreen')
-              .catch(() => setError('请在系统设置里开启锁屏全屏提醒。')) : undefined} divider /> : null}
-        <PanelRow icon="battery-half-outline" title="电池优化" detail="允许周而复起在后台按计划运行"
-          value={battery ? '已忽略' : undefined} divider tone={battery ? 'success' : 'warning'}
+              .catch(() => setError(copy.openFullScreenSettingsFailed)) : undefined} divider /> : null}
+        <PanelRow icon="battery-half-outline" title={copy.batteryOptimization} detail={copy.batteryOptimizationDetail}
+          value={battery ? copy.batteryExempt : undefined} divider tone={battery ? 'success' : 'warning'}
           onPress={battery ? undefined : () => {
             try {
               requestIgnoreBatteryOptimization();
               setBattery(isIgnoringBatteryOptimizations());
             } catch {
-              setError('请在系统电池设置中检查周而复起的后台运行权限。');
+              setError(copy.openBatterySettingsFailed);
             }
           }} />
       </PanelList>
 
       <PanelList>
         <View style={styles.vendor}>
-          <Text style={[styles.statusTitle, { color: t.text }]}>厂商设置</Text>
+          <Text style={[styles.statusTitle, { color: t.text }]}>{copy.vendorSettings}</Text>
           <View style={styles.chips}>
-            {vendorTips.map((item, index) => {
+            {copy.vendors.map((item, index) => {
               const selected = vendor === index;
               return (
                 <Pressable key={item.name} accessibilityRole="button" accessibilityState={{ selected }}
@@ -126,27 +118,28 @@ export default function GuideScreen() {
               );
             })}
           </View>
-          <Text style={[styles.detail, { color: p.muted }]}>{vendorTips[vendor]!.detail}</Text>
+          <Text style={[styles.detail, { color: p.muted }]}>{copy.vendors[vendor]!.detail}</Text>
         </View>
-        <PanelRow icon="notifications-outline" title="闹钟通知" detail="查看系统提供的通知方式" divider onPress={() => setDialog('notifications')} />
+        <PanelRow icon="notifications-outline" title={copy.alarmNotifications} detail={copy.alarmNotificationsDetail} divider
+          onPress={() => setDialog('notifications')} />
       </PanelList>
-      <PanelButton label="试响" variant="primary" onPress={() => setDialog('test')} />
+      <PanelButton label={common.tryAlarm} variant="primary" onPress={() => setDialog('test')} />
       <TrialStatus />
 
       {dialog === 'test' ? <TrialDialog onClose={close} /> : null}
       {dialog === 'notifications' ? (
-        <AppDialog title="闹钟通知" confirm="打开通知设置" onClose={close} onConfirm={() => void openSettings()}>
-          <DialogCopy>允许周而复起发送通知，并检查「闹钟响铃」类别。手机没有单独的锁屏通知选项时，可直接用试响验证锁屏效果。</DialogCopy>
+        <AppDialog title={copy.alarmNotifications} confirm={copy.openNotificationSettings} onClose={close} onConfirm={() => void openSettings()}>
+          <DialogCopy>{copy.notificationInstructions}</DialogCopy>
           <PanelList inset>
-            <PanelRow icon="notifications-outline" title="允许通知" detail="允许应用发出提醒" />
-            <PanelRow icon="lock-closed-outline" title="锁屏通知（如有）" detail="锁屏时显示通知卡片" divider />
-            <PanelRow icon="browsers-outline" title="横幅通知（如有）" detail="亮屏时显示通知横幅" divider />
+            <PanelRow icon="notifications-outline" title={copy.allowNotifications} detail={copy.allowNotificationsDetail} />
+            <PanelRow icon="lock-closed-outline" title={copy.lockScreenNotifications} detail={copy.lockScreenNotificationsDetail} divider />
+            <PanelRow icon="browsers-outline" title={copy.banners} detail={copy.bannersDetail} divider />
           </PanelList>
           {error ? <Text accessibilityLiveRegion="polite" style={{ color: p.danger }}>{error}</Text> : null}
         </AppDialog>
       ) : null}
       {error && dialog !== 'notifications' ? (
-        <AppDialog title="无法打开系统设置" icon="alert-circle-outline" tone="error" layout="center" onClose={() => setError('')}>
+        <AppDialog title={copy.openSettingsFailed} icon="alert-circle-outline" tone="error" layout="center" onClose={() => setError('')}>
           <DialogCopy centered>{error}</DialogCopy>
         </AppDialog>
       ) : null}

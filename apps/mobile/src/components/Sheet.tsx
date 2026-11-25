@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useLocale } from '@/i18n';
+import { commonCopy } from '@/i18n/settings';
 import { useTheme } from '@/theme';
 
 /**
@@ -25,6 +27,7 @@ export function Sheet({
 }) {
   const router = useRouter();
   const t = useTheme();
+  const copy = commonCopy[useLocale()];
   const panel = appearance === 'panel';
   return (
     <SafeAreaView edges={['top', 'bottom', 'left', 'right']}
@@ -37,10 +40,10 @@ export function Sheet({
           <Pressable
             onPress={onClose ?? (() => router.back())}
             style={[styles.done, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}
-            accessibilityLabel={`关闭${title}`}
+            accessibilityLabel={copy.closePage(title)}
             accessibilityRole="button"
           >
-            <Text style={{ color: t.panel.accent, fontSize: 12, fontWeight: '800' }}>完成</Text>
+            <Text style={{ color: t.panel.accent, fontSize: 12, fontWeight: '800' }}>{copy.done}</Text>
           </Pressable>
         </View>
         {children}

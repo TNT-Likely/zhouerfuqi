@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "RosterWake";
+"NSAlarmKitUsageDescription" = "RosterWake uses system alarms to ring at the times in your shift schedule.";
+"NSPhotoLibraryUsageDescription" = "Choose a photo to use as your avatar on the RosterWake home screen.";

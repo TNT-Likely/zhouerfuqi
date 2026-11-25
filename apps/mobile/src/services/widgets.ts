@@ -2,8 +2,9 @@ import { Platform } from 'react-native';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { expandGroups, localDateISO, occurrenceEpoch, type AlarmGroup } from '@core';
 import { getHolidayCalendar } from './holidays';
-import { cnDate } from '../lib/labels';
+import { dateLabel } from '../lib/labels';
 import { clockLabel } from '../lib/clock';
+import { getLocale } from '../i18n';
 
 type WidgetBridge = { updateWidgetPlan(json: string): void };
 
@@ -13,9 +14,10 @@ export function publishWidgetPlan(groups: AlarmGroup[]): void {
     const widget = requireOptionalNativeModule<WidgetBridge>(Platform.OS === 'ios' ? 'ZfAlarmIos' : 'ZfAlarm');
     const names = new Map(groups.map((group) => [group.id, group.name]));
     const now = new Date();
+    const locale = getLocale();
     const items = expandGroups(groups, getHolidayCalendar(), localDateISO(now), 14)
       .map((item) => ({
-        epochMs: occurrenceEpoch(item), date: cnDate(item.date), time: clockLabel(item),
+        epochMs: occurrenceEpoch(item), date: dateLabel(item.date, locale), time: clockLabel(item, locale),
         title: [names.get(item.groupId), item.shiftName, item.label].filter(Boolean).join(' · '),
       }))
       .filter((item) => item.epochMs > now.getTime())

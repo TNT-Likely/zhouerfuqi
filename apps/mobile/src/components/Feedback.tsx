@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getLocale } from '@/i18n';
 import { useTheme } from '@/theme';
 import { PanelButton, PanelIconTile, type PanelIcon, type PanelTone } from './Panel';
 
@@ -12,14 +13,17 @@ export const useFeedback = () => useContext(FeedbackContext);
 
 export function FeedbackProvider({ children }: { children: ReactNode }) {
   const t = useTheme();
-  const { bottom } = useSafeAreaInsets();
+  const { bottom, left, right } = useSafeAreaInsets();
   const [message, setMessage] = useState<{ title: string; detail?: string; tone: PanelTone; icon: PanelIcon; action?: Action }>();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const show = useCallback<Feedback>((title, detail, tone = 'success', icon = 'checkmark', action) => {
     clearTimeout(timer.current);
     setMessage({ title, detail, tone, icon, action });
-    if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility([title, detail].filter(Boolean).join('。'));
+    if (Platform.OS === 'ios') {
+      const pause = getLocale() === 'zh-CN' ? '。' : '. ';
+      AccessibilityInfo.announceForAccessibility([title, detail].filter(Boolean).join(pause));
+    }
     timer.current = setTimeout(() => setMessage(undefined), action ? 9000 : 4800);
   }, []);
 
@@ -31,7 +35,8 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
         {children}
         {message ? (
           <View pointerEvents={message.action ? 'box-none' : 'none'} accessibilityLiveRegion="polite" style={[
-            styles.feedback, { bottom: bottom + 12, backgroundColor: t.panel.surface, borderColor: t.panel.border },
+            styles.feedback, { bottom: bottom + 12, left: left + 14, right: right + 14,
+              backgroundColor: t.panel.surface, borderColor: t.panel.border },
           ]}>
             <PanelIconTile icon={message.icon} tone={message.tone} />
             <View style={styles.copy}>
@@ -53,7 +58,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   feedback: {
-    position: 'absolute', left: 14, right: 14, alignSelf: 'center', maxWidth: 460, zIndex: 10,
+    position: 'absolute', alignSelf: 'center', maxWidth: 460, zIndex: 10,
     flexDirection: 'row', alignItems: 'center', gap: 10, padding: 11, borderRadius: 17, borderWidth: 1,
     elevation: 8, shadowColor: '#000', shadowOpacity: 0.25, shadowRadius: 12, shadowOffset: { width: 0, height: 5 },
   },

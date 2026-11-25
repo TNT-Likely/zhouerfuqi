@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zf_alarm_brand">RosterWake</string>
+    <string name="zf_alarm_name">Alarm</string>
+    <string name="zf_alarm_ringing">Ringing · Volume rising</string>
+    <string name="zf_alarm_snooze">Snooze for 9 min</string>
+    <string name="zf_alarm_snooze_failed">Could not snooze. Check your alarm permissions.</string>
+    <string name="zf_alarm_snoozed">Snoozed alarm</string>
+    <string name="zf_alarm_stop">Stop alarm</string>
+    <string name="zf_alarm_notification">Ringing · %1$s</string>
+    <string name="zf_alarm_channel">Alarm ringing</string>
+    <string name="zf_alarm_channel_description">Full-screen alerts for shift alarms</string>
+</resources>

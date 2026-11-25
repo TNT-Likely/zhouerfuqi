@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { addDays, isoWeekday, localDateISO, pad2 } from '@core';
-import { WD, cnDate } from '@/lib/labels';
+import { addDays, isoWeekday, localDateISO } from '@core';
+import { getFirstWeekday, useLocale } from '@/i18n';
+import { planningMessages } from '@/i18n/planning';
+import { dateLabel, monthLabel, weekdayNames } from '@/lib/labels';
 import { useTheme } from '@/theme';
 import { AppDialog } from './AppDialog';
 
@@ -19,7 +21,7 @@ export function daysInMonth(month: string): number {
   return new Date(Date.UTC(year!, index!, 0)).getUTCDate();
 }
 
-export type DayBadge = { text: string; tone?: 'accent' | 'warning' | 'muted' | 'success' };
+export type DayBadge = { text: string; accessibilityLabel: string; tone?: 'accent' | 'warning' | 'muted' | 'success' };
 export function MonthGrid({ month, selected, onMonth, onSelect, badge, isMarked }: {
   month: string;
   selected: string;
@@ -29,25 +31,30 @@ export function MonthGrid({ month, selected, onMonth, onSelect, badge, isMarked 
   isMarked?: (date: string) => boolean;
 }) {
   const t = useTheme();
+  const locale = useLocale();
+  const { common, calendar } = planningMessages[locale];
   const today = localDateISO();
   const p = t.panel;
-  const offset = isoWeekday(month) - 1;
+  const firstWeekday = getFirstWeekday();
+  const offset = (isoWeekday(month) - firstWeekday + 7) % 7;
+  const weekdays = weekdayNames(locale);
+  const orderedWeekdays = [...weekdays.slice(firstWeekday - 1), ...weekdays.slice(0, firstWeekday - 1)];
   const [year, monthNumber] = month.split('-').map(Number);
   return (
     <View style={[styles.frame, { backgroundColor: t.surface, borderColor: t.line }]}>
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" accessibilityLabel="上个月" style={styles.arrow}
+        <Pressable accessibilityRole="button" accessibilityLabel={calendar.previousMonth} style={styles.arrow}
           onPress={() => onMonth(shiftMonth(month, -1))}>
           <Ionicons name="chevron-back" size={20} color={p.accent} />
         </Pressable>
-        <Text accessibilityRole="header" style={[styles.title, { color: t.text }]}>{year}年{monthNumber}月</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="下个月" style={styles.arrow}
+        <Text accessibilityRole="header" style={[styles.title, { color: t.text }]}>{monthLabel(year!, monthNumber!, locale)}</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={calendar.nextMonth} style={styles.arrow}
           onPress={() => onMonth(shiftMonth(month, 1))}>
           <Ionicons name="chevron-forward" size={20} color={p.accent} />
         </Pressable>
       </View>
       <View style={styles.grid}>
-        {WD.map((day) => <Text key={day} style={[styles.weekday, { color: p.muted }]}>{day}</Text>)}
+        {orderedWeekdays.map((day) => <Text key={day} style={[styles.weekday, { color: p.muted }]}>{day}</Text>)}
         {Array.from({ length: offset }, (_, index) => <View key={'spacer' + index} style={styles.cell} />)}
         {Array.from({ length: daysInMonth(month) }, (_, index) => {
           const date = addDays(month, index);
@@ -57,10 +64,13 @@ export function MonthGrid({ month, selected, onMonth, onSelect, badge, isMarked 
           const isToday = date === today;
           const color = item?.tone === 'warning' ? p.danger : item?.tone === 'success' ? p.success
             : item?.tone === 'accent' ? p.accent : p.muted;
-          const context = [isToday ? '今天' : '', checked ? '已选' : '', item?.text].filter(Boolean).join('，');
+          const context = common.dateContext([
+            dateLabel(date, locale), isToday ? common.today : undefined, checked ? calendar.selected : undefined,
+            item?.accessibilityLabel,
+          ]);
           return (
             <View key={date} style={styles.cell}>
-              <Pressable accessibilityRole="button" accessibilityLabel={cnDate(date) + (context ? '，' + context : '')}
+              <Pressable accessibilityRole="button" accessibilityLabel={context}
                 accessibilityState={{ selected: checked ?? active }} onPress={() => onSelect(date)}
                 style={[styles.day, {
                   borderColor: active ? p.accent : isToday ? t.heroBorder : 'transparent',
@@ -69,7 +79,7 @@ export function MonthGrid({ month, selected, onMonth, onSelect, badge, isMarked 
                 <Text style={[styles.number, { color: t.text, fontWeight: active || isToday ? '800' : '600' }]}>
                   {checked ? '✓ ' : ''}{index + 1}
                 </Text>
-                {item ? <Text numberOfLines={1} style={[styles.badge, { color }]}>{item.text}</Text> : null}
+                {item ? <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.badge, { color }]}>{item.text}</Text> : null}
               </Pressable>
             </View>
           );
@@ -82,10 +92,12 @@ export function MonthGrid({ month, selected, onMonth, onSelect, badge, isMarked 
 export function DateDialog({ title, date, onSelect, onClose }: {
   title: string; date: string; onSelect: (date: string) => void; onClose: () => void;
 }) {
+  const locale = useLocale();
+  const { calendar } = planningMessages[locale];
   const [selection, setSelection] = useState(date);
   const [month, setMonth] = useState(firstOfMonth(date));
   return (
-    <AppDialog title={title} cancel confirm={'选定 ' + selection.slice(5, 7) + ' 月 ' + pad2(Number(selection.slice(8))) + ' 日'}
+    <AppDialog title={title} cancel confirm={calendar.chooseDate(dateLabel(selection, locale))}
       onClose={onClose} onConfirm={() => onSelect(selection)}>
       <MonthGrid month={month} selected={selection} onSelect={setSelection} onMonth={setMonth} />
     </AppDialog>

@@ -1,5 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import { getVersion, installApk } from '../../modules/zf-update/src';
+import { getLocale } from '../i18n';
+import { systemMessages } from '../i18n/system';
 
 /**
  * 应用内自更新流水线:
@@ -56,7 +58,7 @@ export async function checkUpdate(
     );
     const assets: { name: string; browser_download_url: string }[] = release.assets ?? [];
     const metaAsset = assets.find((a) => a.name === 'update.json');
-    if (!metaAsset) throw new Error('Release 缺少 update.json 资产');
+    if (!metaAsset) throw new Error(systemMessages[getLocale()].missingUpdateAsset);
     const meta = await fetchJson(metaAsset.browser_download_url);
     return evaluateUpdate(meta, current);
   } catch (e: any) {
@@ -74,7 +76,7 @@ function evaluateUpdate(
     apkUrl: String(meta.apk ?? ''),
     notes: String(meta.notes ?? ''),
   };
-  if (!info.apkUrl) throw new Error('update.json 缺少 apk 地址');
+  if (!info.apkUrl) throw new Error(systemMessages[getLocale()].missingUpdateUrl);
   if (info.versionCode > current.versionCode) {
     return { status: 'available', current, info };
   }
@@ -91,6 +93,6 @@ export async function downloadAndInstall(
     onProgress?.(Math.round(((p.totalBytesWritten || 0) / total) * 100));
   });
   const result = await callback.downloadAsync();
-  if (!result || result.status !== 200) throw new Error('下载失败');
+  if (!result || result.status !== 200) throw new Error(systemMessages[getLocale()].downloadFailed);
   installApk(result.uri);
 }

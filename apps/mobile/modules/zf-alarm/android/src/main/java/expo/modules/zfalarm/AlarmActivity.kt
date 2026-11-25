@@ -20,6 +20,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.WindowInsets
@@ -31,6 +32,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.graphics.ColorUtils
+import androidx.core.widget.TextViewCompat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -100,7 +102,7 @@ class AlarmActivity : Activity() {
 
   override fun onNewIntent(next: Intent) {
     super.onNewIntent(next)
-    val title = next.getStringExtra(EXTRA_TITLE) ?: "闹钟"
+    val title = alarmTitle(next)
     dismissNotification(next)
     if (next.getLongExtra(EXTRA_EPOCH, -1L) == intent.getLongExtra(EXTRA_EPOCH, 0L)) {
       activeTitles.add(title)
@@ -115,13 +117,17 @@ class AlarmActivity : Activity() {
   private fun showAlarm(alarm: Intent) {
     accentColor = runCatching { Color.parseColor(alarm.getStringExtra(EXTRA_ACCENT)) }
       .getOrDefault(Color.parseColor("#4096FF"))
-    val title = alarm.getStringExtra(EXTRA_TITLE) ?: "闹钟"
+    val title = alarmTitle(alarm)
     activeTitles.clear()
     activeTitles.add(title)
     dismissNotification(alarm)
-    buildUi(title, alarm.getStringExtra(EXTRA_TIME_LABEL) ?: nowLabel())
+    val epochMs = alarm.getLongExtra(EXTRA_EPOCH, 0L).takeIf { it > 0L } ?: System.currentTimeMillis()
+    buildUi(title, epochMs)
     startRing()
   }
+
+  private fun alarmTitle(alarm: Intent): String =
+    alarm.getStringExtra(EXTRA_TITLE).orEmpty().ifBlank { getString(R.string.zf_alarm_name) }
 
   private fun dismissNotification(alarm: Intent) {
     alarm.getStringExtra(EXTRA_ID)?.let {
@@ -133,10 +139,7 @@ class AlarmActivity : Activity() {
   private fun accentTint(alpha: Int): Int = ColorUtils.setAlphaComponent(accentColor, alpha)
   private fun white(alpha: Int): Int = ColorUtils.setAlphaComponent(Color.WHITE, alpha)
 
-  private fun dateLabel(): String =
-    SimpleDateFormat("M月d日 EEEE", Locale.CHINA).format(Date())
-
-  private fun buildUi(title: String, timeLabel: String) {
+  private fun buildUi(title: String, epochMs: Long) {
     val dec = AccelerateDecelerateInterpolator()
 
     // 底:纵向渐变近黑(上冷下沉),光晕单独一层做「破晓」感
@@ -171,7 +174,7 @@ class AlarmActivity : Activity() {
     col.addView(View(this), LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 0.24f))
 
     val brand = TextView(this).apply {
-      text = "周 而 复 起"
+      text = getString(R.string.zf_alarm_brand)
       setTextColor(white(0x66))
       textSize = 11f
       letterSpacing = 0.35f
@@ -179,24 +182,25 @@ class AlarmActivity : Activity() {
     }
     col.addView(brand, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT))
 
-    // 钟面:排班时间为大字(原生闹钟语义);贪睡等非时刻文案退回当前时间
-    val heroText = if (timeLabel.matches(Regex("^\\d{1,2}:\\d{2}$"))) timeLabel else nowLabel()
+    // Use the scheduled epoch for display. The stored wall time remains ASCII HH:mm.
     val hero = TextView(this).apply {
-      text = heroText
+      text = ZfAlarmDisplay.time(this@AlarmActivity, epochMs)
       setTextColor(Color.parseColor("#F4F6FA"))
-      textSize = 96f
       typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
       letterSpacing = -0.02f
       includeFontPadding = false
+      maxLines = 1
       gravity = Gravity.CENTER
+      TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 32, 96, 1, TypedValue.COMPLEX_UNIT_SP)
     }
+    // Autosizing needs a measured height that can fit the clock at its maximum size.
     col.addView(
       hero,
-      LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply { topMargin = dp(10) },
+      LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp(112)).apply { topMargin = dp(10) },
     )
 
     val date = TextView(this).apply {
-      text = dateLabel()
+      text = ZfAlarmDisplay.format(this@AlarmActivity, epochMs, "MMMMdEEEE")
       setTextColor(white(0x8C))
       textSize = 14f
       gravity = Gravity.CENTER
@@ -242,7 +246,7 @@ class AlarmActivity : Activity() {
       LinearLayout.LayoutParams(dp(8), dp(8)).apply { gravity = Gravity.CENTER_VERTICAL; marginEnd = dp(8) },
     )
     val live = TextView(this).apply {
-      text = "响铃中 · 音量渐强"
+      text = getString(R.string.zf_alarm_ringing)
       setTextColor(white(0xAA))
       textSize = 13f
     }
@@ -263,7 +267,7 @@ class AlarmActivity : Activity() {
       setStroke(dp(1), white(0x2E))
     }
     val snooze = TextView(this).apply {
-      text = "稍后 9 分钟"
+      text = getString(R.string.zf_alarm_snooze)
       setTextColor(Color.WHITE)
       textSize = 15f
       typeface = Typeface.DEFAULT_BOLD
@@ -275,7 +279,7 @@ class AlarmActivity : Activity() {
         stopRing()
         finish()
       }.onFailure {
-        Toast.makeText(this, "无法延后，请检查闹钟权限。", Toast.LENGTH_LONG).show()
+        Toast.makeText(this, R.string.zf_alarm_snooze_failed, Toast.LENGTH_LONG).show()
       }
     }
     btnRow.addView(
@@ -288,7 +292,7 @@ class AlarmActivity : Activity() {
       setColor(accentColor)
     }
     val stop = TextView(this).apply {
-      text = "停止本次"
+      text = getString(R.string.zf_alarm_stop)
       val foreground = if (ColorUtils.calculateContrast(Color.WHITE, accentColor) >= 4.5) Color.WHITE else Color.BLACK
       setTextColor(foreground)
       textSize = 15f
@@ -408,7 +412,7 @@ class AlarmActivity : Activity() {
     val time = SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(epochMs))
     val scheduled = ZfAlarmSchedule.schedule(this, mapOf(
       "id" to "snooze:$epochMs", "epochMs" to epochMs,
-      "title" to activeTitles.joinToString(" / "), "body" to "稍后响铃",
+      "title" to activeTitles.joinToString(" / "),
       "groupId" to "snooze", "timeId" to "snooze", "timeLabel" to time,
     ), String.format("#%06X", 0xFFFFFF and accentColor))
     checkNotNull(scheduled)
@@ -434,9 +438,5 @@ class AlarmActivity : Activity() {
     const val EXTRA_TIME_LABEL = "timeLabel"
     const val EXTRA_ACCENT = "accent"
     const val TAG = "ZfAlarmActivity"
-    fun nowLabel(): String {
-      val d = java.util.Calendar.getInstance()
-      return String.format("%02d:%02d", d.get(java.util.Calendar.HOUR_OF_DAY), d.get(java.util.Calendar.MINUTE))
-    }
   }
 }

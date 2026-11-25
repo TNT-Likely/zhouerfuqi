@@ -9,8 +9,10 @@ import { DateDialog, firstOfMonth, MonthGrid } from '@/components/MonthGrid';
 import { PanelButton, PanelList, PanelRow } from '@/components/Panel';
 import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
 import { TimeGridPicker, type DraftTime } from '@/components/TimeWheel';
+import { useLocale } from '@/i18n';
+import { planningMessages } from '@/i18n/planning';
 import { clockLabel } from '@/lib/clock';
-import { cnDate, ruleDesc, WD } from '@/lib/labels';
+import { dateLabel, ruleDesc, weekdayNames } from '@/lib/labels';
 import { cycleRule, makeId, templateGroup } from '@/lib/templates';
 import { syncAll, useScheduleState } from '@/scheduler/sync';
 import { getHolidayCalendar } from '@/services/holidays';
@@ -19,16 +21,16 @@ import { useGroups } from '@/stores/groups';
 import { useTheme } from '@/theme';
 
 const RULES = [
-  ['weekly', '每周'], ['everyNWeeks', '大小周'], ['everyNDays', '按天间隔'], ['cycle', '轮班循环'], ['customDates', '手动'],
-] as const;
+  'weekly', 'everyNWeeks', 'everyNDays', 'cycle', 'customDates',
+] as const satisfies readonly RepeatRule['kind'][];
 
-const PRESETS = [
-  { hour: 6, minute: 40, label: '第一道' },
-  { hour: 6, minute: 50, label: '第二道' },
-  { hour: 7, minute: 0, label: '底线' },
+const PRESETS: ReadonlyArray<{ hour: number; minute: number; label?: keyof typeof planningMessages.en.editor.presets }> = [
+  { hour: 6, minute: 40, label: 'first' },
+  { hour: 6, minute: 50, label: 'second' },
+  { hour: 7, minute: 0, label: 'last' },
   { hour: 7, minute: 30 },
   { hour: 8, minute: 0 },
-  { hour: 12, minute: 55, label: '午休' },
+  { hour: 12, minute: 55, label: 'nap' },
 ];
 
 type Editing = DraftTime & { id: string; shiftId?: string; creating?: boolean };
@@ -37,11 +39,14 @@ const newTime = (shiftId?: string): Editing => ({ id: makeId('t'), hour: 7, minu
 export default function GroupEditScreen() {
   const router = useRouter();
   const t = useTheme();
+  const locale = useLocale();
+  const { common, editor } = planningMessages[locale];
+  const weekdays = weekdayNames(locale);
   const notify = useFeedback();
   const { id, template, timeId } = useLocalSearchParams<{ id: string; template?: string; timeId?: string }>();
   const isNew = id === 'new';
   const existing = useGroups((s) => s.groups.find((group) => group.id === id));
-  const [draft, setDraft] = useState(() => existing ?? templateGroup(template));
+  const [draft, setDraft] = useState(() => existing ?? templateGroup(template, locale));
   const original = useRef(draft);
   const [error, setError] = useState('');
   const [dialog, setDialog] = useState<'enable' | 'discard' | 'delete' | 'anchor' | 'dates' | 'changes' | null>(null);
@@ -70,8 +75,8 @@ export default function GroupEditScreen() {
     if (!ruleChanged) return [];
     const before = expandGroup({ ...original.current, enabled: true }, calendar, today, 14);
     return Array.from({ length: 14 }, (_, index) => addDays(today, index)).filter((date) => (
-      before.filter((item) => item.date === date).map(clockLabel).join(',') !==
-      preview.filter((item) => item.date === date).map(clockLabel).join(',')
+      before.filter((item) => item.date === date).map((item) => item.hour * 60 + item.minute).join(',') !==
+      preview.filter((item) => item.date === date).map((item) => item.hour * 60 + item.minute).join(',')
     ));
   }, [ruleChanged, calendar, today, preview]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(original.current);
@@ -85,9 +90,9 @@ export default function GroupEditScreen() {
     if (kind === rule.kind) return;
     switch (kind) {
       case 'weekly': setRule({ kind, weekdays: [1, 2, 3, 4, 5] }); break;
-      case 'everyNWeeks': setRule(templateGroup('alternating').rule); break;
+      case 'everyNWeeks': setRule(templateGroup('alternating', locale).rule); break;
       case 'everyNDays': setRule({ kind, n: 2, anchor: today }); break;
-      case 'cycle': patch({ rule: cycleRule('two', today, draft.times), holidayMode: 'raw' }); break;
+      case 'cycle': patch({ rule: cycleRule('two', today, draft.times, locale), holidayMode: 'raw' }); break;
       case 'customDates': setRule({ kind, dates: [] }); break;
     }
   }
@@ -102,7 +107,7 @@ export default function GroupEditScreen() {
     const list = (cycle?.shifts.find((item) => item.id === pending.shiftId)?.times ?? draft.times)
       .filter((time) => time.id !== pending.id);
     if (list.some((time) => time.hour === pending.hour && time.minute === pending.minute)) {
-      setTimeError('这个时间已经在当前班次里。');
+      setTimeError(editor.duplicateTime);
       return;
     }
     const { id, hour, minute, label } = pending;
@@ -113,12 +118,12 @@ export default function GroupEditScreen() {
   }
 
   function validate() {
-    if (!draft.name.trim()) return '请输入班组名称。';
-    if (!draft.times.length && !cycle) return '请至少添加一个响铃时间。';
-    if ((rule.kind === 'weekly' || rule.kind === 'everyNWeeks') && !rule.weekdays.length) return '请选择响铃的星期。';
-    if (isNew && rule.kind === 'customDates' && !rule.dates.length) return '请先在月历选择响铃日期。';
+    if (!draft.name.trim()) return editor.needName;
+    if (!draft.times.length && !cycle) return editor.needAlarm;
+    if ((rule.kind === 'weekly' || rule.kind === 'everyNWeeks') && !rule.weekdays.length) return editor.needWeekdays;
+    if (isNew && rule.kind === 'customDates' && !rule.dates.length) return editor.needDates;
     if (cycle && (!cycle.days.some(Boolean) || cycle.shifts.some((item) => cycle.days.includes(item.id) && (!item.name.trim() || !item.times.length)))) {
-      return '循环至少需要一个班次，使用中的班次要有名称和响铃时间。';
+      return editor.needShifts;
     }
     return '';
   }
@@ -142,12 +147,12 @@ export default function GroupEditScreen() {
         await syncAll();
         const next = useScheduleState.getState();
         const firstEntry = Object.entries(next.entries).filter(([key]) => key.startsWith(draft.id + ":")).some(([, item]) => item.delivery === 'system' || item.delivery === 'notification');
-        notify('班组已保存', firstEntry ? '已同步响铃计划。' : '可在设置查看响铃登记状态。');
+        notify(editor.saved, firstEntry ? editor.synced : editor.checkStatus);
       } catch {
-        notify('班组已保存', '响铃同步失败，可在设置中重试。', 'warning', 'alert-circle-outline');
+        notify(editor.saved, editor.savedSyncFailed, 'warning', 'alert-circle-outline');
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '保存班组失败。');
+      setError(reason instanceof Error ? reason.message : editor.saveFailed);
       setDialog(null);
     } finally {
       saving.current = false;
@@ -160,40 +165,40 @@ export default function GroupEditScreen() {
     setDialog(null);
     router.back();
     void syncAll().then(
-      () => notify('班组已删除', draft.name),
-      () => notify('班组已删除', '响铃同步失败，可在设置中重试。', 'warning'),
+      () => notify(editor.deleted, draft.name),
+      () => notify(editor.deleted, editor.savedSyncFailed, 'warning'),
     );
   }
 
   if (!isNew && !existing) {
     return <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.screen}>
-      <Text style={{ color: t.text }}>该班组已删除。</Text>
-      <PanelButton label="返回" onPress={() => router.back()} />
+      <Text style={{ color: t.text }}>{editor.scheduleGone}</Text>
+      <PanelButton label={editor.back} onPress={() => router.back()} />
     </SafeAreaScrollView>;
   }
 
   return (
     <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
       <View style={styles.nav}>
-        <PanelButton label="返回" variant="text" icon="chevron-back" onPress={() => dirty ? setDialog('discard') : router.back()} />
-        <Text accessibilityRole="header" style={[styles.heading, { color: t.text }]}>{isNew ? '新建班组' : '编辑班组'}</Text>
-        <PanelButton label={isNew ? '核对班组' : '保存'} variant="primary" disabled={busy} onPress={() => void save()} />
+        <PanelButton label={editor.back} variant="text" icon="chevron-back" onPress={() => dirty ? setDialog('discard') : router.back()} />
+        <Text accessibilityRole="header" style={[styles.heading, { color: t.text }]}>{isNew ? common.newSchedule : editor.editSchedule}</Text>
+        <PanelButton label={isNew ? editor.review : editor.save} variant="primary" disabled={busy} onPress={() => void save()} />
       </View>
       {error ? <Text accessibilityLiveRegion="polite" style={[styles.error, { color: t.panel.danger }]}>{error}</Text> : null}
-      <Card title="班组名称">
-        <TextInput accessibilityLabel="班组名称" value={draft.name} maxLength={36}
+      <Card title={editor.scheduleName}>
+        <TextInput accessibilityLabel={editor.scheduleName} value={draft.name} maxLength={36}
           onChangeText={(name) => patch({ name })} style={[styles.input, { backgroundColor: t.panel.raised, borderColor: t.panel.border, color: t.text }]} />
       </Card>
-      <Card title="排班规则">
+      <Card title={editor.repeatRule}>
         <View style={styles.wrap}>
-          {RULES.map(([kind, label]) => <Choice key={kind} selected={kind === rule.kind} label={label} onPress={() => choose(kind)} />)}
+          {RULES.map((kind) => <Choice key={kind} selected={kind === rule.kind} label={editor.rules[kind]} onPress={() => choose(kind)} />)}
         </View>
         {rule.kind === 'weekly' || rule.kind === 'everyNWeeks' ? (
           <View style={styles.wrap}>
-            {WD.map((label, index) => {
+            {weekdays.map((label, index) => {
               const day = (index + 1) as Weekday;
               const enabled = rule.weekdays.includes(day);
-              return <Choice key={day} label={'周' + label} selected={enabled} onPress={() => setRule({
+              return <Choice key={day} label={common.weekday(label)} selected={enabled} onPress={() => setRule({
                 ...rule, weekdays: enabled ? rule.weekdays.filter((item) => item !== day) : [...rule.weekdays, day].sort(),
               })} />;
             })}
@@ -202,148 +207,151 @@ export default function GroupEditScreen() {
         {rule.kind === 'everyNWeeks' || rule.kind === 'everyNDays' ? (
           <View style={styles.adjustment}>
             <PanelButton label="−" variant="secondary" disabled={rule.n <= 2} onPress={() => setRule({ ...rule, n: rule.n - 1 })} />
-            <Text style={{ color: t.text, fontWeight: '800' }}>每 {rule.n} {rule.kind === 'everyNWeeks' ? '周' : '天'}</Text>
+            <Text style={{ color: t.text, fontWeight: '800' }}>{rule.kind === 'everyNWeeks' ? editor.everyNWeeks(rule.n) : editor.everyNDays(rule.n)}</Text>
             <PanelButton label="+" variant="secondary" disabled={rule.n >= 30} onPress={() => setRule({ ...rule, n: rule.n + 1 })} />
           </View>
         ) : null}
         {'anchor' in rule ? (
-          <PanelButton label={(rule.kind === 'everyNWeeks' ? '循环周起点 · ' : '循环起始日 · ') + cnDate(rule.anchor)}
+          <PanelButton label={(rule.kind === 'everyNWeeks' ? editor.alternatingAnchor : editor.cycleAnchor)(dateLabel(rule.anchor, locale))}
             icon="calendar-outline" onPress={() => setDialog('anchor')} />
         ) : null}
         {rule.kind === 'everyNWeeks' ? (
           <Text style={{ color: t.panel.muted, fontSize: 13 }}>
-            周{WD[isoWeekday(rule.anchor) - 1]}隔 {rule.n} 周响一次，其他选中的星期每周响。
+            {editor.alternatingDetail(weekdays[isoWeekday(rule.anchor) - 1]!, rule.n)}
           </Text>
         ) : null}
         {cycle ? (
           <>
             <View style={styles.wrap}>
-              <PanelButton label="上二休二" onPress={() => setRule(cycleRule('two', cycle.anchor, draft.times))} />
-              <PanelButton label="早早晚晚休休" onPress={() => setRule(cycleRule('shifts', cycle.anchor, draft.times))} />
+              <PanelButton label={editor.twoOnTwoOff} onPress={() => setRule(cycleRule('two', cycle.anchor, draft.times, locale))} />
+              <PanelButton label={editor.earlyLateOff} onPress={() => setRule(cycleRule('shifts', cycle.anchor, draft.times, locale))} />
             </View>
             <View style={styles.wrap}>
               {cycle.days.map((item, index) => (
                 <Choice key={index} selected={!!item}
-                  label={'第 ' + (index + 1) + ' 天 · ' + (cycle.shifts.find((entry) => entry.id === item)?.name || '休息')}
+                  label={editor.cycleDay(index + 1, cycle.shifts.find((entry) => entry.id === item)?.name || editor.rest)}
                   onPress={() => setCycleDay(index)} />
               ))}
-              {cycle.days.length < 42 ? <PanelButton label="加一天" icon="add" variant="text"
+              {cycle.days.length < 42 ? <PanelButton label={editor.addDay} icon="add" variant="text"
                 onPress={() => setRule({ ...cycle, days: [...cycle.days, null] })} /> : null}
             </View>
           </>
         ) : null}
         {rule.kind === 'customDates' ? (
-          <PanelButton label={'选择日期 · 已选 ' + rule.dates.length + ' 天'} icon="calendar-outline" onPress={() => setDialog('dates')} />
+          <PanelButton label={editor.chooseDates(rule.dates.length)} icon="calendar-outline" onPress={() => setDialog('dates')} />
         ) : null}
       </Card>
-      <Card title={shift ? '班次和响铃时间' : '响铃时间'}>
+      <Card title={shift ? editor.shiftAndAlarmTimes : editor.alarmTimes}>
         {cycle && shift ? (
           <>
             <View style={styles.wrap}>
-              {cycle.shifts.map((item) => <Choice key={item.id} label={item.name || '未命名班次'}
+              {cycle.shifts.map((item) => <Choice key={item.id} label={item.name || editor.unnamedShift}
                 selected={item.id === shift.id} onPress={() => setSelectedShift(item.id)} />)}
-              {cycle.shifts.length < 12 ? <PanelButton label="加班次" icon="add" variant="text" onPress={() => {
+              {cycle.shifts.length < 12 ? <PanelButton label={editor.addShift} icon="add" variant="text" onPress={() => {
                 const id = makeId('s');
-                setRule({ ...cycle, shifts: [...cycle.shifts, { id, name: '班次 ' + (cycle.shifts.length + 1), times: [{ id: makeId('t'), hour: 7, minute: 0 }] }] });
+                setRule({ ...cycle, shifts: [...cycle.shifts, { id, name: editor.shiftNumber(cycle.shifts.length + 1), times: [{ id: makeId('t'), hour: 7, minute: 0 }] }] });
                 setSelectedShift(id);
               }} /> : null}
             </View>
-            <TextInput accessibilityLabel="班次名称" value={shift.name} maxLength={24} onChangeText={(name) => {
+            <TextInput accessibilityLabel={editor.shiftName} value={shift.name} maxLength={24} onChangeText={(name) => {
               setRule({ ...cycle, shifts: cycle.shifts.map((item) => item.id === shift.id ? { ...item, name } : item) });
             }} style={[styles.input, { backgroundColor: t.panel.raised, borderColor: t.panel.border, color: t.text }]} />
           </>
         ) : null}
         <View style={styles.wrap}>
-          {PRESETS.map((preset) => {
-            const used = times.some((time) => time.hour === preset.hour && time.minute === preset.minute);
-            return <Choice key={clockLabel(preset)} label={clockLabel(preset)} selected={used} disabled={used}
-              onPress={() => updateTimes([...times, { ...preset, id: makeId('t') }].sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute)))} />;
+          {PRESETS.map(({ hour, minute, label }) => {
+            const used = times.some((time) => time.hour === hour && time.minute === minute);
+            return <Choice key={hour * 60 + minute} label={clockLabel({ hour, minute }, locale)} selected={used} disabled={used}
+              onPress={() => updateTimes([...times, { hour, minute, label: label ? editor.presets[label] : undefined, id: makeId('t') }]
+                .sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute)))} />;
           })}
         </View>
         <AlarmTimeRows times={times} onAdd={() => setPending(newTime(shift?.id))}
           onEdit={(time) => setPending({ ...time, label: time.label ?? '', shiftId: shift?.id })}
           onRemove={(id) => {
-            if (times.length <= 1) { setError('请至少保留一个响铃时间。'); return; }
+            if (times.length <= 1) { setError(editor.keepAlarm); return; }
             updateTimes(times.filter((item) => item.id !== id));
           }} />
       </Card>
       {rule.kind !== 'customDates' ? (
-        <Card title="节假日">
+        <Card title={editor.holidays}>
           <View style={styles.nav}>
             <View style={styles.flex}>
-              <Text style={[styles.text, { color: t.text }]}>节假日联动</Text>
-              <Text style={{ color: t.panel.muted, fontSize: 13 }}>{cycle ? '法定假日跳过，轮班休息日按循环。' : '法定假日跳过，调休补班日自动响铃。'}</Text>
+              <Text style={[styles.text, { color: t.text }]}>{editor.followHolidays}</Text>
+              <Text style={{ color: t.panel.muted, fontSize: 13 }}>{cycle ? editor.cycleHolidayDetail : editor.holidayDetail}</Text>
             </View>
-            <Switch accessibilityLabel="节假日联动" value={draft.holidayMode !== 'raw'}
+            <Switch accessibilityLabel={editor.followHolidays} value={draft.holidayMode !== 'raw'}
               onValueChange={(on) => patch({ holidayMode: on ? 'china-smart' : 'raw' })} />
           </View>
         </Card>
       ) : null}
-      <Card title="未来两周预览">
-        <Text style={{ color: t.panel.muted, lineHeight: 19 }}>{ruleDesc(draft)}</Text>
-        {first ? <Text style={[styles.text, { color: t.text }]}>首响 · {cnDate(first.date)} {clockLabel(first)}</Text>
-          : <Text style={{ color: t.panel.muted }}>暂无未来响铃。</Text>}
+      <Card title={editor.preview}>
+        <Text style={{ color: t.panel.muted, lineHeight: 19 }}>{ruleDesc(draft, locale)}</Text>
+        {first ? <Text style={[styles.text, { color: t.text }]}>{editor.firstAlarm(dateLabel(first.date, locale), clockLabel(first, locale))}</Text>
+          : <Text style={{ color: t.panel.muted }}>{editor.noUpcoming}</Text>}
         {previewDates.slice(0, 14).map((date) => {
           const items = preview.filter((item) => item.date === date);
           return <View key={date} style={styles.previewRow}>
-            <Text style={{ color: t.panel.muted }}>{cnDate(date)}</Text>
-            <Text style={[styles.flex, { color: t.text }]}>{[items[0]?.shiftName, items.map(clockLabel).join('、')].filter(Boolean).join(' · ')}</Text>
+            <Text style={{ color: t.panel.muted }}>{dateLabel(date, locale)}</Text>
+            <Text style={[styles.flex, { color: t.text }]}>{[
+              items[0]?.shiftName, common.dateContext(items.map((item) => clockLabel(item, locale))),
+            ].filter(Boolean).join(' · ')}</Text>
           </View>;
         })}
       </Card>
       {error ? <Text accessibilityLiveRegion="polite" style={[styles.error, { color: t.panel.danger }]}>{error}</Text> : null}
-      {!isNew ? <PanelButton label="删除班组" variant="text" icon="trash-outline" onPress={() => setDialog('delete')} /> : null}
+      {!isNew ? <PanelButton label={editor.deleteSchedule} variant="text" icon="trash-outline" onPress={() => setDialog('delete')} /> : null}
 
       {pending ? (
-        <AppDialog title={pending.creating ? '添加响铃' : '编辑响铃'} cancel confirm="保存时间" onConfirm={confirmTime}
+        <AppDialog title={pending.creating ? editor.addAlarm : editor.editAlarm} cancel confirm={editor.saveTime} onConfirm={confirmTime}
           onClose={() => { setPending(null); setTimeError(''); }}>
           <TimeGridPicker value={pending} onChange={(value) => { setPending({ ...pending, ...value }); setTimeError(''); }} />
           {timeError ? <Text accessibilityLiveRegion="polite" style={{ color: t.panel.danger }}>{timeError}</Text> : null}
         </AppDialog>
       ) : null}
-      {dialog === 'anchor' && 'anchor' in rule ? <DateDialog title="选择循环起始日" date={rule.anchor}
+      {dialog === 'anchor' && 'anchor' in rule ? <DateDialog title={editor.chooseStart} date={rule.anchor}
         onSelect={(anchor) => { setRule({ ...rule, anchor }); setDialog(null); }} onClose={() => setDialog(null)} /> : null}
       {dialog === 'dates' && rule.kind === 'customDates' ? <ManualDates dates={rule.dates} today={today}
         onSave={(dates) => { setRule({ kind: 'customDates', dates }); setDialog(null); }} onClose={() => setDialog(null)} /> : null}
       {cycleDay !== null && cycle ? (
-        <AppDialog title={'第 ' + (cycleDay + 1) + ' 天的班次'} onClose={() => setCycleDay(null)}>
+        <AppDialog title={editor.pickShift(cycleDay + 1)} onClose={() => setCycleDay(null)}>
           <PanelList inset>
-            {[...cycle.shifts.map((item) => ({ id: item.id as string | null, name: item.name })), { id: null, name: '休息' }].map((item) => (
+            {[...cycle.shifts.map((item) => ({ id: item.id as string | null, name: item.name })), { id: null, name: editor.rest }].map((item) => (
               <PanelRow key={item.id ?? 'rest'} icon={item.id ? 'alarm-outline' : 'moon-outline'} title={item.name}
-                value={cycle.days[cycleDay] === item.id ? '当前' : undefined} onPress={() => {
+                value={cycle.days[cycleDay] === item.id ? editor.current : undefined} onPress={() => {
                   setRule({ ...cycle, days: cycle.days.map((day, index) => index === cycleDay ? item.id : day) });
                   setCycleDay(null);
                 }} />
             ))}
           </PanelList>
-          {cycle.days.length > 1 ? <PanelButton label="移除这一天" variant="text" onPress={() => {
+          {cycle.days.length > 1 ? <PanelButton label={editor.removeDay} variant="text" onPress={() => {
             setRule({ ...cycle, days: cycle.days.filter((_, index) => index !== cycleDay) });
             setCycleDay(null);
           }} /> : null}
         </AppDialog>
       ) : null}
       {dialog === 'enable' ? (
-        <AppDialog title="确认首响" confirm="启用班组" onConfirm={() => void save(true)} cancel busy={busy}
+        <AppDialog title={editor.confirmFirst} confirm={editor.enableSchedule} onConfirm={() => void save(true)} cancel busy={busy}
           onClose={() => setDialog(null)}>
-          <DialogSummary value={first ? clockLabel(first) : '—'} detail={first ? cnDate(first.date) + ' · ' + draft.name : '尚无未来响铃'} />
-          <DialogCopy>{ruleDesc(draft)}</DialogCopy>
+          <DialogSummary value={first ? clockLabel(first, locale) : '—'} detail={first ? dateLabel(first.date, locale) + ' · ' + draft.name : editor.noFirst} />
+          <DialogCopy>{ruleDesc(draft, locale)}</DialogCopy>
         </AppDialog>
       ) : null}
       {dialog === 'changes' ? (
-        <AppDialog title="核对排班变更" confirm="保存规则" onConfirm={() => void save(true)} cancel busy={busy}
+        <AppDialog title={editor.reviewChanges} confirm={editor.saveRule} onConfirm={() => void save(true)} cancel busy={busy}
           onClose={() => setDialog(null)}>
-          <DialogCopy>{'未来两周有 ' + editedDates.length + ' 天的响铃时间会变化。'}</DialogCopy>
-          {editedDates.length ? <DialogCopy>{editedDates.slice(0, 5).map(cnDate).join('、') + (editedDates.length > 5 ? ' 等' : '')}</DialogCopy> : null}
-          <DialogCopy>{ruleDesc(draft)}</DialogCopy>
+          <DialogCopy>{editor.changes(editedDates.length)}</DialogCopy>
+          {editedDates.length ? <DialogCopy>{common.dateList(editedDates.slice(0, 5).map((date) => dateLabel(date, locale)), editedDates.length > 5)}</DialogCopy> : null}
+          <DialogCopy>{ruleDesc(draft, locale)}</DialogCopy>
         </AppDialog>
       ) : null}
-      {dialog === 'discard' ? <AppDialog title="舍弃班组修改？" layout="center" cancel confirm="舍弃修改"
+      {dialog === 'discard' ? <AppDialog title={editor.discardTitle} layout="center" cancel confirm={common.discard}
         onConfirm={() => { setDialog(null); router.back(); }} onClose={() => setDialog(null)}>
-        <DialogCopy centered>当前编辑的时间和规则还未保存。</DialogCopy>
+        <DialogCopy centered>{editor.discardDetail}</DialogCopy>
       </AppDialog> : null}
-      {dialog === 'delete' ? <AppDialog title={'删除「' + draft.name + '」？'} layout="center" cancel tone="danger"
-        icon="trash-outline" confirm="删除班组" onConfirm={deleteGroup} onClose={() => setDialog(null)}>
-        <DialogCopy centered>此班组的排班、临时调整和后续响铃都会移除。</DialogCopy>
+      {dialog === 'delete' ? <AppDialog title={editor.deleteTitle(draft.name)} layout="center" cancel tone="danger"
+        icon="trash-outline" confirm={editor.deleteSchedule} onConfirm={deleteGroup} onClose={() => setDialog(null)}>
+        <DialogCopy centered>{editor.deleteDetail}</DialogCopy>
       </AppDialog> : null}
     </SafeAreaScrollView>
   );
@@ -352,11 +360,12 @@ export default function GroupEditScreen() {
 function ManualDates({ dates, today, onSave, onClose }: {
   dates: string[]; today: string; onSave: (value: string[]) => void; onClose: () => void;
 }) {
+  const { editor } = planningMessages[useLocale()];
   const [selection, setSelection] = useState(() => new Set(dates));
   const [selected, setSelected] = useState(dates.find((date) => date >= today) ?? today);
   const [month, setMonth] = useState(firstOfMonth(selected));
   return (
-    <AppDialog title="选择响铃日期" cancel confirm={'使用日期 · ' + selection.size + ' 天'} onClose={onClose}
+    <AppDialog title={editor.manualTitle} cancel confirm={editor.useDates(selection.size)} onClose={onClose}
       onConfirm={() => onSave([...selection].sort())}>
       <MonthGrid month={month} selected={selected} isMarked={(date) => selection.has(date)} onMonth={setMonth} onSelect={(date) => {
         const next = new Set(selection);

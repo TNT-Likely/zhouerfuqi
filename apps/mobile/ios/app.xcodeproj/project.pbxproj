@@ -16,6 +16,10 @@
 		9832B7441BC14F1EE8F2CCA3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A09EA1EEFBBA9176571B8A5 /* ExpoModulesProvider.swift */; };
 		9A58A9D9D3718C0FB44EAD19 /* NextAlarmWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F20A29B27E2899B9824F9D5 /* NextAlarmWidget.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
+		EA28412124C9B10408597620 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA28412124C9B10408597619 /* InfoPlist.strings */; };
+		EA28412124C9B10408597621 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA28412124C9B1040859761A /* Localizable.strings */; };
+		EA28412124C9B10408597622 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA28412124C9B1040859761B /* InfoPlist.strings */; };
+		EA28412124C9B10408597623 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA28412124C9B1040859761C /* Localizable.strings */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F11748442D0307B40044C1D9 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748432D0307B40044C1D9 /* SceneDelegate.swift */; };
 		FEAFEBB8663A9AEAAE6CB35B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7EAB08A8B81300F7E2A489FB /* PrivacyInfo.xcprivacy */; };
@@ -61,6 +65,14 @@
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C35CC4AA33D3D33EB4398838 /* Pods-app.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.debug.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.debug.xcconfig"; sourceTree = "<group>"; };
 		DFB4772FB56D6E99B47C6262 /* NextAlarmWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = NextAlarmWidget.entitlements; sourceTree = "<group>"; };
+		EA28412124C9B10408597611 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = app/en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		EA28412124C9B10408597612 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "app/zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		EA28412124C9B10408597613 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = app/en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EA28412124C9B10408597614 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "app/zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		EA28412124C9B10408597615 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		EA28412124C9B10408597616 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		EA28412124C9B10408597617 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EA28412124C9B10408597618 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		EB3E8E84BD5979DEA224D0DE /* libPods-app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = app/AppDelegate.swift; sourceTree = "<group>"; };
@@ -97,6 +109,8 @@
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
+				EA28412124C9B10408597619 /* InfoPlist.strings */,
+				EA28412124C9B1040859761A /* Localizable.strings */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
 				7EAB08A8B81300F7E2A489FB /* PrivacyInfo.xcprivacy */,
 			);
@@ -194,6 +208,8 @@
 				8F20A29B27E2899B9824F9D5 /* NextAlarmWidget.swift */,
 				08507B8EFFE79C519F0EA5BF /* PrivacyInfo.xcprivacy */,
 				921FF88490E11B78DF052687 /* Info.plist */,
+				EA28412124C9B1040859761B /* InfoPlist.strings */,
+				EA28412124C9B1040859761C /* Localizable.strings */,
 				DFB4772FB56D6E99B47C6262 /* NextAlarmWidget.entitlements */,
 			);
 			name = NextAlarmWidget;
@@ -265,6 +281,7 @@
 			knownRegions = (
 				en,
 				Base,
+				"zh-Hans",
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
@@ -286,6 +303,8 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				FEAFEBB8663A9AEAAE6CB35B /* PrivacyInfo.xcprivacy in Resources */,
+				EA28412124C9B10408597620 /* InfoPlist.strings in Resources */,
+				EA28412124C9B10408597621 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -294,6 +313,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				24944F152DB5591859B9135C /* PrivacyInfo.xcprivacy in Resources */,
+				EA28412124C9B10408597622 /* InfoPlist.strings in Resources */,
+				EA28412124C9B10408597623 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -387,6 +408,7 @@
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoLocalization/ExpoLocalization_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-cxxreact/React-cxxreact_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/React-timing/React-timing_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/expo-dev-launcher/EXDevLauncher.bundle",
@@ -397,6 +419,7 @@
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXConstants.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoConstants_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoFileSystem_privacy.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/ExpoLocalization_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-cxxreact_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/React-timing_privacy.bundle",
 				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/EXDevLauncher.bundle",
@@ -476,6 +499,45 @@
 			targetProxy = 8719637787A47BDC91E7442D /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
+
+/* Begin PBXVariantGroup section */
+		EA28412124C9B10408597619 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				EA28412124C9B10408597611 /* en */,
+				EA28412124C9B10408597612 /* zh-Hans */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		EA28412124C9B1040859761A /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				EA28412124C9B10408597613 /* en */,
+				EA28412124C9B10408597614 /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		EA28412124C9B1040859761B /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				EA28412124C9B10408597615 /* en */,
+				EA28412124C9B10408597616 /* zh-Hans */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		EA28412124C9B1040859761C /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				EA28412124C9B10408597617 /* en */,
+				EA28412124C9B10408597618 /* zh-Hans */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -560,6 +622,7 @@
 				INFOPLIST_FILE = NextAlarmWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MARKETING_VERSION = 0.4.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tntlikely.zhouerfuqi.NextAlarmWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "$(ZF_WIDGET_PROFILE)";
@@ -717,6 +780,7 @@
 				INFOPLIST_FILE = NextAlarmWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
 				MARKETING_VERSION = 0.4.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tntlikely.zhouerfuqi.NextAlarmWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "$(ZF_WIDGET_PROFILE)";

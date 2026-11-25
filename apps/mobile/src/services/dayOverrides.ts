@@ -1,6 +1,8 @@
 import { type AlarmGroup, type DayOverride, type Occurrence, occurrenceEpoch } from '@core';
 import { useGroups } from '../stores/groups';
 import { syncAll } from '../scheduler/sync';
+import { getLocale } from '../i18n';
+import { systemMessages } from '../i18n/system';
 
 function setOverride(group: AlarmGroup, date: string, value: DayOverride | undefined): void {
   const overrides = { ...group.overrides };
@@ -13,7 +15,7 @@ export function changeDay(
   groupId: string, date: string, change: (previous: DayOverride | undefined) => DayOverride | undefined,
 ): () => boolean {
   const group = useGroups.getState().groups.find((candidate) => candidate.id === groupId);
-  if (!group) throw new Error('这个班组已经被移除。');
+  if (!group) throw new Error(systemMessages[getLocale()].missingGroup);
   const previous = group.overrides?.[date];
   const next = change(previous);
   setOverride(group, date, next);
@@ -28,7 +30,7 @@ export function changeDay(
 }
 
 export function skipOccurrence(item: Occurrence): () => boolean {
-  if (occurrenceEpoch(item) <= Date.now()) throw new Error('这次响铃的时间已到。');
+  if (occurrenceEpoch(item) <= Date.now()) throw new Error(systemMessages[getLocale()].occurrencePassed);
   return changeDay(item.groupId, item.date, (previous) => ({
     ...previous,
     skippedTimeIds: [...new Set([...(previous?.skippedTimeIds ?? []), item.timeId])],

@@ -1,6 +1,9 @@
 import { useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useLocale } from '@/i18n';
+import { alarmUiCopy } from '@/i18n/alarmUi';
+import { commonCopy } from '@/i18n/settings';
 import { scheduleTestRing } from '@/scheduler/sync';
 import { requestAlarmPermissions } from '@/services/permissions';
 import { AppDialog, DialogCopy, DialogSummary } from './AppDialog';
@@ -9,6 +12,8 @@ import { useFeedback } from './Feedback';
 
 export function TrialDialog({ onClose }: { onClose: () => void }) {
   const router = useRouter();
+  const locale = useLocale();
+  const copy = alarmUiCopy[locale].trial;
   const notify = useFeedback();
   const [busy, setBusy] = useState(false);
   const scheduling = useRef(false);
@@ -29,9 +34,9 @@ export function TrialDialog({ onClose }: { onClose: () => void }) {
       await requestAlarmPermissions();
       await scheduleTestRing();
       onClose();
-      notify('已安排试响', '可以锁屏观察。');
+      notify(copy.scheduled, copy.lockToCheck);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : '请检查响铃权限后重试。');
+      setError(reason instanceof Error ? reason.message : copy.checkPermissions);
     } finally {
       scheduling.current = false;
       setBusy(false);
@@ -40,18 +45,18 @@ export function TrialDialog({ onClose }: { onClose: () => void }) {
 
   if (error) {
     return (
-      <AppDialog title="试响安排失败" icon="alert-circle-outline" tone="error" layout="center"
-        confirm="重试" cancel onClose={onClose} onConfirm={() => void schedule()}>
+      <AppDialog title={copy.scheduleFailed} icon="alert-circle-outline" tone="error" layout="center"
+        confirm={commonCopy[locale].retry} cancel onClose={onClose} onConfirm={() => void schedule()}>
         <DialogCopy centered>{error}</DialogCopy>
       </AppDialog>
     );
   }
   return (
-    <AppDialog title="锁屏试响" confirm="安排试响" cancel onClose={onClose} busy={busy}
+    <AppDialog title={copy.title} confirm={copy.schedule} cancel onClose={onClose} busy={busy}
       visible={!previewing} onDismiss={previewing ? openPreview : undefined} onConfirm={() => void schedule()}>
-      <DialogSummary value="30 秒" detail="确认后开始倒计时" />
-      <DialogCopy>可锁屏观察，也可以在倒计时内取消。</DialogCopy>
-      <PanelButton label="预览应用内响铃" icon="open-outline" variant="text" disabled={busy} onPress={() => {
+      <DialogSummary value={copy.duration} detail={copy.countdownStarts} />
+      <DialogCopy>{copy.instructions}</DialogCopy>
+      <PanelButton label={copy.preview} icon="open-outline" variant="text" disabled={busy} onPress={() => {
         if (Platform.OS === 'ios') setPreviewing(true);
         else openPreview();
       }} />

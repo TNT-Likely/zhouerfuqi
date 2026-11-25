@@ -1,7 +1,10 @@
 import { expandGroups, localDateISO, occurrenceEpoch, pad2, type AlarmGroup, type Occurrence } from '@core';
 import { getHolidayCalendar } from '../services/holidays';
 import type { MaterializedAlarm } from '../gateway/types';
-import { cnDate } from '../lib/labels';
+import { dateLabel } from '../lib/labels';
+import { clockLabel } from '../lib/clock';
+import { getLocale } from '../i18n';
+import { systemMessages } from '../i18n/system';
 
 /** 视野:原生层只注册未来 N 天的具体响铃(架构 §4.1) */
 export const HORIZON_DAYS = 14;
@@ -20,12 +23,15 @@ export function materialize(groups: AlarmGroup[], today: string, horizon = HORIZ
   const occ = expandGroups(groups, getHolidayCalendar(), today, horizon);
   const now = Date.now();
   const names = new Map(groups.map((group) => [group.id, group.name]));
+  const locale = getLocale();
+  const copy = systemMessages[locale];
   return occ
     .map((o) => {
+      // Android uses the wall clock time to restore saved alarms after timezone changes.
       const timeLabel = `${pad2(o.hour)}:${pad2(o.minute)}`;
       const groupName = [names.get(o.groupId), o.shiftName].filter(Boolean).join(' · ');
       const title = [groupName, o.label].filter(Boolean).join(' · ');
-      const reason = o.reason === 'swap-workday' ? ' · 补班' : '';
+      const reason = o.reason === 'swap-workday' ? ` · ${copy.makeupWorkday}` : '';
       return {
         id: alarmId(o),
         epochMs: occurrenceEpoch(o),
@@ -35,8 +41,8 @@ export function materialize(groups: AlarmGroup[], today: string, horizon = HORIZ
         timeId: o.timeId,
         label: o.label,
         timeLabel,
-        title: title || '周而复起',
-        body: `${cnDate(o.date)} ${timeLabel}${reason}`,
+        title: title || copy.appName,
+        body: `${dateLabel(o.date, locale)} ${clockLabel(o, locale)}${reason}`,
       };
     })
     .filter((a) => a.epochMs > now);

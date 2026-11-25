@@ -4,16 +4,23 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>CFBundleAllowMixedLocalizations</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>周而复起</string>
+	<string>RosterWake</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>zh-Hans</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
@@ -40,6 +47,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1794758803</string>
+	<key>ExpoLocalization_supportsRTL</key>
+	<false/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSMinimumSystemVersion</key>
@@ -47,9 +56,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAlarmKitUsageDescription</key>
-	<string>周而复起需要系统闹钟权限,在排班设定的时刻用系统闹钟响铃。</string>
+	<string>RosterWake uses system alarms to ring at the times in your shift schedule.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>选择一张照片用作周而复起的首页头像。</string>
+	<string>Choose a photo to use as your avatar on the RosterWake home screen.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

@@ -4,6 +4,8 @@ import { launchImageLibraryAsync } from 'expo-image-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import { cacheDirectory, deleteAsync } from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useLocale } from '@/i18n';
+import { planningMessages } from '@/i18n/planning';
 import { useTheme } from '@/theme';
 import { usePrefs } from '@/stores/prefs';
 import { AppDialog, DialogCopy } from './AppDialog';
@@ -35,7 +37,7 @@ async function prepareAvatar(uri: string): Promise<string> {
         try {
           const result = await cropped.saveAsync({ base64: true, compress: 0.86, format: SaveFormat.JPEG });
           await deleteAsync(result.uri, { idempotent: true }).catch(() => {});
-          if (!result.base64) throw new Error('图片数据为空');
+          if (!result.base64) throw new Error('Missing image data');
           return 'data:image/jpeg;base64,' + result.base64;
         } finally {
           cropped.release();
@@ -53,6 +55,7 @@ async function prepareAvatar(uri: string): Promise<string> {
 
 export function AvatarEditor({ onClose }: { onClose: () => void }) {
   const t = useTheme();
+  const { avatar: copy } = planningMessages[useLocale()];
   const showFeedback = useFeedback();
   const avatar = usePrefs((state) => state.avatarImage);
   const setAvatar = usePrefs((state) => state.setAvatarImage);
@@ -78,7 +81,7 @@ export function AvatarEditor({ onClose }: { onClose: () => void }) {
         }
       }
     } catch {
-      setError('无法读取这张图片，请重新选择。');
+      setError(copy.readFailed);
     } finally {
       picking.current = false;
       setBusy(false);
@@ -86,28 +89,28 @@ export function AvatarEditor({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <AppDialog title="首页头像" confirm="保存头像" cancel onClose={onClose} busy={busy}
+    <AppDialog title={copy.title} confirm={copy.save} cancel onClose={onClose} busy={busy}
       onConfirm={() => {
         if (picking.current) return;
         try {
           setAvatar(draft);
           onClose();
-          showFeedback('头像已保存');
+          showFeedback(copy.saved);
         } catch {
-          setError('头像保存失败，请重试。');
+          setError(copy.saveFailed);
         }
       }}>
       <LinearGradient colors={[t.accentSoft, t.panel.raised]} style={[styles.preview, { borderColor: t.panel.border }]}>
         <View style={[styles.frame, { backgroundColor: t.panel.surface, borderColor: t.heroBorder }]}>
           <Avatar image={draft} size={84} />
         </View>
-        <Text style={[styles.label, { color: t.text }]}>{draft ? '自定义图片' : '破晓 · 默认头像'}</Text>
-        <DialogCopy centered>照片会居中裁切，显示为圆形。</DialogCopy>
+        <Text style={[styles.label, { color: t.text }]}>{draft ? copy.custom : copy.default}</Text>
+        <DialogCopy centered>{copy.cropHint}</DialogCopy>
       </LinearGradient>
       <View style={styles.actions}>
-        <PanelButton label={busy ? '读取图片中…' : '选择本机图片'} icon="image-outline"
+        <PanelButton label={busy ? copy.loading : copy.choose} icon="image-outline"
           onPress={() => void pickPhoto()} disabled={busy} grow />
-        <PanelButton label="恢复默认" variant="text" disabled={busy} onPress={() => {
+        <PanelButton label={copy.reset} variant="text" disabled={busy} onPress={() => {
           setDraft(null);
           setError('');
         }} />

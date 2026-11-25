@@ -4,10 +4,30 @@ import WidgetKit
 private let appGroup = "group.com.tntlikely.zhouerfuqi"
 private let planKey = "zf.next.alarms.v1"
 
+private struct WidgetLocalization {
+  let locale: Locale
+  private let bundle: Bundle
+
+  init() {
+    let language = UserDefaults(suiteName: appGroup)?.string(forKey: "zf.next.alarms.language")
+      ?? Bundle.main.preferredLocalizations.first ?? "en"
+    bundle = Bundle.main.url(forResource: language, withExtension: "lproj").flatMap(Bundle.init(url:)) ?? .main
+    let preferredLanguage = Locale(identifier: language).language
+    let current = Locale.autoupdatingCurrent
+    var components = Locale.Components(languageCode: preferredLanguage.languageCode,
+      script: preferredLanguage.script, languageRegion: current.region)
+    components.calendar = .gregorian
+    components.hourCycle = current.hourCycle
+    locale = Locale(components: components)
+  }
+
+  func text(_ key: String) -> String {
+    bundle.localizedString(forKey: key, value: nil, table: nil)
+  }
+}
+
 private struct PlannedAlarm: Decodable {
   let epochMs: Double
-  let date: String
-  let time: String
   let title: String
 
   var timestamp: Date { Date(timeIntervalSince1970: epochMs / 1000) }
@@ -20,7 +40,12 @@ private struct NextAlarmEntry: TimelineEntry {
 
 private struct NextAlarmProvider: TimelineProvider {
   func placeholder(in context: Context) -> NextAlarmEntry {
-    NextAlarmEntry(date: .now, alarm: PlannedAlarm(epochMs: 0, date: "明天", time: "06:40", title: "上班 · 第一道"))
+    let now = Date.now
+    let calendar = Calendar.autoupdatingCurrent
+    let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) ?? now
+    let sample = calendar.date(bySettingHour: 6, minute: 40, second: 0, of: tomorrow) ?? tomorrow
+    let alarm = PlannedAlarm(epochMs: sample.timeIntervalSince1970 * 1000, title: WidgetLocalization().text("widget.example"))
+    return NextAlarmEntry(date: now, alarm: alarm)
   }
 
   func getSnapshot(in context: Context, completion: @escaping (NextAlarmEntry) -> Void) {
@@ -48,6 +73,7 @@ private struct NextAlarmProvider: TimelineProvider {
 
 private struct NextAlarmView: View {
   let entry: NextAlarmEntry
+  private let copy = WidgetLocalization()
 
   private var fill: LinearGradient {
     LinearGradient(colors: [Color(red: 0.10, green: 0.20, blue: 0.33), Color(red: 0.04, green: 0.08, blue: 0.16)],
@@ -56,18 +82,19 @@ private struct NextAlarmView: View {
 
   private var face: some View {
     VStack(alignment: .leading, spacing: 4) {
-      Label("下次计划响铃", systemImage: "alarm")
+      Label(copy.text("widget.caption"), systemImage: "alarm")
         .font(.caption2.weight(.semibold))
         .foregroundStyle(Color(red: 0.72, green: 0.83, blue: 0.98))
       if let alarm = entry.alarm {
-        Text(alarm.time)
+        Text(alarm.timestamp, format: .dateTime.hour().minute().locale(copy.locale))
           .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
           .minimumScaleFactor(0.70)
           .lineLimit(1)
         Text(alarm.title).font(.caption.weight(.semibold)).lineLimit(2)
-        Text(alarm.date).font(.caption2)
+        Text(alarm.timestamp, format: .dateTime.month(.abbreviated).day().locale(copy.locale))
+          .font(.caption2)
       } else {
-        Text("近期暂无计划").font(.callout.weight(.semibold))
+        Text(copy.text("widget.empty")).font(.callout.weight(.semibold))
       }
     }
     .foregroundStyle(.white)
@@ -88,11 +115,12 @@ private struct NextAlarmView: View {
 @main
 struct NextAlarmWidget: Widget {
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: "ZhouerfuqiNextAlarm", provider: NextAlarmProvider()) { entry in
+    let copy = WidgetLocalization()
+    return StaticConfiguration(kind: "ZhouerfuqiNextAlarm", provider: NextAlarmProvider()) { entry in
       NextAlarmView(entry: entry)
     }
-    .configurationDisplayName("下一次响铃")
-    .description("在桌面查看周而复起的下一次计划响铃。")
+    .configurationDisplayName(copy.text("widget.name"))
+    .description(copy.text("widget.description"))
     .supportedFamilies([.systemSmall, .systemMedium])
   }
 }

@@ -6,6 +6,8 @@ import { registry, type RegistryEntry } from './registry';
 import { useGroups } from '../stores/groups';
 import { publishWidgetPlan } from '../services/widgets';
 import { setRefresherEnabled } from '../../modules/zf-alarm/src';
+import { getLocale } from '../i18n';
+import { systemMessages } from '../i18n/system';
 
 type Trial = { id: string; epochMs: number; delivery: AlarmDelivery };
 type ScheduleState = {
@@ -90,14 +92,15 @@ async function syncSchedule(groups: ReturnType<typeof useGroups.getState>['group
 }
 
 export function snooze(minutes: number, title: string): Promise<Trial> {
-  return enqueue(() => scheduleOneShot('snooze', minutes * 60_000, title, '稍后响铃'));
+  return enqueue(() => scheduleOneShot('snooze', minutes * 60_000, title, systemMessages[getLocale()].snoozedAlarm));
 }
 
 export function scheduleTestRing(): Promise<Trial> {
   return enqueue(async () => {
     const existing = savedTrial();
     if (existing) return existing;
-    const trial = await scheduleOneShot('test', 30_000, '锁屏试响', '周而复起');
+    const copy = systemMessages[getLocale()];
+    const trial = await scheduleOneShot('test', 30_000, copy.trialTitle, copy.appName);
     useScheduleState.setState({ trial });
     return trial;
   });
@@ -128,7 +131,7 @@ async function scheduleOneShot(kind: 'snooze' | 'test', delay: number, title: st
     await gateway.cancel([id]);
     delete map[id];
     registry.set(map);
-    throw new Error('请开启闹钟或通知权限，再安排试响。');
+    throw new Error(systemMessages[getLocale()].enableBeforeTrial);
   }
   map[id] = { epochMs, title, delivery };
   registry.set(map);

@@ -7,25 +7,29 @@ import notifee, {
 } from 'react-native-notify-kit';
 import type { TimestampTrigger } from 'react-native-notify-kit';
 import type { AlarmGateway, AlarmPermissionStatus, MaterializedAlarm } from './types';
+import { getLocale, type AppLocale } from '../i18n';
+import { systemMessages } from '../i18n/system';
 
 /**
  * [M1] Android 实现:notify-kit(Notifee 新架构 fork)。
  * alarmType = SET_ALARM_CLOCK 与系统时钟同源,享受 Doze/OEM 白名单豁免。
  */
 const CHANNEL = 'alarms';
-let channelReady = false;
+let channelLocale: AppLocale | undefined;
 
 async function ensureChannel() {
-  if (channelReady) return;
+  const locale = getLocale();
+  if (channelLocale === locale) return;
+  const copy = systemMessages[locale];
   await notifee.createChannel({
     id: CHANNEL,
-    name: '闹钟',
-    description: '班制闹钟响铃通道',
+    name: copy.notificationChannel,
+    description: copy.notificationChannelDescription,
     importance: AndroidImportance.HIGH,
     vibration: true,
     vibrationPattern: [300, 500, 300, 500],
   });
-  channelReady = true;
+  channelLocale = locale;
 }
 
 export const notifyKitGateway: AlarmGateway = {

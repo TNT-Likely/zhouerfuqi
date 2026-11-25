@@ -26,7 +26,7 @@
 
 ## 数据删除
 
-卸载本应用即删除全部本地数据;你也可在「设置 → 备份与导出」中导出或清除。
+在班组编辑页可以删除单个班组。卸载应用会删除设备上的应用数据。通过「设置 → 备份与导出」另存的文件可以在文件管理器中删除。
 
 ## 联系方式
 
@@ -38,7 +38,7 @@
 
 Updated November 22, 2026
 
-**Zhouerfuqi** is a local-first shift-scheduling alarm app.
+**RosterWake (周而复起)** is a local-first shift-scheduling alarm app.
 
 **We collect no personal data.** No accounts, no analytics, no ads, no trackers. All
 your schedules and settings stay on your device. When you choose an avatar, the
@@ -56,6 +56,8 @@ full-screen intent (show the ringing page on lock screen), boot receiver (restor
 schedules after reboot), request-install-packages (self-update in the GitHub Release
 distribution only; the Google Play build does not include it).
 
-**Data deletion:** uninstall the app, or use Settings → Backup & Export.
+**Data deletion.** Delete a schedule from its edit screen. Uninstalling the app
+removes the app data on that device. Manage any files you exported in your device’s
+file manager.
 
 Contact: https://github.com/TNT-Likely/zhouerfuqi/issues
