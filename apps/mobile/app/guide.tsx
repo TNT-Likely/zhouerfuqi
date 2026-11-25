@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { AppState, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { PanelButton, PanelList, PanelRow } from '@/components/Panel';
 import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
@@ -33,6 +33,7 @@ const vendorTips = [
 ] as const;
 
 export default function GuideScreen() {
+  const router = useRouter();
   const t = useTheme();
   const p = t.panel;
   const [permissions, setPermissions] = useState<AlarmPermissionStatus | null>(null);

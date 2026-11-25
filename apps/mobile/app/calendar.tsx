@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { expandGroups, isoWeekday, isRuleDay, localDateISO, occurrenceEpoch, type AlarmGroup } from '@core';
 import { Sheet } from '@/components/Sheet';
 import { AppDialog, DialogCopy } from '@/components/AppDialog';
@@ -21,6 +21,7 @@ import { useTheme } from '@/theme';
 type Draft = { original: string[]; dates: string[] };
 
 export default function CalendarScreen() {
+  const router = useRouter();
   const t = useTheme();
   const notify = useFeedback();
   const params = useLocalSearchParams<{ date?: string; group?: string }>();

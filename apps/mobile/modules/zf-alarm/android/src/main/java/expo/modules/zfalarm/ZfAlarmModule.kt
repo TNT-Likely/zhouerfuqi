@@ -58,7 +58,8 @@ class ZfAlarmReceiver : BroadcastReceiver() {
           if (ZfAlarmModule.refresherEnabled(context)) ZfAlarmModule.scheduleRefresherAt(context)
         }.onFailure { Log.w(TAG, "Could not restore alarms", it) }
         ZfPlanWidget.refresh(context)
-        startResync(context)
+        // 覆盖安装后，用户第一次打开时由前台同步，避免两个运行时同时初始化。
+        if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) startResync(context)
       }
     }
   }

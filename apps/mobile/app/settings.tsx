@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { AppState, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import Constants from 'expo-constants';
 import { AppDialog, DialogCopy, DialogSummary, type AppDialogContent } from '@/components/AppDialog';
 import { Avatar, AvatarEditor } from '@/components/Avatar';
@@ -44,6 +44,7 @@ const android = Platform.OS === 'android';
 const canUpdate = isUpdateSupported();
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const t = useTheme();
   const p = t.panel;
   const notify = useFeedback();

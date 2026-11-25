@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { addDays, diffDays, expandGroups, isoWeekday, type AlarmGroup, type Occurrence } from '@core';
 import { Avatar } from '@/components/Avatar';
 import { AppDialog, DialogCopy } from '@/components/AppDialog';
@@ -22,10 +22,10 @@ import { useGroups } from '@/stores/groups';
 import { usePrefs } from '@/stores/prefs';
 import { useTheme } from '@/theme';
 
-const newGroup = (template?: string) => router.push({ pathname: '/group/new', params: template ? { template } : {} });
-const openCalendar = (date: string, group?: string) => router.push({ pathname: '/calendar', params: { date, group } });
-
 export default function HomeScreen() {
+  const router = useRouter();
+  const newGroup = (template?: string) => router.push({ pathname: '/group/new', params: template ? { template } : {} });
+  const openCalendar = (date: string, group?: string) => router.push({ pathname: '/calendar', params: { date, group } });
   const t = useTheme();
   const notify = useFeedback();
   const { groups, now, calendar, upcoming, state } = useFutureSchedule();

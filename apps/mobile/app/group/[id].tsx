@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { addDays, expandGroup, isoWeekday, localDateISO, nextUpcomingOccurrences, type AlarmGroup, type AlarmTime, type RepeatRule, type Weekday } from '@core';
 import { AlarmTimeRows } from '@/components/AlarmTimeRows';
 import { AppDialog, DialogCopy, DialogSummary } from '@/components/AppDialog';
@@ -35,6 +35,7 @@ type Editing = DraftTime & { id: string; shiftId?: string; creating?: boolean };
 const newTime = (shiftId?: string): Editing => ({ id: makeId('t'), hour: 7, minute: 0, label: '', shiftId, creating: true });
 
 export default function GroupEditScreen() {
+  const router = useRouter();
   const t = useTheme();
   const notify = useFeedback();
   const { id, template, timeId } = useLocalSearchParams<{ id: string; template?: string; timeId?: string }>();

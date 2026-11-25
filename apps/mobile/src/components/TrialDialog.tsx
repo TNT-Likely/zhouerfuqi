@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Platform } from 'react-native';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { scheduleTestRing } from '@/scheduler/sync';
 import { requestAlarmPermissions } from '@/services/permissions';
 import { AppDialog, DialogCopy, DialogSummary } from './AppDialog';
@@ -8,6 +8,7 @@ import { PanelButton } from './Panel';
 import { useFeedback } from './Feedback';
 
 export function TrialDialog({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const notify = useFeedback();
   const [busy, setBusy] = useState(false);
   const scheduling = useRef(false);

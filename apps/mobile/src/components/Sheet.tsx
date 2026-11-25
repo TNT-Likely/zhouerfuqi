@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/theme';
 
 /**
@@ -23,6 +23,7 @@ export function Sheet({
   children: ReactNode;
   appearance?: 'default' | 'panel';
 }) {
+  const router = useRouter();
   const t = useTheme();
   const panel = appearance === 'panel';
   return (

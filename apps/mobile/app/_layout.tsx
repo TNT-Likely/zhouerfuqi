@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stack, router } from 'expo-router';
+import { Stack, useRootNavigationState, useRouter } from 'expo-router';
 import { AppState, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import notifee from 'react-native-notify-kit';
@@ -11,6 +11,8 @@ import { syncAll } from '@/scheduler/sync';
 import { initHolidays } from '@/services/holidays';
 import { consumeLastNotificationTap, onNotificationTap } from '../modules/zf-alarm-ios/src';
 import { useGroups } from '@/stores/groups';
+
+type RingRoute = { timeLabel: string; title?: string; alarmId?: string };
 
 export default function RootLayout() {
   return (
@@ -24,7 +26,16 @@ export default function RootLayout() {
 
 function AppNavigation() {
   const t = useTheme();
+  const router = useRouter();
+  const navigationKey = useRootNavigationState()?.key;
+  const [ringRoute, setRingRoute] = useState<RingRoute | null>(null);
   const [startupError, setStartupError] = useState<string>();
+  useEffect(() => {
+    if (!navigationKey || !ringRoute) return;
+    setRingRoute(null);
+    router.push({ pathname: '/ring', params: ringRoute });
+  }, [navigationKey, ringRoute, router]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -39,15 +50,15 @@ function AppNavigation() {
 
       // 全屏意图/点通知 → 直接进响铃页(notify-kit 把 data 原样带回来)
       const initial = await notifee.getInitialNotification();
-      if (initial?.notification.data?.timeLabel) {
-        router.push('/ring');
+      if (typeof initial?.notification.data?.timeLabel === 'string') {
+        setRingRoute({ timeLabel: initial.notification.data.timeLabel, title: initial.notification.title, alarmId: initial.notification.id });
       }
     })();
 
     const unsub = notifee.onForegroundEvent(({ type, detail }) => {
       // EventType.PRESS = 1
-      if (type === 1 && detail.notification?.data?.timeLabel) {
-        router.push('/ring');
+      if (type === 1 && typeof detail.notification?.data?.timeLabel === 'string') {
+        setRingRoute({ timeLabel: detail.notification.data.timeLabel, title: detail.notification.title, alarmId: detail.notification.id });
       }
     });
 
@@ -56,10 +67,10 @@ function AppNavigation() {
     let unsubIosTap: (() => void) | undefined;
     if (Platform.OS === 'ios') {
       const pending = consumeLastNotificationTap();
-      if (pending) router.push({ pathname: '/ring', params: { timeLabel: pending.timeLabel, title: pending.title, alarmId: pending.id } });
+      if (pending) setRingRoute({ timeLabel: pending.timeLabel, title: pending.title, alarmId: pending.id });
       unsubIosTap = onNotificationTap(() => {
         const tap = consumeLastNotificationTap();
-        if (tap) router.push({ pathname: '/ring', params: { timeLabel: tap.timeLabel, title: tap.title, alarmId: tap.id } });
+        if (tap) setRingRoute({ timeLabel: tap.timeLabel, title: tap.title, alarmId: tap.id });
       });
     }
 

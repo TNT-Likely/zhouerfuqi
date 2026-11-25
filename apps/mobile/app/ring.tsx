@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, router } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,6 +12,7 @@ import { gateway } from '@/gateway';
 import { useTheme } from '@/theme';
 
 export default function RingScreen() {
+  const router = useRouter();
   const t = useTheme();
   const notify = useFeedback();
   const { top, bottom } = useSafeAreaInsets();
