@@ -70,6 +70,8 @@ final class ZfIosAlarmScheduler {
 
     let interval = date.timeIntervalSinceNow
     guard interval > 0 else { return "skipped" }
+    let settings = await notifications.notificationSettings()
+    guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else { return "skipped" }
     let content = UNMutableNotificationContent()
     content.title = title
     content.body = body

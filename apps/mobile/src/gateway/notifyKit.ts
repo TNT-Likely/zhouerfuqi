@@ -63,6 +63,7 @@ export const notifyKitGateway: AlarmGateway = {
         trigger,
       );
     }
+    return Object.fromEntries(alarms.map((alarm) => [alarm.id, 'notification' as const]));
   },
 
   async cancel(ids: string[]) {

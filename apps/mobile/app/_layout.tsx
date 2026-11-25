@@ -9,7 +9,6 @@ import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { gateway } from '@/gateway';
 import { syncAll } from '@/scheduler/sync';
 import { initHolidays } from '@/services/holidays';
-import { scheduleRefresher as zfScheduleRefresher } from '../modules/zf-alarm/src';
 import { consumeLastNotificationTap, onNotificationTap } from '../modules/zf-alarm-ios/src';
 import { useGroups } from '@/stores/groups';
 
@@ -30,16 +29,13 @@ function AppNavigation() {
     (async () => {
       try {
         await gateway.init();
-        await gateway.requestPermissions();
         await syncAll();
-        // 每日 03:30 自刷新(补偿 MIUI 对 7 天外精确闹钟的钳制)
-        zfScheduleRefresher(3, 30);
       } catch (error) {
         setStartupError(error instanceof Error ? error.message : String(error));
       }
 
       // 节假日缓存加载 + 静默尝试补次年数据(离线/未发布时静默)
-      void initHolidays();
+      void initHolidays().then(() => syncAll()).catch((error) => console.warn('节假日同步失败', error));
 
       // 全屏意图/点通知 → 直接进响铃页(notify-kit 把 data 原样带回来)
       const initial = await notifee.getInitialNotification();
@@ -60,10 +56,10 @@ function AppNavigation() {
     let unsubIosTap: (() => void) | undefined;
     if (Platform.OS === 'ios') {
       const pending = consumeLastNotificationTap();
-      if (pending) router.push({ pathname: '/ring', params: { timeLabel: pending.timeLabel } });
+      if (pending) router.push({ pathname: '/ring', params: { timeLabel: pending.timeLabel, title: pending.title, alarmId: pending.id } });
       unsubIosTap = onNotificationTap(() => {
         const tap = consumeLastNotificationTap();
-        if (tap) router.push({ pathname: '/ring', params: { timeLabel: tap.timeLabel } });
+        if (tap) router.push({ pathname: '/ring', params: { timeLabel: tap.timeLabel, title: tap.title, alarmId: tap.id } });
       });
     }
 

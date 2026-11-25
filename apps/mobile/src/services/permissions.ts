@@ -1,6 +1,7 @@
 import { Platform, PermissionsAndroid, Linking } from 'react-native';
 import { requireNativeModule } from 'expo-modules-core';
 import { nativeGateway } from '../gateway/nativeGateway';
+import { gateway } from '../gateway';
 
 export const supportsNotificationPermissionPrompt = Platform.OS === 'android' && Number(Platform.Version) >= 33;
 
@@ -27,6 +28,27 @@ export async function requestNotificationPermission(): Promise<boolean> {
   }
 }
 
+export async function requestAlarmPermissions(): Promise<void> {
+  if (Platform.OS === 'ios') {
+    await gateway.requestPermissions();
+  } else if (await checkNotificationPermission() === false) {
+    await requestNotificationPermission();
+  }
+}
+
+export async function openAlarmPermissionSettings(kind: 'exact' | 'fullScreen'): Promise<void> {
+  if (Platform.OS === 'android') {
+    const native = requireNativeModule('ZfAlarm');
+    try {
+      const opened = kind === 'exact' ? native.openExactAlarmSettings() : native.openFullScreenSettings();
+      if (opened === true) return;
+    } catch {
+      // 厂商系统没有对应的独立设置入口。
+    }
+  }
+  await Linking.openSettings();
+}
+
 export async function openAppNotificationSettings(): Promise<void> {
   if (Platform.OS === 'android') {
     try {
@@ -36,10 +58,4 @@ export async function openAppNotificationSettings(): Promise<void> {
     }
   }
   await Linking.openSettings();
-}
-
-/** 是否需要弹横幅:有启用中的班组 且 通知权限明确未授 */
-export async function needsNotificationBanner(hasEnabledGroup: boolean): Promise<boolean> {
-  if (!hasEnabledGroup) return false;
-  return (await checkNotificationPermission()) === false;
 }

@@ -6,8 +6,8 @@ import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { PanelList, PanelRow, PanelSection } from '@/components/Panel';
 import { Sheet } from '@/components/Sheet';
 import { holidayInfo } from '@/services/holidays';
-import { useGroups } from '@/stores/groups';
 import { useTheme } from '@/theme';
+import { getVersion } from '../modules/zf-update/src';
 
 const REPO = 'https://github.com/TNT-Likely/zhouerfuqi';
 const ios = Platform.OS === 'ios';
@@ -15,16 +15,9 @@ const beta = ios ? 'https://testflight.apple.com/join/9vNcHgha' : REPO + '/issue
 
 export default function AboutScreen() {
   const t = useTheme();
-  const groups = useGroups((s) => s.groups);
   const [showTech, setShowTech] = useState(false);
   const [linkFailed, setLinkFailed] = useState(false);
-  const enabled = groups.filter((group) => group.enabled);
-  const version = Constants.expoConfig?.version;
-  const stats = [
-    { value: enabled.length, label: '启用班组' },
-    { value: enabled.reduce((count, group) => count + group.times.length, 0), label: '启用响铃' },
-    { value: holidayInfo().days, label: '假日与补班' },
-  ];
+  const version = ios ? Constants.expoConfig?.version : getVersion().versionName;
   const open = (url: string) => () => { void Linking.openURL(url).catch(() => setLinkFailed(true)); };
 
   return (
@@ -35,24 +28,15 @@ export default function AboutScreen() {
           <Text style={[styles.name, { color: t.text }]}>周而复起</Text>
           <Text style={[styles.tagline, { color: t.panel.muted }]}>适合大小周、轮班与手动排班的本地闹钟</Text>
           {version ? <Text style={[styles.version, { color: t.panel.accent, backgroundColor: t.accentSoft }]}>v{version}</Text> : null}
-          <View style={[styles.stats, { borderTopColor: t.panel.border }]}>
-            {stats.map((item, i) => (
-              <View key={item.label} style={[
-                styles.stat, i > 0 && { borderLeftColor: t.panel.border, borderLeftWidth: 1 },
-              ]}>
-                <Text style={[styles.statValue, { color: t.text }]}>{item.value}</Text>
-                <Text style={[styles.statLabel, { color: t.panel.muted }]}>{item.label}</Text>
-              </View>
-            ))}
-          </View>
         </LinearGradient>
 
         <PanelSection title="项目与社区">
-          <PanelRow icon="logo-github" title="GitHub 仓库" detail="查看源码与发布记录" onPress={open(REPO)} external />
+          <PanelRow icon="time-outline" title="更新记录" detail="查看版本变化和下载" onPress={open(REPO + '/releases')} external />
           <PanelRow icon="chatbubble-ellipses-outline" title="反馈与建议" detail="报告问题或分享排班需求"
             onPress={open(REPO + '/issues')} external divider />
           <PanelRow icon="flask-outline" title="加入内测" detail={ios ? 'TestFlight 公开内测' : 'Google Play 封闭测试'}
             onPress={open(beta)} external divider />
+          <PanelRow icon="logo-github" title="源代码" onPress={open(REPO)} external divider />
         </PanelSection>
 
         <PanelSection title="数据与隐私">
@@ -87,9 +71,5 @@ const styles = StyleSheet.create({
   name: { marginTop: 9, fontSize: 23, fontWeight: '800', letterSpacing: -0.4 },
   tagline: { fontSize: 12.5, marginTop: 4, textAlign: 'center' },
   version: { marginTop: 8, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, overflow: 'hidden', fontSize: 11.5, fontWeight: '700' },
-  stats: { marginTop: 15, borderTopWidth: 1, paddingTop: 11, flexDirection: 'row', alignSelf: 'stretch' },
-  stat: { flex: 1, minWidth: 0, alignItems: 'center', paddingHorizontal: 4, gap: 3 },
-  statValue: { fontSize: 19, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  statLabel: { fontSize: 11, textAlign: 'center' },
   footer: { textAlign: 'center', fontSize: 11, paddingVertical: 4 },
 });

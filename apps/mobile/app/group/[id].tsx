@@ -1,438 +1,404 @@
-import { useMemo, useRef, useState, type ComponentRef } from 'react';
-import { View, Text, Pressable, TextInput, Switch, StyleSheet } from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import type { AlarmGroup, AlarmTime, Weekday } from '@core';
-import { useGroups } from '@/stores/groups';
-import { syncAll } from '@/scheduler/sync';
-import { todayISO } from '@/scheduler/materialize';
-import { cnDate, WD } from '@/lib/labels';
-import { useTheme, type Tokens } from '@/theme';
-import { TimeGridPicker, type DraftTime } from '@/components/TimeWheel';
-import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
-import { checkNotificationPermission, requestNotificationPermission } from '@/services/permissions';
-
-import { AppDialog, DialogCopy } from '@/components/AppDialog';
-import { PanelButton, PanelList, PanelRow } from '@/components/Panel';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { addDays, expandGroup, isoWeekday, localDateISO, nextUpcomingOccurrences, type AlarmGroup, type AlarmTime, type RepeatRule, type Weekday } from '@core';
+import { AlarmTimeRows } from '@/components/AlarmTimeRows';
+import { AppDialog, DialogCopy, DialogSummary } from '@/components/AppDialog';
 import { useFeedback } from '@/components/Feedback';
+import { DateDialog, firstOfMonth, MonthGrid } from '@/components/MonthGrid';
+import { PanelButton, PanelList, PanelRow } from '@/components/Panel';
+import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
+import { TimeGridPicker, type DraftTime } from '@/components/TimeWheel';
+import { clockLabel } from '@/lib/clock';
+import { cnDate, ruleDesc, WD } from '@/lib/labels';
+import { cycleRule, makeId, templateGroup } from '@/lib/templates';
+import { syncAll, useScheduleState } from '@/scheduler/sync';
+import { getHolidayCalendar } from '@/services/holidays';
+import { requestAlarmPermissions } from '@/services/permissions';
+import { useGroups } from '@/stores/groups';
+import { useTheme } from '@/theme';
 
-const KINDS = [
-  { k: 'weekly', label: '每周几' },
-  { k: 'everyNWeeks', label: '每 N 周' },
-  { k: 'everyNDays', label: '每 N 天' },
-  { k: 'customDates', label: '月历' },
+const RULES = [
+  ['weekly', '每周'], ['everyNWeeks', '大小周'], ['everyNDays', '按天间隔'], ['cycle', '轮班循环'], ['customDates', '手动'],
 ] as const;
 
 const PRESETS = [
   { hour: 6, minute: 40, label: '第一道' },
   { hour: 6, minute: 50, label: '第二道' },
   { hour: 7, minute: 0, label: '底线' },
-  { hour: 7, minute: 30, label: '' },
-  { hour: 8, minute: 0, label: '' },
+  { hour: 7, minute: 30 },
+  { hour: 8, minute: 0 },
   { hour: 12, minute: 55, label: '午休' },
 ];
 
-function nextSaturdays(count: number): string[] {
-  const out: string[] = [];
-  const d = new Date(`${todayISO()}T00:00:00`);
-  while (out.length < count) {
-    if (d.getDay() === 6) out.push(fmt(d));
-    d.setDate(d.getDate() + 1);
-  }
-  return out;
-}
-function fmt(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-function newGroup(): AlarmGroup {
-  return {
-    id: `g${Date.now()}`,
-    name: '新班组',
-    enabled: true,
-    holidayMode: 'china-smart',
-    times: [{ id: 't1', hour: 7, minute: 0 }],
-    rule: { kind: 'everyNWeeks', n: 2, weekdays: [1, 2, 3, 4, 5], anchor: nextSaturdays(1)[0]! },
-  };
-}
+type Editing = DraftTime & { id: string; shiftId?: string; creating?: boolean };
+const newTime = (shiftId?: string): Editing => ({ id: makeId('t'), hour: 7, minute: 0, label: '', shiftId, creating: true });
 
 export default function GroupEditScreen() {
   const t = useTheme();
   const notify = useFeedback();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, template, timeId } = useLocalSearchParams<{ id: string; template?: string; timeId?: string }>();
   const isNew = id === 'new';
-  const existing = useGroups((s) => s.groups.find((g) => g.id === id));
-  const upsert = useGroups((s) => s.upsert);
-  const remove = useGroups((s) => s.remove);
-
-  const [draft, setDraft] = useState<AlarmGroup>(() => (isNew || !existing ? newGroup() : JSON.parse(JSON.stringify(existing)) as AlarmGroup));
-  const [nameError, setNameError] = useState(false);
-  const [timeError, setTimeError] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [failure, setFailure] = useState<string>();
+  const existing = useGroups((s) => s.groups.find((group) => group.id === id));
+  const [draft, setDraft] = useState(() => existing ?? templateGroup(template));
+  const original = useRef(draft);
+  const [error, setError] = useState('');
+  const [dialog, setDialog] = useState<'enable' | 'discard' | 'delete' | 'anchor' | 'dates' | 'changes' | null>(null);
+  const [pending, setPending] = useState<Editing | null>(() => {
+    const shift = existing?.rule.kind === 'cycle' ? existing.rule.shifts.find((item) => item.times.some((time) => time.id === timeId)) : undefined;
+    const time = (shift?.times ?? existing?.times)?.find((item) => item.id === timeId);
+    return time ? { ...time, label: time.label ?? '', shiftId: shift?.id } : null;
+  });
+  const [timeError, setTimeError] = useState('');
+  const [selectedShift, setSelectedShift] = useState<string>();
+  const [cycleDay, setCycleDay] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
   const saving = useRef(false);
-  const nameField = useRef<ComponentRef<typeof TextInput>>(null);
-  const saturdays = useMemo(() => nextSaturdays(4), []);
-  const patch = (p: Partial<AlarmGroup>) => setDraft((d) => ({ ...d, ...p }));
+  const calendar = getHolidayCalendar();
+  const today = localDateISO();
+  const rule = draft.rule;
+  const cycle = rule.kind === 'cycle' ? rule : undefined;
+  const shift = cycle?.shifts.find((item) => item.id === selectedShift) ?? cycle?.shifts[0];
+  const times = shift?.times ?? draft.times;
+  const previewGroup = useMemo(() => ({ ...draft, enabled: true }), [draft]);
+  const preview = useMemo(() => expandGroup(previewGroup, calendar, today, 14), [previewGroup, calendar, today]);
+  const previewDates = [...new Set(preview.map((item) => item.date))];
+  const first = nextUpcomingOccurrences([previewGroup], calendar, new Date())[0];
+  const ruleChanged = JSON.stringify(rule) !== JSON.stringify(original.current.rule) || draft.holidayMode !== original.current.holidayMode;
+  const editedDates = useMemo(() => {
+    if (!ruleChanged) return [];
+    const before = expandGroup({ ...original.current, enabled: true }, calendar, today, 14);
+    return Array.from({ length: 14 }, (_, index) => addDays(today, index)).filter((date) => (
+      before.filter((item) => item.date === date).map(clockLabel).join(',') !==
+      preview.filter((item) => item.date === date).map(clockLabel).join(',')
+    ));
+  }, [ruleChanged, calendar, today, preview]);
+  const dirty = JSON.stringify(draft) !== JSON.stringify(original.current);
+  const patch = (next: Partial<AlarmGroup>) => {
+    setError('');
+    setDraft((value) => ({ ...value, ...next }));
+  };
+  const setRule = (next: RepeatRule) => patch({ rule: next });
 
-  if (!isNew && !existing) {
-    return (
-      <Centered t={t}>
-        <Text style={{ color: t.text2 }}>该班组已被删除</Text>
-        <Pressable onPress={() => router.back()} style={[styles.primaryBtn, { backgroundColor: t.primary, marginTop: 16 }]}>
-          <Text style={{ color: t.onPrimary, fontWeight: '800' }}>返回</Text>
-        </Pressable>
-      </Centered>
-    );
+  function choose(kind: RepeatRule['kind']) {
+    if (kind === rule.kind) return;
+    switch (kind) {
+      case 'weekly': setRule({ kind, weekdays: [1, 2, 3, 4, 5] }); break;
+      case 'everyNWeeks': setRule(templateGroup('alternating').rule); break;
+      case 'everyNDays': setRule({ kind, n: 2, anchor: today }); break;
+      case 'cycle': patch({ rule: cycleRule('two', today, draft.times), holidayMode: 'raw' }); break;
+      case 'customDates': setRule({ kind, dates: [] }); break;
+    }
   }
 
-  const save = async () => {
-    if (saving.current) return;
-    const name = draft.name.trim();
-    if (!name) {
-      setNameError(true);
-      nameField.current?.focus();
+  function updateTimes(next: AlarmTime[], shiftId = shift?.id) {
+    if (cycle && shiftId) setRule({ ...cycle, shifts: cycle.shifts.map((item) => item.id === shiftId ? { ...item, times: next } : item) });
+    else patch({ times: next });
+  }
+
+  function confirmTime() {
+    if (!pending) return;
+    const list = (cycle?.shifts.find((item) => item.id === pending.shiftId)?.times ?? draft.times)
+      .filter((time) => time.id !== pending.id);
+    if (list.some((time) => time.hour === pending.hour && time.minute === pending.minute)) {
+      setTimeError('这个时间已经在当前班次里。');
       return;
     }
-    if (!draft.times.length) {
-      setTimeError(true);
+    const { id, hour, minute, label } = pending;
+    updateTimes([...list, { id, hour, minute, label: label.trim() || undefined }]
+      .sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute)), pending.shiftId);
+    setPending(null);
+    setTimeError('');
+  }
+
+  function validate() {
+    if (!draft.name.trim()) return '请输入班组名称。';
+    if (!draft.times.length && !cycle) return '请至少添加一个响铃时间。';
+    if ((rule.kind === 'weekly' || rule.kind === 'everyNWeeks') && !rule.weekdays.length) return '请选择响铃的星期。';
+    if (isNew && rule.kind === 'customDates' && !rule.dates.length) return '请先在月历选择响铃日期。';
+    if (cycle && (!cycle.days.some(Boolean) || cycle.shifts.some((item) => cycle.days.includes(item.id) && (!item.name.trim() || !item.times.length)))) {
+      return '循环至少需要一个班次，使用中的班次要有名称和响铃时间。';
+    }
+    return '';
+  }
+
+  async function save(confirmed = false) {
+    if (saving.current) return;
+    const problem = validate();
+    if (problem) { setError(problem); return; }
+    if (!confirmed && (isNew || ruleChanged)) {
+      setDialog(isNew ? 'enable' : 'changes');
       return;
     }
     saving.current = true;
+    setBusy(true);
     try {
-      if (draft.enabled && await checkNotificationPermission() === false) await requestNotificationPermission();
-      upsert({ ...draft, name });
+      if (isNew) await requestAlarmPermissions();
+      useGroups.getState().upsert({ ...draft, name: draft.name.trim() });
+      setDialog(null);
       router.back();
-    } catch (error) {
-      setFailure(error instanceof Error ? error.message : String(error));
+      try {
+        await syncAll();
+        const next = useScheduleState.getState();
+        const firstEntry = Object.entries(next.entries).filter(([key]) => key.startsWith(draft.id + ":")).some(([, item]) => item.delivery === 'system' || item.delivery === 'notification');
+        notify('班组已保存', firstEntry ? '已同步响铃计划。' : '可在设置查看响铃登记状态。');
+      } catch {
+        notify('班组已保存', '响铃同步失败，可在设置中重试。', 'warning', 'alert-circle-outline');
+      }
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '保存班组失败。');
+      setDialog(null);
     } finally {
       saving.current = false;
+      setBusy(false);
     }
-  };
+  }
 
-  const removeTime = (id: string) => {
-    if (draft.times.length <= 1) {
-      setTimeError(true);
-      return;
-    }
-    setTimeError(false);
-    setDraft((current) => current.times.length > 1
-      ? { ...current, times: current.times.filter((time) => time.id !== id) } : current);
-  };
+  function deleteGroup() {
+    useGroups.getState().remove(draft.id);
+    setDialog(null);
+    router.back();
+    void syncAll().then(
+      () => notify('班组已删除', draft.name),
+      () => notify('班组已删除', '响铃同步失败，可在设置中重试。', 'warning'),
+    );
+  }
 
-  const addTime = ({ hour, minute, label }: DraftTime) => {
-    setTimeError(false);
-    setDraft((current) => {
-      if (current.times.some((time) => time.hour === hour && time.minute === minute)) return current;
-      const key = `t${hour}${String(minute).padStart(2, '0')}`;
-      const id = current.times.some((time) => time.id === key) ? `${key}-${Date.now()}` : key;
-      const times = [...current.times, { id, hour, minute, label: label.trim() || undefined }];
-      times.sort((a, b) => a.hour * 60 + a.minute - b.hour * 60 - b.minute);
-      return { ...current, times };
-    });
-  };
-
-  const deleteGroup = () => {
-    try {
-      remove(draft.id);
-      setDeleteOpen(false);
-      router.back();
-      void syncAll().then(
-        () => notify('班组已删除', '此班组的后续响铃已取消。'),
-        () => notify('班组已删除', '响铃同步失败，可在设置中重新同步。', 'warning', 'alert-circle-outline'),
-      );
-    } catch (error) {
-      setDeleteOpen(false);
-      setFailure(error instanceof Error ? error.message : String(error));
-    }
-  };
+  if (!isNew && !existing) {
+    return <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.screen}>
+      <Text style={{ color: t.text }}>该班组已删除。</Text>
+      <PanelButton label="返回" onPress={() => router.back()} />
+    </SafeAreaScrollView>;
+  }
 
   return (
-    <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+    <SafeAreaScrollView backgroundColor={t.bg} contentContainerStyle={styles.screen} keyboardShouldPersistTaps="handled">
       <View style={styles.nav}>
-        <PanelButton label="返回" variant="text" icon="chevron-back" onPress={() => router.back()} />
-        <Text style={{ flex: 1, color: t.text, fontSize: 17, fontWeight: '800' }}>{isNew ? '新建班组' : '编辑班组'}</Text>
-        <PanelButton label="保存" variant="primary" onPress={() => void save()} />
+        <PanelButton label="返回" variant="text" icon="chevron-back" onPress={() => dirty ? setDialog('discard') : router.back()} />
+        <Text accessibilityRole="header" style={[styles.heading, { color: t.text }]}>{isNew ? '新建班组' : '编辑班组'}</Text>
+        <PanelButton label={isNew ? '核对班组' : '保存'} variant="primary" disabled={busy} onPress={() => void save()} />
       </View>
-      <FieldCard t={t} title="班组名称">
-        <TextInput
-          ref={nameField}
-          accessibilityLabel="班组名称"
-          value={draft.name}
-          onChangeText={(name) => {
-            patch({ name });
-            if (name.trim()) setNameError(false);
-          }}
-          style={[styles.input, { backgroundColor: t.panel.raised, borderColor: nameError ? t.panel.danger : t.panel.border, color: t.text }]}
-          placeholder="例如早班"
-          placeholderTextColor={t.panel.muted}
-        />
-        {nameError ? <Text accessibilityLiveRegion="polite" style={[styles.error, { color: t.panel.danger }]}>请输入班组名称。</Text> : null}
-      </FieldCard>
-
-      {/* 规则类型 */}
-      <View style={[styles.seg, { backgroundColor: t.surface, borderColor: t.line }]}>
-        {KINDS.map((k) => (
-          <Pressable
-            key={k.k}
-            onPress={() => setDraft((d) => ({ ...d, rule: switchRule(d.rule, k.k) }))}
-            style={[styles.segItem, draft.rule.kind === k.k ? { backgroundColor: t.primary } : null]}
-          >
-            <Text style={{ fontSize: 11.5, color: draft.rule.kind === k.k ? t.onPrimary : t.text3, fontWeight: draft.rule.kind === k.k ? '800' : '400' }}>
-              {k.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {/* 星期选择(weekly / everyNWeeks) */}
-      {draft.rule.kind === 'weekly' || draft.rule.kind === 'everyNWeeks' ? (
-        <View style={styles.weekRow}>
-          {WD.map((w, i) => {
-            const on = draft.rule.kind === 'weekly' || draft.rule.kind === 'everyNWeeks' ? draft.rule.weekdays.includes((i + 1) as Weekday) : false;
-            return (
-              <Pressable
-                key={w}
-                onPress={() =>
-                  setDraft((d) => {
-                    const r = d.rule;
-                    if (r.kind !== 'weekly' && r.kind !== 'everyNWeeks') return d;
-                    const set = new Set(r.weekdays);
-                    if (set.has((i + 1) as Weekday)) set.delete((i + 1) as Weekday);
-                    else set.add((i + 1) as Weekday);
-                    return { ...d, rule: { ...r, weekdays: [...set].sort() } };
-                  })
-                }
-                style={[styles.wd, { backgroundColor: on ? t.primary : t.surface, borderColor: on ? t.primary : t.line }]}
-              >
-                <Text style={{ fontSize: 12, color: on ? t.onPrimary : t.text2, fontWeight: on ? '800' : '400' }}>{w}</Text>
-              </Pressable>
-            );
-          })}
+      {error ? <Text accessibilityLiveRegion="polite" style={[styles.error, { color: t.panel.danger }]}>{error}</Text> : null}
+      <Card title="班组名称">
+        <TextInput accessibilityLabel="班组名称" value={draft.name} maxLength={36}
+          onChangeText={(name) => patch({ name })} style={[styles.input, { backgroundColor: t.panel.raised, borderColor: t.panel.border, color: t.text }]} />
+      </Card>
+      <Card title="排班规则">
+        <View style={styles.wrap}>
+          {RULES.map(([kind, label]) => <Choice key={kind} selected={kind === rule.kind} label={label} onPress={() => choose(kind)} />)}
         </View>
-      ) : null}
-
-      {/* 每 N 周:N stepper + 锚点 */}
-      {draft.rule.kind === 'everyNWeeks' ? (
-        <>
-          <FieldCard t={t} title="周期 N(n=2 即大小周)">
-            <View style={styles.stepper}>
-              <Pressable style={[styles.stepBtn, { backgroundColor: t.surface2, borderColor: t.line }]} onPress={() => setDraft((d) => (d.rule.kind === 'everyNWeeks' ? { ...d, rule: { ...d.rule, n: Math.max(1, d.rule.n - 1) } } : d))}>
-                <Text style={{ color: t.text2, fontSize: 16 }}>−</Text>
-              </Pressable>
-              <Text style={{ color: t.text, fontSize: 20, fontWeight: '800', minWidth: 56, textAlign: 'center' }}>{draft.rule.n} 周</Text>
-              <Pressable style={[styles.stepBtn, { backgroundColor: t.surface2, borderColor: t.line }]} onPress={() => setDraft((d) => (d.rule.kind === 'everyNWeeks' ? { ...d, rule: { ...d.rule, n: Math.min(4, d.rule.n + 1) } } : d))}>
-                <Text style={{ color: t.text2, fontSize: 16 }}>+</Text>
-              </Pressable>
-              <Text style={{ color: t.text3, fontSize: 12 }}>1=单休 · 2=大小周</Text>
-            </View>
-          </FieldCard>
-          <FieldCard t={t} title="锚点 · 最近一个大周(选中)日">
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {saturdays.map((s) => (
-                <Chip key={s} t={t} on={draft.rule.kind === 'everyNWeeks' && draft.rule.anchor === s} onPress={() => setDraft((d) => (d.rule.kind === 'everyNWeeks' ? { ...d, rule: { ...d.rule, anchor: s } } : d))}>
-                  {cnDate(s)} 周{WD[new Date(`${s}T00:00:00`).getDay() === 0 ? 6 : 5]}
-                </Chip>
-              ))}
-            </View>
-            <Text style={{ color: t.text3, fontSize: 11, marginTop: 10, lineHeight: 18 }}>
-              只问一个问题:「最近的这个周六算大周吗?」选中即完成整条规则。
-            </Text>
-          </FieldCard>
-        </>
-      ) : null}
-
-      {/* 每 N 天 */}
-      {draft.rule.kind === 'everyNDays' ? (
-        <FieldCard t={t} title="每 N 天响一天(上 X 休 Y 最简形态)">
-          <View style={styles.stepper}>
-            <Pressable style={[styles.stepBtn, { backgroundColor: t.surface2, borderColor: t.line }]} onPress={() => setDraft((d) => (d.rule.kind === 'everyNDays' ? { ...d, rule: { ...d.rule, n: Math.max(2, d.rule.n - 1) } } : d))}>
-              <Text style={{ color: t.text2, fontSize: 16 }}>−</Text>
-            </Pressable>
-            <Text style={{ color: t.text, fontSize: 20, fontWeight: '800', minWidth: 56, textAlign: 'center' }}>{draft.rule.n} 天</Text>
-            <Pressable style={[styles.stepBtn, { backgroundColor: t.surface2, borderColor: t.line }]} onPress={() => setDraft((d) => (d.rule.kind === 'everyNDays' ? { ...d, rule: { ...d.rule, n: Math.min(7, d.rule.n + 1) } } : d))}>
-              <Text style={{ color: t.text2, fontSize: 16 }}>+</Text>
-            </Pressable>
-          </View>
-        </FieldCard>
-      ) : null}
-
-      {/* 月历点选 */}
-      {draft.rule.kind === 'customDates' ? (
-        <FieldCard t={t} title="手动点选的日期(点选即权威,不受节假日影响)">
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {saturdays.map((s) => {
-              const on = draft.rule.kind === 'customDates' && draft.rule.dates.includes(s);
-              return (
-                <Chip key={s} t={t} on={on} onPress={() => setDraft((d) => {
-                  if (d.rule.kind !== 'customDates') return d;
-                  const set = new Set(d.rule.dates);
-                  if (set.has(s)) set.delete(s); else set.add(s);
-                  return { ...d, rule: { ...d.rule, dates: [...set].sort() } };
-                })}>
-                  {on ? '✓ ' : ''}{cnDate(s)}
-                </Chip>
-              );
+        {rule.kind === 'weekly' || rule.kind === 'everyNWeeks' ? (
+          <View style={styles.wrap}>
+            {WD.map((label, index) => {
+              const day = (index + 1) as Weekday;
+              const enabled = rule.weekdays.includes(day);
+              return <Choice key={day} label={'周' + label} selected={enabled} onPress={() => setRule({
+                ...rule, weekdays: enabled ? rule.weekdays.filter((item) => item !== day) : [...rule.weekdays, day].sort(),
+              })} />;
             })}
           </View>
-        </FieldCard>
-      ) : null}
-
-      <FieldCard t={t} title={`响铃时间 · ${draft.times.length} 次`}>
-        {draft.times.map((time) => {
-          const label = `${String(time.hour).padStart(2, '0')}:${String(time.minute).padStart(2, '0')}`;
-          return (
-            <View key={time.id} style={[styles.timeRow, { backgroundColor: t.panel.raised, borderColor: t.panel.border }]}>
-              <Text style={styles.timeText}>
-                <Text style={{ color: t.text }}>{label}</Text>
-                {time.label ? <Text style={{ fontSize: 12, color: t.panel.muted, fontWeight: '500' }}> {time.label}</Text> : null}
-              </Text>
-              <Pressable accessibilityRole="button" accessibilityLabel={'移除 ' + label} hitSlop={8}
-                onPress={() => removeTime(time.id)}>
-                <Text style={{ color: t.panel.danger, fontSize: 13, fontWeight: '700' }}>移除</Text>
-              </Pressable>
-            </View>
-          );
-        })}
-        <View style={styles.presets}>
-          {PRESETS.map((preset) => {
-            const label = `${String(preset.hour).padStart(2, '0')}:${String(preset.minute).padStart(2, '0')}`;
-            const existingTime = draft.times.find((time) => time.hour === preset.hour && time.minute === preset.minute);
-            return (
-              <Chip key={label} t={t} on={!!existingTime}
-                onPress={() => existingTime ? removeTime(existingTime.id) : addTime(preset)}>{label}</Chip>
-            );
-          })}
-        </View>
-        <CustomTimeAdder times={draft.times} onAdd={addTime} />
-        {timeError ? (
-          <Text accessibilityLiveRegion="polite" style={[styles.error, { color: t.panel.danger }]}>
-            至少保留一个响铃时间。加入新时间后即可移除这条。
+        ) : null}
+        {rule.kind === 'everyNWeeks' || rule.kind === 'everyNDays' ? (
+          <View style={styles.adjustment}>
+            <PanelButton label="−" variant="secondary" disabled={rule.n <= 2} onPress={() => setRule({ ...rule, n: rule.n - 1 })} />
+            <Text style={{ color: t.text, fontWeight: '800' }}>每 {rule.n} {rule.kind === 'everyNWeeks' ? '周' : '天'}</Text>
+            <PanelButton label="+" variant="secondary" disabled={rule.n >= 30} onPress={() => setRule({ ...rule, n: rule.n + 1 })} />
+          </View>
+        ) : null}
+        {'anchor' in rule ? (
+          <PanelButton label={(rule.kind === 'everyNWeeks' ? '循环周起点 · ' : '循环起始日 · ') + cnDate(rule.anchor)}
+            icon="calendar-outline" onPress={() => setDialog('anchor')} />
+        ) : null}
+        {rule.kind === 'everyNWeeks' ? (
+          <Text style={{ color: t.panel.muted, fontSize: 13 }}>
+            周{WD[isoWeekday(rule.anchor) - 1]}隔 {rule.n} 周响一次，其他选中的星期每周响。
           </Text>
         ) : null}
-      </FieldCard>
-
-      {/* 节假日联动 */}
-      <FieldCard t={t} title="节假日叠加">
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontSize: 14, fontWeight: '600' }}>节假日联动</Text>
-            <Text style={{ color: t.text3, fontSize: 11, marginTop: 3 }}>法定假日跳过 · 调休补班日自动响</Text>
-          </View>
-          <Switch
-            value={draft.holidayMode !== 'raw'}
-            onValueChange={(on) => patch({ holidayMode: on ? 'china-smart' : 'raw' })}
-            trackColor={{ true: t.primary, false: t.surface2 }}
-            thumbColor="#FFFFFF"
-          />
+        {cycle ? (
+          <>
+            <View style={styles.wrap}>
+              <PanelButton label="上二休二" onPress={() => setRule(cycleRule('two', cycle.anchor, draft.times))} />
+              <PanelButton label="早早晚晚休休" onPress={() => setRule(cycleRule('shifts', cycle.anchor, draft.times))} />
+            </View>
+            <View style={styles.wrap}>
+              {cycle.days.map((item, index) => (
+                <Choice key={index} selected={!!item}
+                  label={'第 ' + (index + 1) + ' 天 · ' + (cycle.shifts.find((entry) => entry.id === item)?.name || '休息')}
+                  onPress={() => setCycleDay(index)} />
+              ))}
+              {cycle.days.length < 42 ? <PanelButton label="加一天" icon="add" variant="text"
+                onPress={() => setRule({ ...cycle, days: [...cycle.days, null] })} /> : null}
+            </View>
+          </>
+        ) : null}
+        {rule.kind === 'customDates' ? (
+          <PanelButton label={'选择日期 · 已选 ' + rule.dates.length + ' 天'} icon="calendar-outline" onPress={() => setDialog('dates')} />
+        ) : null}
+      </Card>
+      <Card title={shift ? '班次和响铃时间' : '响铃时间'}>
+        {cycle && shift ? (
+          <>
+            <View style={styles.wrap}>
+              {cycle.shifts.map((item) => <Choice key={item.id} label={item.name || '未命名班次'}
+                selected={item.id === shift.id} onPress={() => setSelectedShift(item.id)} />)}
+              {cycle.shifts.length < 12 ? <PanelButton label="加班次" icon="add" variant="text" onPress={() => {
+                const id = makeId('s');
+                setRule({ ...cycle, shifts: [...cycle.shifts, { id, name: '班次 ' + (cycle.shifts.length + 1), times: [{ id: makeId('t'), hour: 7, minute: 0 }] }] });
+                setSelectedShift(id);
+              }} /> : null}
+            </View>
+            <TextInput accessibilityLabel="班次名称" value={shift.name} maxLength={24} onChangeText={(name) => {
+              setRule({ ...cycle, shifts: cycle.shifts.map((item) => item.id === shift.id ? { ...item, name } : item) });
+            }} style={[styles.input, { backgroundColor: t.panel.raised, borderColor: t.panel.border, color: t.text }]} />
+          </>
+        ) : null}
+        <View style={styles.wrap}>
+          {PRESETS.map((preset) => {
+            const used = times.some((time) => time.hour === preset.hour && time.minute === preset.minute);
+            return <Choice key={clockLabel(preset)} label={clockLabel(preset)} selected={used} disabled={used}
+              onPress={() => updateTimes([...times, { ...preset, id: makeId('t') }].sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute)))} />;
+          })}
         </View>
-      </FieldCard>
+        <AlarmTimeRows times={times} onAdd={() => setPending(newTime(shift?.id))}
+          onEdit={(time) => setPending({ ...time, label: time.label ?? '', shiftId: shift?.id })}
+          onRemove={(id) => {
+            if (times.length <= 1) { setError('请至少保留一个响铃时间。'); return; }
+            updateTimes(times.filter((item) => item.id !== id));
+          }} />
+      </Card>
+      {rule.kind !== 'customDates' ? (
+        <Card title="节假日">
+          <View style={styles.nav}>
+            <View style={styles.flex}>
+              <Text style={[styles.text, { color: t.text }]}>节假日联动</Text>
+              <Text style={{ color: t.panel.muted, fontSize: 13 }}>{cycle ? '法定假日跳过，轮班休息日按循环。' : '法定假日跳过，调休补班日自动响铃。'}</Text>
+            </View>
+            <Switch accessibilityLabel="节假日联动" value={draft.holidayMode !== 'raw'}
+              onValueChange={(on) => patch({ holidayMode: on ? 'china-smart' : 'raw' })} />
+          </View>
+        </Card>
+      ) : null}
+      <Card title="未来两周预览">
+        <Text style={{ color: t.panel.muted, lineHeight: 19 }}>{ruleDesc(draft)}</Text>
+        {first ? <Text style={[styles.text, { color: t.text }]}>首响 · {cnDate(first.date)} {clockLabel(first)}</Text>
+          : <Text style={{ color: t.panel.muted }}>暂无未来响铃。</Text>}
+        {previewDates.slice(0, 14).map((date) => {
+          const items = preview.filter((item) => item.date === date);
+          return <View key={date} style={styles.previewRow}>
+            <Text style={{ color: t.panel.muted }}>{cnDate(date)}</Text>
+            <Text style={[styles.flex, { color: t.text }]}>{[items[0]?.shiftName, items.map(clockLabel).join('、')].filter(Boolean).join(' · ')}</Text>
+          </View>;
+        })}
+      </Card>
+      {error ? <Text accessibilityLiveRegion="polite" style={[styles.error, { color: t.panel.danger }]}>{error}</Text> : null}
+      {!isNew ? <PanelButton label="删除班组" variant="text" icon="trash-outline" onPress={() => setDialog('delete')} /> : null}
 
-      <PanelButton label="保存班组" variant="primary" onPress={() => void save()} />
-      {!isNew ? (
-        <Pressable accessibilityRole="button" onPress={() => setDeleteOpen(true)} style={styles.delete}>
-          <Text style={{ color: t.panel.danger, fontSize: 13.5, fontWeight: '700' }}>删除班组</Text>
-        </Pressable>
+      {pending ? (
+        <AppDialog title={pending.creating ? '添加响铃' : '编辑响铃'} cancel confirm="保存时间" onConfirm={confirmTime}
+          onClose={() => { setPending(null); setTimeError(''); }}>
+          <TimeGridPicker value={pending} onChange={(value) => { setPending({ ...pending, ...value }); setTimeError(''); }} />
+          {timeError ? <Text accessibilityLiveRegion="polite" style={{ color: t.panel.danger }}>{timeError}</Text> : null}
+        </AppDialog>
       ) : null}
-      {deleteOpen && existing ? (
-        <AppDialog title="删除班组？" icon="trash-outline" layout="center" tone="danger" confirm="删除班组" cancel
-          onClose={() => setDeleteOpen(false)} onConfirm={deleteGroup}>
-          <DialogCopy centered>此班组的排班规则和响铃时间将被删除，已安排的后续响铃也会取消。</DialogCopy>
+      {dialog === 'anchor' && 'anchor' in rule ? <DateDialog title="选择循环起始日" date={rule.anchor}
+        onSelect={(anchor) => { setRule({ ...rule, anchor }); setDialog(null); }} onClose={() => setDialog(null)} /> : null}
+      {dialog === 'dates' && rule.kind === 'customDates' ? <ManualDates dates={rule.dates} today={today}
+        onSave={(dates) => { setRule({ kind: 'customDates', dates }); setDialog(null); }} onClose={() => setDialog(null)} /> : null}
+      {cycleDay !== null && cycle ? (
+        <AppDialog title={'第 ' + (cycleDay + 1) + ' 天的班次'} onClose={() => setCycleDay(null)}>
           <PanelList inset>
-            <PanelRow icon="alarm-outline" title={existing.name} detail={`${existing.times.length} 个响铃时间`} tone="danger" />
+            {[...cycle.shifts.map((item) => ({ id: item.id as string | null, name: item.name })), { id: null, name: '休息' }].map((item) => (
+              <PanelRow key={item.id ?? 'rest'} icon={item.id ? 'alarm-outline' : 'moon-outline'} title={item.name}
+                value={cycle.days[cycleDay] === item.id ? '当前' : undefined} onPress={() => {
+                  setRule({ ...cycle, days: cycle.days.map((day, index) => index === cycleDay ? item.id : day) });
+                  setCycleDay(null);
+                }} />
+            ))}
           </PanelList>
+          {cycle.days.length > 1 ? <PanelButton label="移除这一天" variant="text" onPress={() => {
+            setRule({ ...cycle, days: cycle.days.filter((_, index) => index !== cycleDay) });
+            setCycleDay(null);
+          }} /> : null}
         </AppDialog>
       ) : null}
-      {failure ? (
-        <AppDialog title="班组修改失败" layout="center" tone="error" icon="alert-circle-outline" onClose={() => setFailure(undefined)}>
-          <DialogCopy centered>{failure}</DialogCopy>
+      {dialog === 'enable' ? (
+        <AppDialog title="确认首响" confirm="启用班组" onConfirm={() => void save(true)} cancel busy={busy}
+          onClose={() => setDialog(null)}>
+          <DialogSummary value={first ? clockLabel(first) : '—'} detail={first ? cnDate(first.date) + ' · ' + draft.name : '尚无未来响铃'} />
+          <DialogCopy>{ruleDesc(draft)}</DialogCopy>
         </AppDialog>
       ) : null}
+      {dialog === 'changes' ? (
+        <AppDialog title="核对排班变更" confirm="保存规则" onConfirm={() => void save(true)} cancel busy={busy}
+          onClose={() => setDialog(null)}>
+          <DialogCopy>{'未来两周有 ' + editedDates.length + ' 天的响铃时间会变化。'}</DialogCopy>
+          {editedDates.length ? <DialogCopy>{editedDates.slice(0, 5).map(cnDate).join('、') + (editedDates.length > 5 ? ' 等' : '')}</DialogCopy> : null}
+          <DialogCopy>{ruleDesc(draft)}</DialogCopy>
+        </AppDialog>
+      ) : null}
+      {dialog === 'discard' ? <AppDialog title="舍弃班组修改？" layout="center" cancel confirm="舍弃修改"
+        onConfirm={() => { setDialog(null); router.back(); }} onClose={() => setDialog(null)}>
+        <DialogCopy centered>当前编辑的时间和规则还未保存。</DialogCopy>
+      </AppDialog> : null}
+      {dialog === 'delete' ? <AppDialog title={'删除「' + draft.name + '」？'} layout="center" cancel tone="danger"
+        icon="trash-outline" confirm="删除班组" onConfirm={deleteGroup} onClose={() => setDialog(null)}>
+        <DialogCopy centered>此班组的排班、临时调整和后续响铃都会移除。</DialogCopy>
+      </AppDialog> : null}
     </SafeAreaScrollView>
   );
 }
 
-function switchRule(rule: AlarmGroup['rule'], kind: string): AlarmGroup['rule'] {
-  if (kind === 'weekly') return { kind: 'weekly', weekdays: rule.kind === 'weekly' || rule.kind === 'everyNWeeks' ? rule.weekdays : [1, 2, 3, 4, 5] };
-  if (kind === 'everyNWeeks') return { kind: 'everyNWeeks', n: 2, weekdays: rule.kind === 'weekly' || rule.kind === 'everyNWeeks' ? rule.weekdays : [1, 2, 3, 4, 5, 6], anchor: nextSaturdays(1)[0]! };
-  if (kind === 'everyNDays') return { kind: 'everyNDays', n: 3, anchor: nextSaturdays(1)[0]! };
-  return { kind: 'customDates', dates: [nextSaturdays(1)[0]!] };
-}
-
-function CustomTimeAdder({ times, onAdd }: { times: AlarmTime[]; onAdd: (time: DraftTime) => void }) {
-  const t = useTheme();
-  const [pending, setPending] = useState<DraftTime | null>(null);
-  const [duplicate, setDuplicate] = useState(false);
-
+function ManualDates({ dates, today, onSave, onClose }: {
+  dates: string[]; today: string; onSave: (value: string[]) => void; onClose: () => void;
+}) {
+  const [selection, setSelection] = useState(() => new Set(dates));
+  const [selected, setSelected] = useState(dates.find((date) => date >= today) ?? today);
+  const [month, setMonth] = useState(firstOfMonth(selected));
   return (
-    <View style={styles.customTime}>
-      <PanelButton label="自定义响铃时间" icon="add" onPress={() => {
-        setDuplicate(false);
-        setPending({ hour: 7, minute: 0, label: '' });
+    <AppDialog title="选择响铃日期" cancel confirm={'使用日期 · ' + selection.size + ' 天'} onClose={onClose}
+      onConfirm={() => onSave([...selection].sort())}>
+      <MonthGrid month={month} selected={selected} isMarked={(date) => selection.has(date)} onMonth={setMonth} onSelect={(date) => {
+        const next = new Set(selection);
+        if (next.has(date)) next.delete(date);
+        else next.add(date);
+        setSelection(next);
+        setSelected(date);
       }} />
-      {pending ? (
-        <AppDialog title="自定义响铃时间" confirm="加入响铃" cancel onClose={() => setPending(null)}
-          onConfirm={() => {
-            if (times.some((time) => time.hour === pending.hour && time.minute === pending.minute)) {
-              setDuplicate(true);
-              return;
-            }
-            onAdd(pending);
-            setPending(null);
-          }}>
-          <TimeGridPicker value={pending} onChange={(value) => {
-            setDuplicate(false);
-            setPending(value);
-          }} />
-          {duplicate ? (
-            <Text accessibilityLiveRegion="polite" style={{ color: t.panel.danger }}>这个时间已经在班组里。</Text>
-          ) : null}
-        </AppDialog>
-      ) : null}
-    </View>
+    </AppDialog>
   );
 }
 
-function Centered({ children, t }: { children: React.ReactNode; t: Tokens }) {
-  return <View style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>{children}</View>;
-}
-
-function FieldCard({ t, title, children }: { t: Tokens; title: string; children: React.ReactNode }) {
+function Choice({ label, selected, disabled, onPress }: { label: string; selected: boolean; disabled?: boolean; onPress: () => void }) {
+  const t = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: t.panel.surface, borderColor: t.panel.border }]}>
-      <Text style={{ color: t.panel.muted, fontSize: 12, fontWeight: '700', marginBottom: 10 }}>{title}</Text>
-      {children}
-    </View>
-  );
-}
-
-function Chip({ t, on, onPress, children }: { t: Tokens; on?: boolean; onPress?: () => void; children: React.ReactNode }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.chip, { backgroundColor: on ? t.accentSoft : t.surface2, borderColor: on ? t.primary : t.line }]}
-    >
-      <Text style={{ fontSize: 12, color: on ? t.primary : t.text2, fontWeight: on ? '700' : '400' }}>{children}</Text>
+    <Pressable accessibilityRole="button" accessibilityState={{ selected, disabled }} disabled={disabled} onPress={onPress} style={[styles.choice, {
+      borderColor: selected ? t.heroBorder : t.panel.border,
+      backgroundColor: selected ? t.accentSoft : t.panel.raised,
+    }]}>
+      <Text style={{ fontSize: 13, color: selected ? t.panel.accent : t.text, fontWeight: selected ? '800' : '600' }}>{label}</Text>
     </Pressable>
   );
 }
 
+function Card({ title, children }: { title: string; children: ReactNode }) {
+  const t = useTheme();
+  return <View style={[styles.card, { backgroundColor: t.panel.surface, borderColor: t.panel.border }]}>
+    <Text accessibilityRole="header" style={[styles.text, { color: t.text }]}>{title}</Text>
+    {children}
+  </View>;
+}
+
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48, gap: 14 },
-  nav: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  input: { borderWidth: 1, borderRadius: 14, padding: 12, fontSize: 15 },
-  seg: { flexDirection: 'row', borderRadius: 999, borderWidth: 1, padding: 4, gap: 4 },
-  segItem: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 999 },
-  weekRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 },
-  wd: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { borderWidth: 1, borderRadius: 20, padding: 16 },
-  stepper: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  stepBtn: { width: 34, height: 34, borderRadius: 12, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  chip: { fontSize: 12, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12, borderWidth: 1, overflow: 'hidden' },
-  timeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderWidth: 1, borderRadius: 14, padding: 10, marginBottom: 8 },
-  customTime: { marginTop: 12 },
-  error: { marginTop: 8, fontSize: 12, lineHeight: 18 },
-  delete: { alignItems: 'center', justifyContent: 'center', minHeight: 44 },
-  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  timeText: { flex: 1, fontSize: 18, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  primaryBtn: { borderRadius: 14, padding: 14, alignItems: 'center' },
+  screen: { padding: 14, paddingBottom: 32, gap: 12 },
+  nav: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  heading: { flex: 1, fontSize: 17, fontWeight: '800', textAlign: 'center' },
+  input: { minHeight: 46, borderWidth: 1, borderRadius: 13, padding: 10, fontSize: 15 },
+  card: { borderWidth: 1, borderRadius: 19, padding: 13, gap: 10 },
+  text: { fontSize: 15, fontWeight: '800' },
+  wrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  flex: { flex: 1, minWidth: 0 },
+  adjustment: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  choice: { minHeight: 45, justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 10, borderRadius: 13, borderWidth: 1 },
+  previewRow: { flexDirection: 'row', gap: 9, alignItems: 'baseline' },
+  error: { fontSize: 13, lineHeight: 19 },
 });

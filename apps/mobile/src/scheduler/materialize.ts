@@ -1,15 +1,15 @@
-import { expandGroups, type AlarmGroup } from '@core';
+import { expandGroups, localDateISO, occurrenceEpoch, pad2, type AlarmGroup, type Occurrence } from '@core';
 import { getHolidayCalendar } from '../services/holidays';
 import type { MaterializedAlarm } from '../gateway/types';
+import { cnDate } from '../lib/labels';
 
 /** 视野:原生层只注册未来 N 天的具体响铃(架构 §4.1) */
 export const HORIZON_DAYS = 14;
 
-const pad = (n: number) => String(n).padStart(2, '0');
+export const todayISO = localDateISO;
 
-export function todayISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export function alarmId({ groupId, timeId, date }: Pick<Occurrence, 'groupId' | 'timeId' | 'date'>): string {
+  return `${groupId}:${timeId}:${date}`;
 }
 
 /**
@@ -17,32 +17,27 @@ export function todayISO(): string {
  * epoch 按本地时区换算;时区变更后由 syncAll 全量重排。
  */
 export function materialize(groups: AlarmGroup[], today: string, horizon = HORIZON_DAYS): MaterializedAlarm[] {
-  const occ = expandGroups(
-    groups.filter((g) => g.enabled),
-    getHolidayCalendar(),
-    today,
-    horizon,
-  );
+  const occ = expandGroups(groups, getHolidayCalendar(), today, horizon);
   const now = Date.now();
+  const names = new Map(groups.map((group) => [group.id, group.name]));
   return occ
     .map((o) => {
-      const epochMs = new Date(`${o.date}T00:00:00`).getTime() + o.hour * 3600e3 + o.minute * 60e3;
-      const label = o.label ? ` · ${o.label}` : '';
-      const reason = o.reason === 'swap-workday' ? '(补班)' : '';
+      const timeLabel = `${pad2(o.hour)}:${pad2(o.minute)}`;
+      const groupName = [names.get(o.groupId), o.shiftName].filter(Boolean).join(' · ');
+      const title = [groupName, o.label].filter(Boolean).join(' · ');
+      const reason = o.reason === 'swap-workday' ? ' · 补班' : '';
       return {
-        id: `${o.groupId}:${o.timeId}:${o.date}`,
-        epochMs,
+        id: alarmId(o),
+        epochMs: occurrenceEpoch(o),
+        date: o.date,
         groupId: o.groupId,
+        groupName,
         timeId: o.timeId,
-        timeLabel: `${pad(o.hour)}:${pad(o.minute)}`,
-        title: `⏰ ${pad(o.hour)}:${pad(o.minute)}${label}`,
-        body: `${cnDate(o.date)}${reason} · 周而复起`,
+        label: o.label,
+        timeLabel,
+        title: title || '周而复起',
+        body: `${cnDate(o.date)} ${timeLabel}${reason}`,
       };
     })
     .filter((a) => a.epochMs > now);
-}
-
-function cnDate(date: string): string {
-  const [, m, d] = date.split('-');
-  return `${parseInt(m!, 10)}月${parseInt(d!, 10)}日`;
 }

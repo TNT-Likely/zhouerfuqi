@@ -5,7 +5,7 @@ import {
   status,
   pruneOrphanedAlarms,
 } from '../../modules/zf-alarm-ios/src';
-import type { AlarmGateway, AlarmPermissionStatus, MaterializedAlarm } from './types';
+import type { AlarmDelivery, AlarmGateway, AlarmPermissionStatus, MaterializedAlarm } from './types';
 
 /**
  * [M2] iOS 实现:zf-alarm-ios 原生模块。
@@ -20,9 +20,20 @@ export const alarmKitGateway: AlarmGateway = {
   pruneOrphanedAlarms,
 
   async schedule(alarms: MaterializedAlarm[]) {
+    const result: Record<string, AlarmDelivery> = {};
+    let notifications = 0;
     for (const a of alarms) {
-      await scheduleAlarm(a.id, a.epochMs, a.title, a.body);
+      // 为试响和延后留出通知队列空间，优先保留较早的提醒。
+      if (notifications >= 60) {
+        await cancelAlarm(a.id);
+        result[a.id] = 'skipped';
+        continue;
+      }
+      const mode = await scheduleAlarm(a.id, a.epochMs, a.title, a.body);
+      result[a.id] = mode === 'alarmkit' ? 'system' : mode;
+      if (mode === 'notification') notifications++;
     }
+    return result;
   },
 
   async cancel(ids: string[]) {

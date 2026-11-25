@@ -11,6 +11,17 @@ export function toISO(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+export const pad2 = (number: number) => String(number).padStart(2, '0');
+
+export function localDateISO(date = new Date()): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+/** 按钟面时间转换，夏令时切换日的零点偏移量可能和响铃时不同。 */
+export function occurrenceEpoch({ date, hour, minute }: { date: string; hour: number; minute: number }): number {
+  return new Date(`${date}T${pad2(hour)}:${pad2(minute)}:00`).getTime();
+}
+
 export function addDays(date: string, n: number): string {
   return toISO(new Date(parseISO(date).getTime() + n * MS_PER_DAY));
 }

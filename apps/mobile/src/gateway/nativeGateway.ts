@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { requireNativeModule } from 'expo-modules-core';
-import type { AlarmGateway, AlarmPermissionStatus, MaterializedAlarm } from './types';
+import type { AlarmDelivery, AlarmGateway, AlarmPermissionStatus, MaterializedAlarm } from './types';
 
 /**
  * [v2.2] Android 实现:zf-alarm 原生调度(替代 notify-kit)。
@@ -24,24 +24,25 @@ function accentHex(): string {
   }
 }
 
+async function status(): Promise<AlarmPermissionStatus> {
+  return {
+    notifications: ZfAlarm?.areNotificationsEnabled() === true,
+    exactAlarms: ZfAlarm?.canScheduleExactAlarms() === true,
+    fullScreen: ZfAlarm?.canUseFullScreenIntent() === true,
+  };
+}
+
 export const nativeGateway: AlarmGateway = {
   async init() {
     ZfAlarm?.ensureAlarmNotificationChannel?.();
   },
 
   async schedule(alarms: MaterializedAlarm[]) {
-    if (!ZfAlarm) return;
-    const accent = accentHex();
-    const payload = alarms.map((a) => ({
-      id: a.id,
-      epochMs: Number(a.epochMs),
-      title: a.title,
-      body: a.body,
-      groupId: a.groupId,
-      timeId: a.timeId,
-      timeLabel: a.timeLabel,
-    }));
-    ZfAlarm.scheduleAlarms(payload, accent);
+    const permissions = await status();
+    if (!permissions.exactAlarms) return {};
+    const ids: string[] = ZfAlarm.scheduleAlarms(alarms, accentHex());
+    const delivery: AlarmDelivery = !permissions.notifications ? 'skipped' : permissions.fullScreen ? 'system' : 'notification';
+    return Object.fromEntries(ids.map((id) => [id, delivery]));
   },
 
   async cancel(ids: string[]) {
@@ -49,15 +50,6 @@ export const nativeGateway: AlarmGateway = {
     ZfAlarm.cancelAlarms(ids);
   },
 
-  async requestPermissions(): Promise<AlarmPermissionStatus> {
-    // 通知权限由 JS PermissionsAndroid 主动申请(services/permissions)
-    // 精确闹钟:USE_EXACT_ALARM 清单声明即自动授予;setAlarmClock 若被关会在 schedule 抛错
-    const notifications = ZfAlarm ? ZfAlarm.areNotificationsEnabled() === true : true;
-    return { notifications, exactAlarms: true };
-  },
-
-  async status(): Promise<AlarmPermissionStatus> {
-    const notifications = ZfAlarm ? ZfAlarm.areNotificationsEnabled() === true : true;
-    return { notifications, exactAlarms: true };
-  },
+  requestPermissions: status,
+  status,
 };

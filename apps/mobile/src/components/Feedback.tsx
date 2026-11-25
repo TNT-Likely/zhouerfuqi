@@ -2,9 +2,10 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { AccessibilityInfo, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
-import { PanelIconTile, type PanelIcon, type PanelTone } from './Panel';
+import { PanelButton, PanelIconTile, type PanelIcon, type PanelTone } from './Panel';
 
-type Feedback = (title: string, detail?: string, tone?: PanelTone, icon?: PanelIcon) => void;
+type Action = { label: string; run: () => void };
+type Feedback = (title: string, detail?: string, tone?: PanelTone, icon?: PanelIcon, action?: Action) => void;
 const FeedbackContext = createContext<Feedback>(() => {});
 
 export const useFeedback = () => useContext(FeedbackContext);
@@ -12,14 +13,14 @@ export const useFeedback = () => useContext(FeedbackContext);
 export function FeedbackProvider({ children }: { children: ReactNode }) {
   const t = useTheme();
   const { bottom } = useSafeAreaInsets();
-  const [message, setMessage] = useState<{ title: string; detail?: string; tone: PanelTone; icon: PanelIcon }>();
+  const [message, setMessage] = useState<{ title: string; detail?: string; tone: PanelTone; icon: PanelIcon; action?: Action }>();
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const show = useCallback<Feedback>((title, detail, tone = 'success', icon = 'checkmark') => {
+  const show = useCallback<Feedback>((title, detail, tone = 'success', icon = 'checkmark', action) => {
     clearTimeout(timer.current);
-    setMessage({ title, detail, tone, icon });
+    setMessage({ title, detail, tone, icon, action });
     if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility([title, detail].filter(Boolean).join('。'));
-    timer.current = setTimeout(() => setMessage(undefined), 4800);
+    timer.current = setTimeout(() => setMessage(undefined), action ? 9000 : 4800);
   }, []);
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -29,7 +30,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
       <View style={styles.root}>
         {children}
         {message ? (
-          <View pointerEvents="none" accessibilityLiveRegion="polite" style={[
+          <View pointerEvents={message.action ? 'box-none' : 'none'} accessibilityLiveRegion="polite" style={[
             styles.feedback, { bottom: bottom + 12, backgroundColor: t.panel.surface, borderColor: t.panel.border },
           ]}>
             <PanelIconTile icon={message.icon} tone={message.tone} />
@@ -37,6 +38,11 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
               <Text style={[styles.title, { color: t.text }]}>{message.title}</Text>
               {message.detail ? <Text style={[styles.detail, { color: t.panel.muted }]}>{message.detail}</Text> : null}
             </View>
+            {message.action ? <PanelButton variant="text" label={message.action.label} onPress={() => {
+              clearTimeout(timer.current);
+              setMessage(undefined);
+              message.action?.run();
+            }} /> : null}
           </View>
         ) : null}
       </View>

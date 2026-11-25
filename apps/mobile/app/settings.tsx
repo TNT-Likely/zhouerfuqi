@@ -10,12 +10,20 @@ import { useFeedback } from '@/components/Feedback';
 import { PanelButton, PanelIconTile, PanelList, PanelRow, PanelSection } from '@/components/Panel';
 import { Sheet } from '@/components/Sheet';
 import { TrialDialog } from '@/components/TrialDialog';
+import { TrialStatus } from '@/components/TrialStatus';
+import { clockLabel } from '@/lib/clock';
+import { cnDate } from '@/lib/labels';
+import { scheduleMessage, useFutureSchedule } from '@/scheduler/future';
+import { exportCalendar } from '@/services/calendarExport';
+import { useGroups } from '@/stores/groups';
 import { gateway } from '@/gateway';
 import type { AlarmPermissionStatus } from '@/gateway/types';
-import { syncAll } from '@/scheduler/sync';
-import { exportBackup, pickBackup, restoreBackup } from '@/services/backup';
+import { syncAll, useScheduleState } from '@/scheduler/sync';
+import { todayISO } from '@/scheduler/materialize';
+import { exportBackup, getRecoveryBackup, pickBackup, restoreBackup, type BackupFile } from '@/services/backup';
 import { holidayInfo, refreshHolidays } from '@/services/holidays';
 import {
+  openAlarmPermissionSettings,
   openAppNotificationSettings,
   requestNotificationPermission,
   supportsNotificationPermissionPrompt,
@@ -39,6 +47,10 @@ export default function SettingsScreen() {
   const t = useTheme();
   const p = t.panel;
   const notify = useFeedback();
+  const { now, upcoming, state: schedule } = useFutureSchedule();
+  const next = upcoming[0];
+  const readiness = scheduleMessage(next, now, schedule);
+  const [hasRecovery, setHasRecovery] = useState(false);
   const { themeIdx, setThemeIdx, mode, setMode, avatarImage } = usePrefs();
   const [permissions, setPermissions] = useState<AlarmPermissionStatus | null>(null);
   const [attemptedPermission, setAttemptedPermission] = useState(false);
@@ -67,6 +79,7 @@ export default function SettingsScreen() {
       );
     };
     refresh();
+    void getRecoveryBackup().then((value) => { if (active) setHasRecovery(!!value); }).catch(() => {});
     const sub = AppState.addEventListener('change', (state) => { if (state === 'active') refresh(); });
     return () => { active = false; sub.remove(); };
   }, []));
@@ -143,9 +156,11 @@ export default function SettingsScreen() {
         if (android) await requestNotificationPermission();
         else await gateway.requestPermissions();
         setPermissions(await gateway.status());
+        await syncAll();
         return;
       }
-      if (android) await openAppNotificationSettings();
+      if (android && !permissions.exactAlarms) await openAlarmPermissionSettings('exact');
+      else if (android) await openAppNotificationSettings();
       else await Linking.openSettings();
       close();
     }, openPermissions);
@@ -155,7 +170,9 @@ export default function SettingsScreen() {
     const resync = () => void run('重新同步失败', async () => {
       await syncAll();
       close();
-      notify('响铃已重排', '未来 14 天的响铃已同步。');
+      const entries = Object.values(useScheduleState.getState().entries);
+      const count = entries.filter((entry) => entry.delivery === 'system' || entry.delivery === 'notification').length;
+      notify('响铃计划已重新计算', count ? '已登记 ' + count + ' 次提醒。' : '可在设置检查下一次响铃的状态。');
     }, resync);
     setDialog({
       title: '重新同步响铃？', layout: 'center', icon: 'refresh-outline', confirm: '重新同步', cancel: true,
@@ -196,34 +213,42 @@ export default function SettingsScreen() {
     });
   }
 
+  function previewRestore(name: string, backup: BackupFile) {
+    const current = useGroups.getState().groups;
+    const count = backup.groups.length;
+    setDialog({
+      title: '用备份恢复排班？', layout: 'sheet', tone: 'warning', icon: 'download-outline',
+      confirm: '确认恢复', cancel: true,
+      children: <>
+        <DialogCopy>恢复前会在这台设备保存当前排班的副本。</DialogCopy>
+        <PanelList inset>
+          <PanelRow icon="document-text-outline" title={name}
+            detail={count ? backup.groups.map((group) => group.name).join('、') : '空班表'} tone="warning" />
+          <PanelRow icon="swap-horizontal-outline" title={'将替换 ' + current.length + ' 个当前班组'}
+            detail={current.map((group) => group.name).join('、')} divider />
+        </PanelList>
+      </>,
+      onConfirm: () => void run('恢复排班失败', async () => {
+        await restoreBackup(backup, version);
+        setHasRecovery(true);
+        try {
+          await syncAll();
+        } catch (error) {
+          showError('排班已恢复，响铃同步失败', error, confirmResync);
+          return;
+        }
+        close();
+        notify('排班已恢复', '已恢复 ' + count + ' 个班组。');
+      }),
+    });
+  }
+
   function selectBackup() {
     if (pending.current) return;
     close();
     void run('导入备份失败', async () => {
       const selection = await pickBackup();
-      if (!selection) return;
-      const count = selection.backup.groups.length;
-      setDialog({
-        title: '用备份恢复排班？', layout: 'center', tone: 'warning', icon: 'download-outline',
-        confirm: '确认恢复', cancel: true,
-        children: <>
-          <DialogCopy centered>恢复后，当前班组和响铃计划会被备份中的数据覆盖。</DialogCopy>
-          <PanelList inset>
-            <PanelRow icon="document-text-outline" title={selection.name} detail={`${count} 个班组`} tone="warning" />
-          </PanelList>
-        </>,
-        onConfirm: () => void run('恢复排班失败', async () => {
-          restoreBackup(selection.backup);
-          try {
-            await syncAll();
-          } catch (error) {
-            showError('排班已恢复，响铃同步失败', error, confirmResync);
-            return;
-          }
-          close();
-          notify('排班已恢复', `已恢复 ${count} 个班组并同步响铃。`);
-        }),
-      });
+      if (selection) previewRestore(selection.name, selection.backup);
     }, () => {
       if (android) selectBackup();
       else setRepickAfterDismiss(true);
@@ -232,7 +257,7 @@ export default function SettingsScreen() {
 
   const permissionsLabel = permissions === null ? '查看通知与闹钟状态'
     : authorized ? (exactAvailable ? '通知与闹钟权限已开启' : '通知权限已开启')
-      : '有权限待开启';
+      : '查看需要开启的权限';
 
   return (
     <Sheet title="设置" appearance="panel">
@@ -243,10 +268,11 @@ export default function SettingsScreen() {
             <PanelIconTile icon="shield-checkmark-outline" />
             <View style={styles.reliabilityCopy}>
               <Text style={[styles.reliabilityTitle, { color: t.text }]}>
-                <Text style={{ color: authorized ? p.success : p.warning }}>{'● '}</Text>
-                {authorized ? '响铃权限已开启' : permissions ? '响铃权限待开启' : '响铃权限待检查'}
+                {readiness.title}
               </Text>
-              <Text style={[styles.caption, { color: p.muted }]}>{android ? '使用试响验证锁屏提醒' : '使用试响检查闹钟提醒'}</Text>
+              <Text style={[styles.caption, { color: p.muted }]}>{next
+                ? cnDate(next.date) + ' · ' + clockLabel(next)
+                : '安排一个班组后显示下一次响铃。'}</Text>
             </View>
             <PanelButton label="试响" variant="primary" onPress={() => setDialog('trial')} disabled={busy} />
           </View>
@@ -255,7 +281,9 @@ export default function SettingsScreen() {
             <PanelRow icon="shield-outline" title="保活向导" detail="检查通知和后台运行设置"
               onPress={() => router.push('/guide')} divider />
           ) : null}
-          <PanelRow icon="refresh-outline" title="立即重排" detail="重新同步未来 14 天的响铃" onPress={confirmResync} divider />
+          <PanelRow icon="refresh-outline" title="重新同步响铃"
+            detail={schedule.syncedAt ? '上次同步 · ' + new Date(schedule.syncedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+              : '登记未来 14 天的响铃'} onPress={confirmResync} divider />
           {android && __DEV__ ? (
             <PanelRow icon="construct-outline" title="注册 03:30 刷新器（调试）" divider onPress={() => {
               try {
@@ -267,6 +295,8 @@ export default function SettingsScreen() {
             }} />
           ) : null}
         </PanelSection>
+
+        <TrialStatus />
 
         <PanelSection title="外观与个人">
           <View style={styles.appearance}>
@@ -302,7 +332,11 @@ export default function SettingsScreen() {
           </View>
           <PanelRow icon="person-outline" title="首页头像" value={<Avatar image={avatarImage} size={30} />}
             onPress={() => setDialog('avatar')} divider />
-          <PanelRow icon="language-outline" title="界面语言" value="简体中文" divider />
+          <PanelRow icon="grid-outline" title="桌面小组件" detail="查看下一次计划响铃" divider onPress={() => setDialog({
+            title: '添加桌面小组件',
+            children: <DialogCopy>{android ? '长按主屏幕空白处，打开「小组件」，选择周而复起。'
+              : '长按主屏幕空白处进入编辑，选择「添加小组件」，搜索周而复起。'}</DialogCopy>,
+          })} />
         </PanelSection>
 
         <PanelSection title="数据与备份">
@@ -310,6 +344,13 @@ export default function SettingsScreen() {
             onPress={showHolidays} />
           <PanelRow icon="share-outline" title="导出备份" detail="生成排班和保活设置的 JSON 文件" onPress={showExport} divider />
           <PanelRow icon="download-outline" title="导入恢复" detail="从备份文件恢复排班" onPress={selectBackup} divider />
+          {hasRecovery ? <PanelRow icon="arrow-undo-outline" title="恢复前的本地副本" detail="查看上次恢复前保存的班组" divider
+            onPress={() => void run('无法读取本地副本', async () => {
+              const recovery = await getRecoveryBackup();
+              if (recovery) previewRestore('恢复前的本地副本', recovery);
+            })} /> : null}
+          <PanelRow icon="calendar-clear-outline" title="导出班表" detail="分享未来 30 天的系统日历文件" divider
+            onPress={() => void run('班表导出失败', () => exportCalendar(useGroups.getState().groups, todayISO(), 30))} />
         </PanelSection>
 
         <PanelSection title="应用">
@@ -331,6 +372,11 @@ export default function SettingsScreen() {
               value={<PermissionBadge enabled={permissions?.notifications} />} />
             {exactAvailable ? <PanelRow icon="alarm-outline" title={android ? '精确闹钟' : '闹钟权限'}
               detail="在排班时间触发闹钟" value={<PermissionBadge enabled={permissions?.exactAlarms} />} divider /> : null}
+            {android && Number(Platform.Version) >= 34 ? <PanelRow icon="expand-outline" title="全屏提醒"
+              value={<PermissionBadge enabled={permissions?.fullScreen} />} divider
+              onPress={permissions?.fullScreen === false ? () => void run('无法打开全屏提醒设置', async () => {
+                await openAlarmPermissionSettings('fullScreen'); close();
+              }) : undefined} /> : null}
           </PanelList>
           {permissions && !authorized ? (
             <DialogCopy>{canRequest ? '开启权限后，可用试响检查响铃。' : '请在系统设置中开启周而复起的响铃权限。'}</DialogCopy>

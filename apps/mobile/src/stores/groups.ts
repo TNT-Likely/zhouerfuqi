@@ -4,23 +4,6 @@ import type { AlarmGroup } from '@core';
 
 const mmkv = createMMKV({ id: 'groups.v1' });
 
-/** 首次启动的种子数据:还原用户当前的真实班制(周一~五 + 大周周六;2026-11-21 为大周周六) */
-const SEED: AlarmGroup[] = [
-  {
-    id: 'work',
-    name: '上班',
-    enabled: true,
-    holidayMode: 'china-smart',
-    times: [
-      { id: 't1', hour: 6, minute: 40, label: '第一道' },
-      { id: 't2', hour: 6, minute: 50, label: '第二道' },
-      { id: 't3', hour: 7, minute: 0, label: '底线' },
-      { id: 't4', hour: 12, minute: 55, label: '午休' },
-    ],
-    rule: { kind: 'everyNWeeks', n: 2, weekdays: [1, 2, 3, 4, 5, 6], anchor: '2026-11-21' },
-  },
-];
-
 function load(): AlarmGroup[] | null {
   try {
     const raw = mmkv.getString('groups');
@@ -44,12 +27,13 @@ interface GroupsState {
 }
 
 export const useGroups = create<GroupsState>((set, get) => {
-  const initial = load();
-  if (initial === null) persist(SEED);
   return {
-    groups: initial ?? SEED,
+    groups: load() ?? [],
     upsert: (group) => {
-      const groups = [...get().groups.filter((g) => g.id !== group.id), group];
+      const current = get().groups;
+      const groups = current.some((g) => g.id === group.id)
+        ? current.map((g) => g.id === group.id ? group : g)
+        : [...current, group];
       persist(groups);
       set({ groups });
     },

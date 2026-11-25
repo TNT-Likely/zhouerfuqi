@@ -2,7 +2,7 @@
   "expo": {
     "name": "周而复起",
     "slug": "zhouerfuqi",
-    "version": "0.3.1",
+    "version": "0.4.0",
     "scheme": "zhouerfuqi",
     "icon": "./assets/icon.png",
     "orientation": "portrait",

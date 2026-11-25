@@ -3,9 +3,7 @@ package expo.modules.zfalarm
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.app.Activity
-import android.app.AlarmManager
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
@@ -14,7 +12,6 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.RippleDrawable
 import android.media.AudioAttributes
-import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.RingtoneManager
 import android.os.Build
@@ -32,6 +29,7 @@ import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.graphics.ColorUtils
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -44,7 +42,7 @@ import java.util.Locale
  * - 沉浸式全屏:隐藏状态栏/导航栏,挖孔区穿透(整块屏幕都是响铃页)
  * - 设计:「破晓时计」暗底 + 主题色破晓光晕(呼吸动画)+ 细体大字钟面 + 胶囊按钮
  * - 铃声:系统闹钟音循环播放,音量 10 秒渐强;振动循环
- * - 原生按钮:稍后 9 分钟(原生重排)/ 关闭
+ * - 原生按钮:稍后 9 分钟(原生重排)/ 停止本次
  * - 自包含:全部状态来自 Intent extras,app 被杀不影响
  */
 class AlarmActivity : Activity() {
@@ -54,6 +52,8 @@ class AlarmActivity : Activity() {
   private val handler = Handler(Looper.getMainLooper())
   private var accentColor = Color.parseColor("#4096FF")
   private val animators = mutableListOf<ValueAnimator>()
+  private var alarmLabel: TextView? = null
+  private val activeTitles = linkedSetOf<String>()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -73,26 +73,9 @@ class AlarmActivity : Activity() {
         layoutInDisplayCutoutMode =
           WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
       }
-      // 响铃页固定 90% 亮度,避免锁屏自动亮度把界面压暗
-      screenBrightness = 0.9f
     }
 
-    accentColor = try {
-      Color.parseColor(intent.getStringExtra(EXTRA_ACCENT))
-    } catch (_: Exception) {
-      Color.parseColor("#4096FF")
-    }
-    val title = intent.getStringExtra(EXTRA_TITLE) ?: "闹钟"
-    val groupId = intent.getStringExtra(EXTRA_GROUP) ?: ""
-    val timeLabel = intent.getStringExtra(EXTRA_TIME_LABEL) ?: nowLabel()
-    val alarmId = intent.getStringExtra(EXTRA_ID)
-
-    // FSI 自动拉起时,清掉通知栏残留(autoCancel 只在用户点击时生效)
-    alarmId?.let {
-      (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).cancel(it.hashCode())
-    }
-
-    buildUi(title, groupId, timeLabel)
+    showAlarm(intent)
 
     // setContentView 创建 DecorView 后才能获取沉浸式全屏的控制器。
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -113,7 +96,37 @@ class AlarmActivity : Activity() {
         )
     }
 
+  }
+
+  override fun onNewIntent(next: Intent) {
+    super.onNewIntent(next)
+    val title = next.getStringExtra(EXTRA_TITLE) ?: "闹钟"
+    dismissNotification(next)
+    if (next.getLongExtra(EXTRA_EPOCH, -1L) == intent.getLongExtra(EXTRA_EPOCH, 0L)) {
+      activeTitles.add(title)
+      alarmLabel?.text = activeTitles.joinToString(" / ")
+      return
+    }
+    stopRing()
+    setIntent(next)
+    showAlarm(next)
+  }
+
+  private fun showAlarm(alarm: Intent) {
+    accentColor = runCatching { Color.parseColor(alarm.getStringExtra(EXTRA_ACCENT)) }
+      .getOrDefault(Color.parseColor("#4096FF"))
+    val title = alarm.getStringExtra(EXTRA_TITLE) ?: "闹钟"
+    activeTitles.clear()
+    activeTitles.add(title)
+    dismissNotification(alarm)
+    buildUi(title, alarm.getStringExtra(EXTRA_TIME_LABEL) ?: nowLabel())
     startRing()
+  }
+
+  private fun dismissNotification(alarm: Intent) {
+    alarm.getStringExtra(EXTRA_ID)?.let {
+      getSystemService(NotificationManager::class.java).cancel(it.hashCode())
+    }
   }
 
   private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
@@ -123,7 +136,7 @@ class AlarmActivity : Activity() {
   private fun dateLabel(): String =
     SimpleDateFormat("M月d日 EEEE", Locale.CHINA).format(Date())
 
-  private fun buildUi(title: String, groupId: String, timeLabel: String) {
+  private fun buildUi(title: String, timeLabel: String) {
     val dec = AccelerateDecelerateInterpolator()
 
     // 底:纵向渐变近黑(上冷下沉),光晕单独一层做「破晓」感
@@ -194,16 +207,12 @@ class AlarmActivity : Activity() {
     )
 
     // 闹钟标识胶囊:主题色软底 + 描边;时刻已上大字则不再重复
-    val pillParts = mutableListOf<String>()
-    if (title.isNotBlank()) pillParts.add(title)
-    if (groupId.isNotBlank() && groupId !in pillParts) pillParts.add(groupId)
-    if (timeLabel.isNotBlank() && timeLabel != heroText) pillParts.add(timeLabel)
-    if (pillParts.isEmpty()) pillParts.add("闹钟")
     val pill = TextView(this).apply {
-      text = pillParts.joinToString(" · ")
-      setTextColor(accentTint(0xE6))
-      textSize = 13f
-      maxLines = 1
+      text = title
+      setTextColor(ColorUtils.blendARGB(accentColor, Color.WHITE, 0.44f))
+      textSize = 15f
+      maxLines = 3
+      gravity = Gravity.CENTER
       ellipsize = android.text.TextUtils.TruncateAt.END
       background = GradientDrawable().apply {
         cornerRadius = dp(40).toFloat()
@@ -212,6 +221,7 @@ class AlarmActivity : Activity() {
       }
       setPadding(dp(18), dp(9), dp(18), dp(9))
     }
+    alarmLabel = pill
     col.addView(
       pill,
       LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT).apply {
@@ -232,9 +242,9 @@ class AlarmActivity : Activity() {
       LinearLayout.LayoutParams(dp(8), dp(8)).apply { gravity = Gravity.CENTER_VERTICAL; marginEnd = dp(8) },
     )
     val live = TextView(this).apply {
-      text = "响铃中 · 音量渐强 · 静音/勿扰不影响"
-      setTextColor(white(0x73))
-      textSize = 12f
+      text = "响铃中 · 音量渐强"
+      setTextColor(white(0xAA))
+      textSize = 13f
     }
     liveRow.addView(live)
     col.addView(
@@ -261,9 +271,12 @@ class AlarmActivity : Activity() {
       background = RippleDrawable(ColorStateList.valueOf(white(0x2E)), snoozeBg, null)
     }
     snooze.setOnClickListener {
-      scheduleSnooze()
-      stopRing()
-      finish()
+      runCatching { scheduleSnooze() }.onSuccess {
+        stopRing()
+        finish()
+      }.onFailure {
+        Toast.makeText(this, "无法延后，请检查闹钟权限。", Toast.LENGTH_LONG).show()
+      }
     }
     btnRow.addView(
       snooze,
@@ -275,8 +288,9 @@ class AlarmActivity : Activity() {
       setColor(accentColor)
     }
     val stop = TextView(this).apply {
-      text = "关 闭"
-      setTextColor(Color.WHITE)
+      text = "停止本次"
+      val foreground = if (ColorUtils.calculateContrast(Color.WHITE, accentColor) >= 4.5) Color.WHITE else Color.BLACK
+      setTextColor(foreground)
       textSize = 15f
       typeface = Typeface.DEFAULT_BOLD
       gravity = Gravity.CENTER
@@ -351,21 +365,16 @@ class AlarmActivity : Activity() {
         )
         isLooping = true
         prepare()
-        // 音量渐强:从 15% 起,10 秒到 100%(STREAM_ALARM 独立于媒体/勿扰音量)
-        val am = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val max = am.getStreamMaxVolume(AudioManager.STREAM_ALARM).coerceAtLeast(1)
-        var step = 0
-        val ramp = object : Runnable {
-          override fun run() {
-            step++
-            val pct = 0.15f + 0.085f * step.coerceAtMost(10)
-            am.setStreamVolume(AudioManager.STREAM_ALARM, (max * pct).toInt().coerceIn(1, max), 0)
-            handler.postDelayed(this, 1000)
-          }
-        }
-        am.setStreamVolume(AudioManager.STREAM_ALARM, (max * 0.15f).toInt().coerceIn(1, max), 0)
+        setVolume(0.15f, 0.15f)
         start()
-        handler.post(ramp)
+        var step = 0
+        handler.postDelayed(object : Runnable {
+          override fun run() {
+            val volume = 0.15f + 0.085f * ++step
+            player?.setVolume(volume, volume)
+            if (step < 10) handler.postDelayed(this, 1000)
+          }
+        }, 1000)
       }
     } catch (e: Exception) {
       android.util.Log.e(TAG, "ringtone failed", e)
@@ -396,28 +405,13 @@ class AlarmActivity : Activity() {
   /** 原生贪睡:+9 分钟再响(自包含,不依赖 JS) */
   private fun scheduleSnooze() {
     val epochMs = System.currentTimeMillis() + 9 * 60e3.toLong()
-    val am = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-    val fire = Intent(this, AlarmActivity::class.java).apply {
-      putExtra(EXTRA_ID, "snooze:$epochMs")
-      putExtra(EXTRA_EPOCH, epochMs)
-      putExtra(EXTRA_TITLE, "贪睡")
-      putExtra(EXTRA_GROUP, intent.getStringExtra(EXTRA_GROUP) ?: "")
-      putExtra(EXTRA_TIME_LABEL, "贪睡 9 分钟后")
-      putExtra(EXTRA_ACCENT, String.format("#%06X", 0xFFFFFF and accentColor))
-    }
-    val pi = PendingIntent.getActivity(
-      this,
-      (epochMs / 1000).toInt(),
-      fire,
-      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-    )
-    val openPi = PendingIntent.getActivity(
-      this,
-      (epochMs / 1000).toInt() + 1,
-      packageManager.getLaunchIntentForPackage(packageName),
-      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-    )
-    am.setAlarmClock(AlarmManager.AlarmClockInfo(epochMs, openPi), pi)
+    val time = SimpleDateFormat("HH:mm", Locale.ROOT).format(Date(epochMs))
+    val scheduled = ZfAlarmSchedule.schedule(this, mapOf(
+      "id" to "snooze:$epochMs", "epochMs" to epochMs,
+      "title" to activeTitles.joinToString(" / "), "body" to "稍后响铃",
+      "groupId" to "snooze", "timeId" to "snooze", "timeLabel" to time,
+    ), String.format("#%06X", 0xFFFFFF and accentColor))
+    checkNotNull(scheduled)
   }
 
   @Deprecated("Deprecated in Java")

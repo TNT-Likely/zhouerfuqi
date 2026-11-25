@@ -49,6 +49,11 @@ jobs:
             if [ -z "$VN" ]; then VN=$(node -p "require('./apps/mobile/app.json').expo.version"); fi
           fi
           VC=$(date +%s)   # 单调递增,2038 年前均小于 versionCode 上限
+          if [[ "$VN" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
           echo "version_name=$VN" >> "$GITHUB_OUTPUT"
           echo "version_code=$VC" >> "$GITHUB_OUTPUT"
           echo "version: $VN ($VC)"
@@ -89,6 +94,8 @@ jobs:
           # 手动 dispatch 无 tag 上下文:显式指定 tag_name(不存在时 softprops 会自动建)
           tag_name: v${{ steps.ver.outputs.version_name }}
           target_commitish: ${{ github.sha }}
+          prerelease: ${{ steps.ver.outputs.prerelease == 'true' }}
+          make_latest: ${{ steps.ver.outputs.prerelease == 'true' && 'false' || 'true' }}
           files: |
             dist/zhouerfuqi-${{ steps.ver.outputs.version_name }}-arm64-v8a.apk
             dist/zhouerfuqi-${{ steps.ver.outputs.version_name }}-armeabi-v7a.apk
@@ -98,9 +105,10 @@ jobs:
             周而复起 ${{ steps.ver.outputs.version_name }}
 
             - 真机(华为/小米等)下载 **arm64-v8a** 版安装
-            - 已装旧版的用户可在 App 内「设置 → 检查更新」自助升级
+            - ${{ steps.ver.outputs.prerelease == 'true' && '测试版通过本页 APK 手动安装。' || '已装旧版的用户可在 App 内「设置 → 检查更新」自助升级。' }}
 
       - name: Commit update manifest to main
+        if: steps.ver.outputs.prerelease != 'true'
         env:
           TAG: v${{ steps.ver.outputs.version_name }}
         run: |

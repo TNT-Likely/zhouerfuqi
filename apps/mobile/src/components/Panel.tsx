@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   rowDetail: { fontSize: 12, lineHeight: 17, marginTop: 3 },
   rowValue: { flexShrink: 1, fontSize: 12, fontWeight: '600' },
   button: {
-    minHeight: 46, gap: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    minHeight: 48, gap: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderRadius: 15, paddingVertical: 8, paddingHorizontal: 12,
   },
   grow: { flex: 1, minWidth: 0 },

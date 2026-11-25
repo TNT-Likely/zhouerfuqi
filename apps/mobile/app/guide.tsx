@@ -1,13 +1,16 @@
 import { useCallback, useState } from 'react';
-import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { AppDialog, DialogCopy } from '@/components/AppDialog';
 import { PanelButton, PanelList, PanelRow } from '@/components/Panel';
 import { SafeAreaScrollView } from '@/components/SafeAreaScrollView';
 import { TrialDialog } from '@/components/TrialDialog';
+import { TrialStatus } from '@/components/TrialStatus';
 import { useTheme } from '@/theme';
+import { gateway } from '@/gateway';
+import type { AlarmPermissionStatus } from '@/gateway/types';
 import {
-  checkNotificationPermission,
+  openAlarmPermissionSettings,
   openAppNotificationSettings,
   requestNotificationPermission,
   supportsNotificationPermissionPrompt,
@@ -32,9 +35,13 @@ const vendorTips = [
 export default function GuideScreen() {
   const t = useTheme();
   const p = t.panel;
-  const [permission, setPermission] = useState<boolean | null>(null);
+  const [permissions, setPermissions] = useState<AlarmPermissionStatus | null>(null);
+  const permission = permissions?.notifications;
   const [battery, setBattery] = useState(isIgnoringBatteryOptimizations);
-  const [vendor, setVendor] = useState(0);
+  const [vendor, setVendor] = useState(() => {
+    const brand = Platform.OS === 'android' ? Platform.constants.Brand.toLowerCase() : '';
+    return brand === 'xiaomi' || brand === 'redmi' ? 1 : brand === 'oppo' || brand === 'vivo' ? 2 : 0;
+  });
   const [dialog, setDialog] = useState<'notifications' | 'test' | null>(null);
   const [error, setError] = useState('');
   const [attemptedPermission, setAttemptedPermission] = useState(false);
@@ -42,7 +49,7 @@ export default function GuideScreen() {
 
   const refresh = useCallback(() => {
     setBattery(isIgnoringBatteryOptimizations());
-    void checkNotificationPermission().then(setPermission);
+    void gateway.status().then(setPermissions, () => setPermissions(null));
   }, []);
   useFocusEffect(useCallback(() => {
     refresh();
@@ -75,14 +82,22 @@ export default function GuideScreen() {
         <Text style={[styles.title, { color: t.text }]}>保活向导</Text>
       </View>
       <View style={[styles.status, { backgroundColor: t.accentSoft, borderColor: t.heroBorder }]}>
-        <Text style={[styles.statusTitle, { color: t.text }]}>{`已开启 ${Number(permission === true) + Number(battery)} / 2 项系统设置`}</Text>
-        <Text style={[styles.detail, { color: p.muted }]}>查看通知和后台运行状态，可用试响检查锁屏时的效果。</Text>
+        <Text style={[styles.statusTitle, { color: t.text }]}>锁屏响铃检查</Text>
+        <Text style={[styles.detail, { color: p.muted }]}>不同机型的锁屏设置可能不同。可用下方试响检查实际表现。</Text>
       </View>
       <PanelList>
         <PanelRow icon="notifications-outline" title="通知权限" detail="允许发出闹钟响铃通知"
           value={permission ? '已开启' : undefined}
           onPress={permission ? undefined : requestPermission}
           tone={permission ? 'success' : 'warning'} />
+        <PanelRow icon="alarm-outline" title="精确闹钟" detail="允许在排班设定的时刻触发"
+          value={permissions ? permissions.exactAlarms ? '已开启' : '待开启' : '待检查'}
+          onPress={permissions?.exactAlarms === false ? () => void openAlarmPermissionSettings('exact')
+            .catch(() => setError('请在系统设置里开启精确闹钟。')) : undefined} divider />
+        {Platform.OS === 'android' && Number(Platform.Version) >= 34 ?
+          <PanelRow icon="expand-outline" title="锁屏全屏提醒" value={permissions ? permissions.fullScreen ? '已开启' : '待开启' : '待检查'}
+            onPress={permissions?.fullScreen === false ? () => void openAlarmPermissionSettings('fullScreen')
+              .catch(() => setError('请在系统设置里开启锁屏全屏提醒。')) : undefined} divider /> : null}
         <PanelRow icon="battery-half-outline" title="电池优化" detail="允许周而复起在后台按计划运行"
           value={battery ? '已忽略' : undefined} divider tone={battery ? 'success' : 'warning'}
           onPress={battery ? undefined : () => {
@@ -115,6 +130,7 @@ export default function GuideScreen() {
         <PanelRow icon="notifications-outline" title="闹钟通知" detail="查看系统提供的通知方式" divider onPress={() => setDialog('notifications')} />
       </PanelList>
       <PanelButton label="试响" variant="primary" onPress={() => setDialog('test')} />
+      <TrialStatus />
 
       {dialog === 'test' ? <TrialDialog onClose={close} /> : null}
       {dialog === 'notifications' ? (

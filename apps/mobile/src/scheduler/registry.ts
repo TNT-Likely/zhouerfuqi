@@ -1,10 +1,12 @@
 import { createMMKV } from 'react-native-mmkv';
+import type { AlarmDelivery } from '../gateway/types';
 
 const mmkv = createMMKV({ id: 'registry.v1' });
 
 export interface RegistryEntry {
   epochMs: number;
   title: string;
+  delivery?: AlarmDelivery;
 }
 
 /**

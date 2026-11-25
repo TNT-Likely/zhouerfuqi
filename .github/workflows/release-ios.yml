@@ -19,7 +19,7 @@ permissions:
 jobs:
   unsigned-ipa:
     # unsigned 包:开源用户可自行签名;TestFlight 签名上传见 testflight job
-    if: github.ref_type == 'tag' || inputs.upload != true
+    if: (github.ref_type == 'tag' && !contains(github.ref_name, '-')) || (github.ref_type != 'tag' && inputs.upload != true)
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
@@ -47,6 +47,7 @@ jobs:
             VN="${{ inputs.version_name }}"
             if [ -z "$VN" ]; then VN=$(node -p "require('./apps/mobile/app.json').expo.version"); fi
           fi
+          VN="${VN%%-*}"
           VC=$(date +%s)   # 与 Android 同策略:单调递增 build 号
           echo "version_name=$VN" >> "$GITHUB_OUTPUT"
           echo "version_code=$VC" >> "$GITHUB_OUTPUT"
@@ -133,6 +134,7 @@ jobs:
           else
             VN="${VERSION_NAME:-$(node -p "require('./apps/mobile/app.json').expo.version")}"
           fi
+          VN="${VN%%-*}"
           VC=$(date +%s)
           echo "version_name=$VN" >> "$GITHUB_OUTPUT"
           echo "version_code=$VC" >> "$GITHUB_OUTPUT"
@@ -170,19 +172,29 @@ jobs:
           echo "SIGNING_IDENTITY=$(security find-identity -v -p codesigning build.keychain | sed -n 's/.*"\(.*\)".*/\1/p' | head -1)" >> "$GITHUB_ENV"
           rm -f /tmp/dist.p12
 
-      - name: Install provisioning profile
+      - name: Install app and widget provisioning profiles
         env:
-          PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+          APP_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE }}
+          WIDGET_PROFILE: ${{ secrets.APPLE_PROVISIONING_PROFILE_WIDGET }}
         run: |
-          # secret 是 base64(GitHub secret 只收 UTF-8,二进制 profile 必须转存)
-          echo "$PROFILE" | base64 -d > /tmp/zf.mobileprovision
-          UUID=$(security cms -D -i /tmp/zf.mobileprovision | plutil -extract UUID raw -o - -)
-          PROFILE_NAME=$(security cms -D -i /tmp/zf.mobileprovision | plutil -extract Name raw -o - -)
-          echo "profile: $PROFILE_NAME ($UUID)"
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp /tmp/zf.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/$UUID.mobileprovision
-          echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
-          rm -f /tmp/zf.mobileprovision
+          set -euo pipefail
+          PROFILE_DIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILE_DIR"
+          install_profile() {
+            local name="$1" content="$2" bundle_id="$3"
+            local profile_file="$(mktemp)" decoded_file="$(mktemp)"
+            printf '%s' "$content" | base64 -d > "$profile_file"
+            security cms -D -i "$profile_file" > "$decoded_file"
+            local uuid="$(plutil -extract UUID raw -o - "$decoded_file")"
+            local profile_name="$(plutil -extract Name raw -o - "$decoded_file")"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$decoded_file")" = "JS3KDL8437.$bundle_id"
+            test "$(/usr/libexec/PlistBuddy -c 'Print :Entitlements:com.apple.security.application-groups:0' "$decoded_file")" = "group.com.tntlikely.zhouerfuqi"
+            cp "$profile_file" "$PROFILE_DIR/$uuid.mobileprovision"
+            echo "$name=$profile_name" >> "$GITHUB_ENV"
+            rm -f "$profile_file" "$decoded_file"
+          }
+          install_profile PROFILE_NAME "$APP_PROFILE" com.tntlikely.zhouerfuqi
+          install_profile WIDGET_PROFILE_NAME "$WIDGET_PROFILE" com.tntlikely.zhouerfuqi.NextAlarmWidget
 
       - name: Signed archive
         working-directory: apps/mobile/ios
@@ -193,7 +205,7 @@ jobs:
           xcodebuild archive -workspace app.xcworkspace -scheme app -configuration Release \
             -destination 'generic/platform=iOS' -archivePath build/app-signed.xcarchive \
             CODE_SIGN_STYLE=Manual "CODE_SIGN_IDENTITY=${{ env.SIGNING_IDENTITY }}" \
-            PROVISIONING_PROFILE_SPECIFIER="${{ env.PROFILE_NAME }}" \
+            ZF_APP_PROFILE="$PROFILE_NAME" ZF_WIDGET_PROFILE="$WIDGET_PROFILE_NAME" \
             COMPILER_INDEX_STORE_ENABLE=NO \
             MARKETING_VERSION="${{ steps.ver.outputs.version_name }}" \
             CURRENT_PROJECT_VERSION="${{ steps.ver.outputs.version_code }}"
@@ -214,7 +226,7 @@ jobs:
             '<key>teamID</key><string>JS3KDL8437</string>' \
             '<key>signingStyle</key><string>manual</string>' \
             "<key>signingCertificate</key><string>$SIGNING_IDENTITY</string>" \
-            "<key>provisioningProfiles</key><dict><key>com.tntlikely.zhouerfuqi</key><string>$PROFILE_NAME</string></dict>" \
+            "<key>provisioningProfiles</key><dict><key>com.tntlikely.zhouerfuqi</key><string>$PROFILE_NAME</string><key>com.tntlikely.zhouerfuqi.NextAlarmWidget</key><string>$WIDGET_PROFILE_NAME</string></dict>" \
             '<key>uploadSymbols</key><true/>' \
             '<key>ITSAppUsesNonExemptEncryption</key><false/>' \
             '</dict></plist>' > /tmp/export.plist

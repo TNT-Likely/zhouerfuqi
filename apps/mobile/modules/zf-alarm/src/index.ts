@@ -12,4 +12,8 @@ export function scheduleRefresher(hour: number, minute: number): boolean {
   return ZfAlarm.scheduleRefresher(hour, minute) as boolean;
 }
 
+export function setRefresherEnabled(enabled: boolean): void {
+  if (Platform.OS === 'android') requireNativeModule('ZfAlarm').setRefresherEnabled(enabled);
+}
+
 export default { scheduleRefresher };

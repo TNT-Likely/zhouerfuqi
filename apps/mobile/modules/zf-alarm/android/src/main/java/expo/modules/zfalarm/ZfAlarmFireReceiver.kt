@@ -22,6 +22,7 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     val id = intent.getStringExtra(AlarmActivity.EXTRA_ID) ?: return
     val epochMs = intent.getLongExtra(AlarmActivity.EXTRA_EPOCH, 0L)
+    if (epochMs <= 0L || !ZfAlarmSchedule.isCurrent(context, id, epochMs)) return
     val title = intent.getStringExtra(AlarmActivity.EXTRA_TITLE) ?: "闹钟"
     val body = intent.getStringExtra(AlarmActivity.EXTRA_BODY) ?: ""
     val groupId = intent.getStringExtra(AlarmActivity.EXTRA_GROUP) ?: ""
@@ -33,8 +34,9 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
 
     val contentIntent = PendingIntent.getActivity(
       context,
-      (epochMs / 1000).toInt() + 2,
+      0,
       Intent(context, AlarmActivity::class.java).apply {
+        data = ZfAlarmSchedule.identity("ring", id)
         putExtra(AlarmActivity.EXTRA_ID, id)
         putExtra(AlarmActivity.EXTRA_EPOCH, epochMs)
         putExtra(AlarmActivity.EXTRA_TITLE, title)
@@ -63,6 +65,8 @@ class ZfAlarmFireReceiver : BroadcastReceiver() {
 
     val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     nm.notify(id.hashCode(), notification)
+    ZfAlarmSchedule.cancel(context, id)
+    ZfPlanWidget.refresh(context)
     android.util.Log.i("ZfAlarmFire", "fired: $id (fsi notification posted)")
   }
 

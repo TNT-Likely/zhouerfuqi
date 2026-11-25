@@ -7,24 +7,40 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { PanelButton } from '@/components/Panel';
 import { useFeedback } from '@/components/Feedback';
-import { syncAll, snooze } from '@/scheduler/sync';
+import { snooze } from '@/scheduler/sync';
+import { gateway } from '@/gateway';
 import { useTheme } from '@/theme';
 
 export default function RingScreen() {
   const t = useTheme();
   const notify = useFeedback();
   const { top, bottom } = useSafeAreaInsets();
-  const params = useLocalSearchParams<{ timeLabel?: string; groupId?: string; preview?: string }>();
+  const params = useLocalSearchParams<{ timeLabel?: string; title?: string; alarmId?: string; preview?: string }>();
   const preview = params.preview === '1';
   const [state, setState] = useState<'ringing' | 'snoozed' | 'closed'>('ringing');
   const [initial] = useState(() => new Date());
   const [delay, setDelay] = useState(0);
+  const [busy, setBusy] = useState(false);
   const sampleTime = new Date(initial.getTime() + delay * 60_000);
-  const time = preview || !params.timeLabel ? formatTime(sampleTime) : params.timeLabel;
-  const groupLabel = preview ? '试响预览' : params.groupId === 'work' ? '上班组' : params.groupId || '闹钟';
+  const time = preview || !params.timeLabel || state === 'snoozed' ? formatTime(sampleTime) : params.timeLabel;
+  const groupLabel = preview ? '试响预览' : params.title || '闹钟';
   const close = () => {
     if (preview) router.back();
     else router.dismissAll();
+  };
+  const respond = async (later: boolean) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      if (later && !preview) await snooze(9, groupLabel);
+      if (!preview && params.alarmId) await gateway.cancel([params.alarmId]);
+      if (later) setDelay(9);
+      setState(later ? 'snoozed' : 'closed');
+    } catch {
+      notify(later ? '无法延后响铃' : '无法停止本次', '请检查系统闹钟权限。', 'error', 'alert-circle-outline');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -44,34 +60,21 @@ export default function RingScreen() {
             <Text style={styles.muted}>{sampleTime.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })}</Text>
             <Text style={styles.time} adjustsFontSizeToFit numberOfLines={1}>{time}</Text>
             <Text style={styles.label}>{groupLabel}</Text>
-            <Text style={styles.muted}>{state === 'snoozed' ? `已延后 ${delay} 分钟` : preview ? '用于查看响铃界面' : '响铃中 · 音量渐强'}</Text>
+            <Text style={styles.muted}>{state === 'snoozed' ? '已延后 9 分钟' : preview ? '应用内响铃界面预览' : '通知提醒'}</Text>
           </>
         )}
       </View>
 
       <View style={styles.actions}>
-        {state === 'closed' ? (
+        {state !== 'ringing' ? (
           <>
             {preview ? <PanelButton label="重新预览" onPress={() => { setDelay(0); setState('ringing'); }} /> : null}
             <PanelButton label={preview ? '返回' : '返回首页'} variant="primary" onPress={close} />
           </>
         ) : (
           <>
-            <PanelButton label={preview && state === 'snoozed' ? '再延后 9 分钟' : '稍后 9 分钟'} onPress={() => {
-              if (preview) {
-                setDelay((minutes) => minutes + 9);
-                setState('snoozed');
-                return;
-              }
-              void snooze(9, '贪睡 · 周而复起').then(() => {
-                setDelay(9);
-                setState('snoozed');
-              }).catch(() => notify('无法延后响铃', '请检查系统闹钟权限。', 'error', 'alert-circle-outline'));
-            }} />
-            <PanelButton label="关闭本次闹钟" variant="primary" onPress={() => {
-              if (!preview) void syncAll().catch(() => {});
-              setState('closed');
-            }} />
+            <PanelButton label="稍后 9 分钟" disabled={busy} onPress={() => void respond(true)} />
+            <PanelButton label="停止本次" variant="primary" disabled={busy} onPress={() => void respond(false)} />
           </>
         )}
       </View>

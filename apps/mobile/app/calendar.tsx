@@ -1,268 +1,213 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { evaluateDay, isRuleDay, type AlarmGroup, type Weekday } from '@core';
-import { useGroups } from '@/stores/groups';
-import { getHolidayCalendar } from '@/services/holidays';
-import { todayISO } from '@/scheduler/materialize';
-import { syncAll } from '@/scheduler/sync';
-import { cnDate, WD } from '@/lib/labels';
-import { useTheme, type Tokens } from '@/theme';
+import { useMemo, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { expandGroups, isoWeekday, isRuleDay, localDateISO, occurrenceEpoch, type AlarmGroup } from '@core';
 import { Sheet } from '@/components/Sheet';
+import { AppDialog, DialogCopy } from '@/components/AppDialog';
+import { DayEditor } from '@/components/DayEditor';
+import { useFeedback } from '@/components/Feedback';
+import { daysInMonth, firstOfMonth, MonthGrid } from '@/components/MonthGrid';
+import { PanelButton } from '@/components/Panel';
+import { clockLabel, useClock } from '@/lib/clock';
+import { cnDate, WD } from '@/lib/labels';
+import { alarmId } from '@/scheduler/materialize';
+import { syncAll, useScheduleState } from '@/scheduler/sync';
+import { exportCalendar } from '@/services/calendarExport';
+import { changeDay } from '@/services/dayOverrides';
+import { getHolidayCalendar } from '@/services/holidays';
+import { useGroups } from '@/stores/groups';
+import { useTheme } from '@/theme';
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
-function monthMeta(y: number, m: number) {
-  return { days: new Date(y, m, 0).getDate(), firstDow: (() => { const w = new Date(y, m - 1, 1).getDay(); return w === 0 ? 7 : w; })() };
-}
-function dowOf(date: string): number {
-  const d = new Date(`${date}T00:00:00`).getDay();
-  return d === 0 ? 7 : d;
-}
+type Draft = { original: string[]; dates: string[] };
 
 export default function CalendarScreen() {
   const t = useTheme();
-  const groups = useGroups((s) => s.groups);
-  const upsert = useGroups((s) => s.upsert);
-  const g = groups[0]; // 排班月历编辑的班组
-  const now = new Date();
-  const [cal, setCal] = useState({ y: now.getFullYear(), m: now.getMonth() + 1 });
-  const [mode, setMode] = useState<'rule' | 'manual'>('rule');
-  const [sel, setSel] = useState(todayISO());
+  const notify = useFeedback();
+  const params = useLocalSearchParams<{ date?: string; group?: string }>();
+  const now = useClock();
+  const today = localDateISO(new Date(now));
+  const initialDate = typeof params.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.date)
+    && Number.isFinite(Date.parse(params.date)) ? params.date : today;
+  const [selected, setSelected] = useState(initialDate);
+  const [month, setMonth] = useState(firstOfMonth(initialDate));
+  const [filter, setFilter] = useState(params.group ?? '');
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const [confirm, setConfirm] = useState<'save' | 'discard' | null>(null);
+  const [dayMode, setDayMode] = useState<'extra' | 'replace' | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const groups = useGroups((state) => state.groups);
+  // 节假日缓存更新后，重排状态会触发一次重新渲染。
+  useScheduleState((state) => state.syncedAt);
+  const calendar = getHolidayCalendar();
+  const active = groups.find((group) => group.id === filter);
+  const target = active ?? (groups.length === 1 ? groups[0] : undefined);
+  const shown = useMemo(() => active ? [active] : groups, [active, groups]);
+  const names = new Map(groups.map((group) => [group.id, group.name]));
+  const monthItems = useMemo(() => expandGroups(shown, calendar, month, daysInMonth(month)), [shown, calendar, month]);
+  const counts = new Map<string, number>();
+  for (const item of monthItems) counts.set(item.date, (counts.get(item.date) ?? 0) + 1);
+  const items = monthItems.filter((item) => item.date === selected);
+  const originally = new Set(draft?.original);
+  const selectedDates = new Set(draft?.dates);
+  const added = draft?.dates.filter((date) => !originally.has(date)) ?? [];
+  const removed = draft?.original.filter((date) => !selectedDates.has(date)) ?? [];
+  const changed = added.length + removed.length;
+  const adjusted = shown.some((group) => group.overrides?.[selected]);
+  const isPastDay = selected < today;
 
-  const manual = g?.rule.kind === 'customDates';
-  const editing = !!g && manual && mode === 'manual' && g.enabled;
-  const dates = new Set<string>(g && g.rule.kind === 'customDates' ? g.rule.dates : []);
-  const y = cal.y, m = cal.m;
-  const { days, firstDow } = monthMeta(y, m);
-  const today = todayISO();
+  function selectDate(date: string) {
+    setSelected(date);
+    if (!draft) return;
+    const dates = new Set(draft.dates);
+    if (dates.has(date)) dates.delete(date);
+    else dates.add(date);
+    setDraft({ ...draft, dates: [...dates].sort() });
+  }
 
-  const setRuleDates = (fn: (set: Set<string>) => void) => {
-    if (!g) return;
-    const set = new Set(dates);
-    fn(set);
-    upsert({ ...g, rule: { kind: 'customDates', dates: [...set].sort() } });
-    void syncAll();
-  };
-  const enterManual = () => {
-    if (!g) return;
-    if (g.rule.kind !== 'customDates') {
-      // 进入手动排班:把可见月份的规则响铃日(今天起)播种为点选起点
-      const seed = new Set<string>();
-      for (let d = 1; d <= days; d++) {
-        const date = `${y}-${pad(m)}-${pad(d)}`;
-        if (date >= today && isRuleDay(g.rule, date)) seed.add(date);
-      }
-      upsert({ ...g, rule: { kind: 'customDates', dates: [...seed].sort() } });
-      void syncAll();
+  function editManual(group: AlarmGroup) {
+    if (group.rule.kind !== 'customDates') return;
+    setFilter(group.id);
+    setDraft({ original: group.rule.dates, dates: group.rule.dates });
+  }
+
+  function saveManual() {
+    if (!draft || !target) return;
+    const current = useGroups.getState().groups.find((group) => group.id === target.id);
+    if (!current || current.rule.kind !== 'customDates' || current.rule.dates !== draft.original) {
+      notify('排班已更新', '请重新打开编辑查看当前日期。', 'warning');
+      setDraft(null);
+      setConfirm(null);
+      return;
     }
-    setMode('manual');
-  };
+    useGroups.getState().upsert({ ...current, rule: { kind: 'customDates', dates: draft.dates } });
+    setConfirm(null);
+    setDraft(null);
+    notify('已保存手动排班', '新增 ' + added.length + ' 天 · 移除 ' + removed.length + ' 天');
+    void syncAll().catch(() => notify('响铃同步失败', '可在设置中重试。', 'warning'));
+  }
 
-  const cells: { date: string; day: number }[] = [];
-  for (let d = 1; d <= days; d++) cells.push({ date: `${y}-${pad(m)}-${pad(d)}`, day: d });
+  function clearOverride(group: AlarmGroup) {
+    const undo = changeDay(group.id, selected, () => undefined);
+    notify('已恢复当天规则', cnDate(selected) + ' · ' + group.name, 'success', 'checkmark',
+      { label: '撤销', run: () => { if (undo()) notify('已撤销恢复'); } });
+  }
 
-  const evFor = (date: string) => evaluateDay(g ?? { id: '', name: '', enabled: true, times: [], rule: { kind: 'weekly', weekdays: [1,2,3,4,5] } }, getHolidayCalendar(), date);
-
-  const selEv = g ? evaluateDay(g, getHolidayCalendar(), sel) : null;
+  async function shareMonth() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await exportCalendar(shown, month, daysInMonth(month));
+    } catch (error) {
+      notify('班表导出失败', error instanceof Error ? error.message : undefined, 'error', 'alert-circle-outline');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
-    <Sheet
-      title="排班月历"
-      right={
-        <Text style={{ fontSize: 11, color: t.text2 }}>
-          {editing ? '手动排班 · 编辑中' : manual ? '手动排班 · 预览' : '规则预览'}
-        </Text>
-      }
-    >
-      <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-
-      {/* 模式切换 */}
-      <View style={[styles.mode, { backgroundColor: t.surface2 }]}>
-        <Pressable style={[styles.modeBtn, mode === 'rule' && { backgroundColor: t.surface }]} onPress={() => setMode('rule')}>
-          <Text style={{ fontSize: 12, color: mode === 'rule' ? t.text : t.text3, fontWeight: mode === 'rule' ? '600' : '400' }}>规则预览</Text>
-        </Pressable>
-        <Pressable style={[styles.modeBtn, mode === 'manual' && { backgroundColor: t.surface }]} onPress={() => { mode === 'rule' ? enterManual() : setMode('manual'); }}>
-          <Text style={{ fontSize: 12, color: mode === 'manual' ? t.text : t.text3, fontWeight: mode === 'manual' ? '600' : '400' }}>手动排班</Text>
-        </Pressable>
-      </View>
-
-      {/* 月份导航 */}
-      <View style={styles.calHead}>
-        <Pressable style={[styles.calNav, { backgroundColor: t.surface2 }]} onPress={() => setCal(c => ({ y: c.m === 1 ? c.y - 1 : c.y, m: c.m === 1 ? 12 : c.m - 1 }))}>
-          <Ionicons name="chevron-back" size={16} color={t.text2} />
-        </Pressable>
-        <Text style={[styles.calTitle, { color: t.text }]}>
-          {y}年{m}月
-          {y === now.getFullYear() && m === now.getMonth() + 1 && <Text style={{ color: t.primary, fontSize: 11, fontWeight: '600' }}>  本月</Text>}
-        </Text>
-        <Pressable style={[styles.calNav, { backgroundColor: t.surface2 }]} onPress={() => setCal(c => ({ y: c.m === 12 ? c.y + 1 : c.y, m: c.m === 12 ? 1 : c.m + 1 }))}>
-          <Ionicons name="chevron-forward" size={16} color={t.text2} />
-        </Pressable>
-        <Pressable style={[styles.calNav, { backgroundColor: t.surface2 }]} onPress={() => setCal({ y: now.getFullYear(), m: now.getMonth() + 1 })}>
-          <Ionicons name="calendar-clear-outline" size={15} color={t.text2} />
-        </Pressable>
-      </View>
-
-      {/* 快捷填充(手动排班编辑中) */}
-      {editing && (
-        <View style={styles.quick}>
-          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => { for (let d = 1; d <= days; d++) { const date = `${y}-${pad(m)}-${pad(d)}`; if (dowOf(date) <= 5) set.add(date); } })}>
-            <Text style={{ fontSize: 12, color: t.text }}>填充工作日</Text>
-          </Pressable>
-          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => { for (let d = 1; d <= days; d++) set.add(`${y}-${pad(m)}-${pad(d)}`); })}>
-            <Text style={{ fontSize: 12, color: t.text }}>填充全月</Text>
-          </Pressable>
-          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => { for (let d = 1; d <= days; d++) set.delete(`${y}-${pad(m)}-${pad(d)}`); })}>
-            <Text style={{ fontSize: 12, color: t.text }}>清空本月</Text>
-          </Pressable>
-          <Pressable style={[styles.quickBtn, { backgroundColor: t.surface2 }]} onPress={() => setRuleDates(set => set.clear())}>
-            <Text style={{ fontSize: 12, color: t.text }}>清空全部点选</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {/* 月历 */}
-      <View style={[styles.cal, { backgroundColor: t.surface, borderColor: t.line }]}>
-        <View style={styles.grid}>
-          {WD.map(w => <Text key={w} style={[styles.dow, { color: t.text2 }]}>{w}</Text>)}
-          {Array.from({ length: firstDow - 1 }).map((_, i) => (
-            <View key={`b${i}`} style={styles.day} />
-          ))}
-          {cells.map(({ date, day }) => {
-            const ev = g ? evaluateDay(g, getHolidayCalendar(), date) : null;
-            const ring = !!g && g.enabled && !!ev?.ring;
-            const picked = dates.has(date);
-            const w = dowOf(date);
-            const isToday = date === today;
-            const isSel = sel === date;
-            let tag = ''; let tagColor = t.text2;
-            if (editing) {
-              if (picked) { tag = '✓'; tagColor = t.primary; }
-              else if (ev?.holiday === true) { tag = '假'; tagColor = t.red; }
-            } else if (ev) {
-              if (ev.holiday === true) { tag = '假'; tagColor = t.red; }
-              else if (ev.holiday === false && ring) { tag = '班'; tagColor = t.green; }
-              else if (ring && g?.rule.kind === 'everyNWeeks' && w === dowOf(g.rule.anchor)) { tag = '大周'; tagColor = t.primary; }
-              else if (!ring && w === 6) { tag = '小周'; }
-              else if (!ring && w === 7) { tag = '休'; }
-            }
-            const dotCount = ring && g ? g.times.length : 0;
-            return (
-              <Pressable
-                key={date}
-                onPress={() => {
-                  if (editing) { setRuleDates(set => { set.has(date) ? set.delete(date) : set.add(date); }); }
-                  else setSel(date);
-                }}
-                style={[
-                  styles.day,
-                  { backgroundColor: restBg(restFlag(!editing, ring, w)) },
-                  picked ? styles.picked : null,
-                  isSel && !picked ? styles.selSolid : null,
-                  ev?.holiday === true && !picked && !editing ? styles.dim : null,
-                ]}
-              >
-                <Text style={{ fontSize: 13, fontWeight: isSel || picked ? '700' : '600', color: isSel ? '#fff' : restFlag(!editing, ring, w) ? t.text3 : t.text }}>
-                  {day}
-                </Text>
-                {ring ? (
-                  <View style={styles.dots}>
-                    {Array.from({ length: Math.min(dotCount, 4) }).map((_, i) => (
-                      <View key={i} style={[styles.dot, { backgroundColor: t.primary }]} />
-                    ))}
+    <>
+      <Sheet title={draft ? '编辑手动日期' : '排班月历'} onClose={draft ? () => changed ? setConfirm('discard') : setDraft(null) : undefined}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          {!draft && groups.length ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
+              <PanelButton label="全部班组" variant={!active ? 'primary' : 'secondary'} onPress={() => setFilter('')} />
+              {groups.map((group) => (
+                <PanelButton key={group.id} label={group.name} variant={active?.id === group.id ? 'primary' : 'secondary'}
+                  onPress={() => setFilter(group.id)} />
+              ))}
+            </ScrollView>
+          ) : null}
+          <MonthGrid month={month} selected={selected} onMonth={(date) => { setMonth(date); setSelected(date); }}
+            onSelect={selectDate} isMarked={draft ? (date) => selectedDates.has(date) : undefined}
+            badge={(date) => {
+              const flag = calendar.statusOf(date);
+              const count = counts.get(date) ?? 0;
+              if (draft) return flag === true ? { text: '假', tone: 'warning' } : flag === false ? { text: '补', tone: 'success' } : undefined;
+              if (shown.some((group) => group.overrides?.[date])) return { text: count ? '调 ' + count : '调休', tone: 'accent' };
+              const rule = target?.rule;
+              if (rule?.kind === 'everyNWeeks' && rule.n === 2 && isoWeekday(date) === 6 &&
+                isoWeekday(rule.anchor) === 6 && rule.weekdays.includes(6) && flag === undefined) {
+                return isRuleDay(rule, date) ? { text: '大周', tone: 'accent' } : { text: '小周' };
+              }
+              if (count) return { text: (flag === false ? '补 ' : '响 ') + count, tone: flag === false ? 'success' : 'accent' };
+              return flag === true ? { text: '假', tone: 'warning' } : { text: '休' };
+            }} />
+          <View style={styles.actions}>
+            <PanelButton label="回到今天" variant="text" onPress={() => { setMonth(firstOfMonth(today)); setSelected(today); }} />
+            {!draft ? <PanelButton label="导出本月" variant="text" icon="share-outline" disabled={exporting}
+              onPress={() => void shareMonth()} /> : null}
+          </View>
+          {draft ? (
+            <View style={[styles.detail, { backgroundColor: t.surface2 }]}>
+              <Text style={[styles.title, { color: t.text }]}>{target?.name} · 已选 {draft.dates.length} 天</Text>
+              <Text style={{ color: t.panel.muted }}>{changed ? '新增 ' + added.length + ' 天 · 移除 ' + removed.length + ' 天' : '点击日期选中或移除。'}</Text>
+              <View style={styles.actions}>
+                <PanelButton label="取消编辑" onPress={() => changed ? setConfirm('discard') : setDraft(null)} grow />
+                <PanelButton label="核对并保存" variant="primary" disabled={!changed} onPress={() => setConfirm('save')} grow />
+              </View>
+            </View>
+          ) : (
+            <View style={[styles.detail, { backgroundColor: t.surface, borderColor: t.line }]}>
+              <View style={styles.detailHeader}>
+                <Text accessibilityRole="header" style={[styles.title, { color: t.text }]}>{cnDate(selected)} · 周{WD[isoWeekday(selected) - 1]}</Text>
+                <Text style={{ color: t.panel.muted }}>{items.length ? items.length + ' 次响铃' : '休息'}</Text>
+              </View>
+              {adjusted ? <Text style={{ color: t.panel.accent, fontSize: 13 }}>当天有临时调整</Text> : null}
+              {items.map((item) => {
+                const past = occurrenceEpoch(item) <= now;
+                return (
+                  <View key={alarmId(item)} style={[styles.item, { borderColor: t.line }]}>
+                    <Text style={[styles.clock, { color: past ? t.panel.muted : t.text }]}>{clockLabel(item)}</Text>
+                    <Text style={[styles.source, { color: t.text }]}>{[names.get(item.groupId), item.shiftName, item.label].filter(Boolean).join(' · ')}</Text>
+                    {past ? <Text style={{ color: t.panel.muted, fontSize: 12 }}>已过</Text> : null}
                   </View>
-                ) : null}
-                {tag ? <Text style={[styles.tag, { color: tagColor }]}>{tag}</Text> : null}
-              </Pressable>
-            );
-          })}
-        </View>
-        <View style={styles.legend}>
-          <Legend t={t} color={t.primary} text="班日响铃" />
-          <Legend t={t} color={t.primary} text="大周周六" />
-          <Legend t={t} color={t.red} text="法定假日" />
-          <Legend t={t} color={t.green} text="调休补班" />
-          <Legend t={t} color={t.primary} text="手动点选" />
-        </View>
-      </View>
-
-      {/* 当日明细 */}
-      <View style={[styles.detail, { backgroundColor: t.surface2 }]}>
-        {(() => {
-          if (!g) return null;
-          const ev = evaluateDay(g, getHolidayCalendar(), sel);
-          const ring = g.enabled && ev.ring;
-          const editingNow = editing;
-          let st: string;
-          if (editingNow) st = dates.has(sel) ? '已加入排班(点选即权威,不受节假日影响)' : '未排班 · 点击上方格子加入';
-          else if (ev.holiday === true) st = '法定假日 · 联动开启时自动跳过';
-          else if (ev.holiday === false) st = '调休补班日 · 法定上班';
-          else if (dowOf(sel) >= 6) st = '周末';
-          else st = '工作日';
-          if (ring && ev.reason === 'swap-workday') st += ' · 补班自动响起';
-          return (
-            <>
-              <Text style={{ color: t.text, fontSize: 13, fontWeight: '700' }}>
-                {cnDate(sel)} 周{WD[dowOf(sel) - 1]} · {ring ? (ev.reason === 'swap-workday' ? '补班上班' : ring && g.rule.kind === 'everyNWeeks' && dowOf(sel) === 6 ? '大周周六' : '响铃日') : editingNow ? '未点选' : '不响'}
-              </Text>
-              <Text style={{ color: t.text2, fontSize: 11, marginTop: 4 }}>{st}</Text>
-              {ring ? (
-                <View style={styles.ev}>
-                  {g.times.map(x => (
-                    <Text key={x.id} style={[styles.evPill, { borderColor: t.line, color: t.text2 }]}>
-                      {String(x.hour).padStart(2, '0')}:{String(x.minute).padStart(2, '0')}{x.label ? ` ${x.label}` : ''}
-                    </Text>
-                  ))}
-                </View>
+                );
+              })}
+              {target && !isPastDay ? (
+                <>
+                  <View style={styles.actions}>
+                    <PanelButton label="仅改当天" onPress={() => setDayMode('replace')} grow />
+                    <PanelButton label="补一次" icon="add" onPress={() => setDayMode('extra')} grow />
+                  </View>
+                  {target.overrides?.[selected] ? <PanelButton label="恢复当天规则" variant="text"
+                    onPress={() => clearOverride(target)} /> : null}
+                </>
+              ) : shown.length > 1 && !isPastDay ? (
+                <Text style={{ color: t.panel.muted, fontSize: 13 }}>选择一个班组，即可调整这一天。</Text>
               ) : null}
+              {target?.rule.kind === 'customDates' ? <PanelButton label="编辑手动日期" variant="text" onPress={() => editManual(target)} /> : null}
+              {target && !target.enabled ? <Text style={{ color: t.panel.muted, fontSize: 13 }}>此班组已暂停。</Text> : null}
+              {!groups.length ? <PanelButton label="新建班组" onPress={() => router.push('/group/new')} /> : null}
+            </View>
+          )}
+        </ScrollView>
+      </Sheet>
+      {dayMode && target ? <DayEditor group={target} date={selected} mode={dayMode} onClose={() => setDayMode(null)} /> : null}
+      {confirm ? (
+        <AppDialog title={confirm === 'save' ? '保存这些日期？' : '舍弃排班修改？'} cancel layout="center" tone="warning"
+          confirm={confirm === 'save' ? '保存日期' : '舍弃修改'} onClose={() => setConfirm(null)}
+          onConfirm={confirm === 'save' ? saveManual : () => { setConfirm(null); setDraft(null); }}>
+          {confirm === 'save' ? (
+            <>
+              <DialogCopy centered>新增 {added.length} 天 · 移除 {removed.length} 天</DialogCopy>
+              {added.length ? <DialogCopy>{'新增 ' + added.slice(0, 4).map(cnDate).join('、') + (added.length > 4 ? ' 等' : '')}</DialogCopy> : null}
+              {removed.length ? <DialogCopy>{'移除 ' + removed.slice(0, 4).map(cnDate).join('、') + (removed.length > 4 ? ' 等' : '')}</DialogCopy> : null}
             </>
-          );
-        })()}
-      </View>
-      </ScrollView>
-    </Sheet>
-  );
-}
-
-function restFlag(isPreview: boolean, ring: boolean, w: number): boolean {
-  return isPreview && !ring && w >= 6;
-}
-function restBg(rest: boolean): string | undefined {
-  return rest ? 'transparent' : undefined;
-}
-function Legend({ t, color, text }: { t: Tokens; color: string; text: string }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <View style={{ width: 8, height: 8, borderRadius: 3, backgroundColor: color }} />
-      <Text style={{ fontSize: 10, color: t.text2 }}>{text}</Text>
-    </View>
+          ) : <DialogCopy centered>舍弃后恢复到上次保存的日期。</DialogCopy>}
+        </AppDialog>
+      ) : null}
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, paddingBottom: 48, gap: 12 },
-  topbar: { flexDirection: 'row', alignItems: 'center', paddingTop: 52, paddingHorizontal: 2, gap: 10 },
-  title: { fontSize: 18, fontWeight: '800', letterSpacing: -0.3 },
-  mode: { flexDirection: 'row', borderRadius: 14, padding: 3, gap: 2 },
-  modeBtn: { flex: 1, alignItems: 'center', paddingVertical: 9, borderRadius: 11 },
-  calHead: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, minHeight: 44 },
-  calNav: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-  calTitle: { fontSize: 17, fontWeight: '700', flex: 1, textAlign: 'center' },
-  quick: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  quickBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12 },
-  cal: { borderWidth: 1, borderRadius: 22, padding: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 3 },
-  dow: { fontSize: 10, width: '13.2%', textAlign: 'center', paddingVertical: 4 },
-  day: { width: '13.2%', height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center', gap: 3, position: 'relative' },
-  picked: { shadowColor: '#1677FF', shadowOpacity: 1, shadowRadius: 0, shadowOffset: { width: 0, height: 0 }, borderWidth: 2, borderColor: '#1677FF' },
-  selSolid: {},
-  dim: { opacity: 0.4 },
-  dots: { flexDirection: 'row', gap: 2 },
-  dot: { width: 4, height: 4, borderRadius: 2 },
-  tag: { position: 'absolute', top: 2, right: 5, fontSize: 8, fontWeight: '700' },
-  legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 10, paddingHorizontal: 2 },
-  detail: { borderRadius: 16, padding: 14, minHeight: 78 },
-  ev: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  evPill: { fontSize: 11, borderWidth: 1, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, overflow: 'hidden' },
+  content: { paddingHorizontal: 12, paddingTop: 6, paddingBottom: 28, gap: 11 },
+  filters: { gap: 6 },
+  actions: { flexDirection: 'row', gap: 8, justifyContent: 'space-between' },
+  detail: { borderWidth: 1, borderRadius: 18, padding: 13, gap: 8, borderColor: 'transparent' },
+  detailHeader: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: 5 },
+  title: { fontSize: 17, fontWeight: '800' },
+  item: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 43, borderBottomWidth: StyleSheet.hairlineWidth },
+  clock: { fontSize: 19, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  source: { fontSize: 14, flex: 1 },
 });

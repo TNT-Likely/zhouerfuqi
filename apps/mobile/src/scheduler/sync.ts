@@ -1,79 +1,136 @@
+import { create } from 'zustand';
 import { gateway } from '../gateway';
-import { materialize, todayISO, HORIZON_DAYS } from './materialize';
-import { registry } from './registry';
+import type { AlarmDelivery, AlarmPermissionStatus } from '../gateway/types';
+import { HORIZON_DAYS, materialize, todayISO } from './materialize';
+import { registry, type RegistryEntry } from './registry';
 import { useGroups } from '../stores/groups';
+import { publishWidgetPlan } from '../services/widgets';
+import { setRefresherEnabled } from '../../modules/zf-alarm/src';
 
-let queue = Promise.resolve();
+type Trial = { id: string; epochMs: number; delivery: AlarmDelivery };
+type ScheduleState = {
+  syncing: boolean;
+  error: string | null;
+  syncedAt: number | null;
+  entries: Record<string, RegistryEntry>;
+  permissions: AlarmPermissionStatus | null;
+  trial: Trial | null;
+};
 
-function enqueue(operation: () => Promise<void>): Promise<void> {
+function savedTrial(recent = false): Trial | null {
+  const cutoff = Date.now() - (recent ? 120_000 : 0);
+  const entry = Object.entries(registry.get()).filter(([id, alarm]) => id.startsWith('test:') && alarm.epochMs > cutoff)
+    .sort((a, b) => b[1].epochMs - a[1].epochMs)
+    .find(([, alarm]) => alarm.delivery === 'system' || alarm.delivery === 'notification');
+  if (!entry || !entry[1].delivery) return null;
+  return { id: entry[0], epochMs: entry[1].epochMs, delivery: entry[1].delivery };
+}
+
+export const useScheduleState = create<ScheduleState>(() => ({
+  syncing: false,
+  error: null,
+  syncedAt: null,
+  entries: {},
+  permissions: null,
+  trial: savedTrial(true),
+}));
+
+let queue: Promise<unknown> = Promise.resolve();
+let pendingSync: Promise<void> | undefined;
+
+function enqueue<T>(operation: () => Promise<T>): Promise<T> {
   const next = queue.then(operation);
   queue = next.catch(() => {});
   return next;
 }
 
-/**
- * 统一重排入口。触发点:规则变更 / 闹钟触发 / 关闭响铃 /
- * BOOT_COMPLETED / TIME_SET / TIMEZONE_CHANGED / App 回前台 / 每日 03:30。
- *
- * ⚠️ 强制全量重排:App 更新/重装会清空系统闹钟,而注册表(mmkv)无感——
- * 若按 diff 增量,「registry 说有、系统里没有」的洞永远填不上。
- * Android 按固定 requestCode 更新，iOS 核对系统注册并复用未变化的条目。
- */
 export function syncAll(): Promise<void> {
-  return enqueue(syncSchedule);
+  if (pendingSync) return pendingSync;
+  useScheduleState.setState({ syncing: true });
+  pendingSync = enqueue(async () => {
+    pendingSync = undefined;
+    const groups = useGroups.getState().groups;
+    try {
+      await syncSchedule(groups);
+    } catch (error) {
+      useScheduleState.setState({ error: error instanceof Error ? error.message : String(error), entries: {} });
+      throw error;
+    } finally {
+      useScheduleState.setState({ syncing: !!pendingSync });
+      publishWidgetPlan(groups);
+    }
+  });
+  return pendingSync;
 }
 
-async function syncSchedule(): Promise<void> {
-  const groups = useGroups.getState().groups;
+async function syncSchedule(groups: ReturnType<typeof useGroups.getState>['groups']): Promise<void> {
+  setRefresherEnabled(groups.some((group) => group.enabled));
+  const permissions = await gateway.status();
+  useScheduleState.setState({ permissions });
   const desired = materialize(groups, todayISO(), HORIZON_DAYS);
   const current = registry.get();
-
-  // 先清理旧版 iOS 丢失 UUID 映射的闹钟，释放系统注册额度。
-  await gateway.pruneOrphanedAlarms?.();
-  // 全量重排:desired 幂等注册,registry 里多余的取消
-  if (desired.length) await gateway.schedule(desired);
-  const desiredIds = new Set(desired.map((a) => a.id));
-  const map: Record<string, { epochMs: number; title: string }> = {};
-  for (const a of desired) map[a.id] = { epochMs: a.epochMs, title: a.title };
+  const ids = new Set(desired.map((alarm) => alarm.id));
   const now = Date.now();
-  const toCancel = [];
-  for (const [id, alarm] of Object.entries(current)) {
-    if (desiredIds.has(id)) continue;
-    if (/^(snooze|test):\d+$/.test(id) && alarm.epochMs > now) {
-      map[id] = alarm;
-    } else {
-      toCancel.push(id);
-    }
-  }
+  const keep = Object.fromEntries(Object.entries(current).filter(([id, alarm]) => (
+    !ids.has(id) && /^(snooze|test):\d+$/.test(id) && alarm.epochMs > now
+  )));
+  const toCancel = Object.keys(current).filter((id) => !ids.has(id) && !(id in keep));
+  await gateway.pruneOrphanedAlarms?.();
   if (toCancel.length) await gateway.cancel(toCancel);
-  registry.set(map);
+
+  // 先记录将尝试的标识。部分注册成功或进程中途退出时，下次仍能清理相应响铃。
+  const entries: Record<string, RegistryEntry> = { ...keep };
+  for (const alarm of desired) entries[alarm.id] = { epochMs: alarm.epochMs, title: alarm.title };
+  registry.set(entries);
+
+  const delivery = desired.length ? await gateway.schedule(desired) : {};
+  for (const alarm of desired) entries[alarm.id]!.delivery = delivery[alarm.id] ?? 'skipped';
+  registry.set(entries);
+  useScheduleState.setState({ entries, syncedAt: Date.now(), error: null });
 }
 
-/** 注册一次性贪睡闹钟，定时到期前由重排保留。 */
-export function snooze(minutes: number, title: string): Promise<void> {
-  return enqueue(() => scheduleOneShot('snooze', minutes * 60_000, title, '贪睡重排 · 周而复起'));
+export function snooze(minutes: number, title: string): Promise<Trial> {
+  return enqueue(() => scheduleOneShot('snooze', minutes * 60_000, title, '稍后响铃'));
 }
 
-/** 设置页「试响」:注册一枚 30 秒后的一次性闹钟,用于真机/模拟器验证触发链 */
-export function scheduleTestRing(): Promise<void> {
-  return enqueue(() => scheduleOneShot('test', 30_000, '试响 · 周而复起', '锁屏试响'));
+export function scheduleTestRing(): Promise<Trial> {
+  return enqueue(async () => {
+    const existing = savedTrial();
+    if (existing) return existing;
+    const trial = await scheduleOneShot('test', 30_000, '锁屏试响', '周而复起');
+    useScheduleState.setState({ trial });
+    return trial;
+  });
 }
 
-async function scheduleOneShot(kind: 'snooze' | 'test', delay: number, title: string, body: string): Promise<void> {
+export function cancelTestRing(id: string): Promise<void> {
+  return enqueue(async () => {
+    if (!id.startsWith('test:')) return;
+    await gateway.cancel([id]);
+    const map = registry.get();
+    delete map[id];
+    registry.set(map);
+    useScheduleState.setState({ trial: savedTrial() });
+  });
+}
+
+async function scheduleOneShot(kind: 'snooze' | 'test', delay: number, title: string, body: string): Promise<Trial> {
   const epochMs = Date.now() + delay;
+  const id = `${kind}:${epochMs}`;
   const clock = new Date(epochMs);
   const timeLabel = [clock.getHours(), clock.getMinutes()].map((n) => String(n).padStart(2, '0')).join(':');
-  const alarm = {
-    id: `${kind}:${epochMs}`,
-    epochMs,
-    groupId: kind,
-    timeId: kind,
-    timeLabel,
-    title,
-    body,
-  };
-  await gateway.schedule([alarm]);
   const map = registry.get();
-  map[alarm.id] = { epochMs: alarm.epochMs, title: alarm.title };
+  map[id] = { epochMs, title };
   registry.set(map);
+  const result = await gateway.schedule([{ id, epochMs, groupId: kind, timeId: kind, timeLabel, title, body }]);
+  const delivery = result[id] ?? 'skipped';
+  if (delivery === 'skipped') {
+    await gateway.cancel([id]);
+    delete map[id];
+    registry.set(map);
+    throw new Error('请开启闹钟或通知权限，再安排试响。');
+  }
+  map[id] = { epochMs, title, delivery };
+  registry.set(map);
+  return { id, epochMs, delivery };
 }

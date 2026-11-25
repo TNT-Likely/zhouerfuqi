@@ -8,25 +8,59 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		218C7826C3766C18F915F1AF /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F9EA6D5816E020441AA3972 /* Foundation.framework */; };
+		24944F152DB5591859B9135C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 08507B8EFFE79C519F0EA5BF /* PrivacyInfo.xcprivacy */; };
 		361B4908DB2C82AF7CC45A5A /* libPods-app.a in Frameworks */ = {isa = PBXBuildFile; fileRef = EB3E8E84BD5979DEA224D0DE /* libPods-app.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		5F592DF94F652E906ACDD58B /* NextAlarmWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 6CC194CC36C8D9D4379769A7 /* NextAlarmWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		9832B7441BC14F1EE8F2CCA3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A09EA1EEFBBA9176571B8A5 /* ExpoModulesProvider.swift */; };
+		9A58A9D9D3718C0FB44EAD19 /* NextAlarmWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F20A29B27E2899B9824F9D5 /* NextAlarmWidget.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 		F11748442D0307B40044C1D9 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748432D0307B40044C1D9 /* SceneDelegate.swift */; };
 		FEAFEBB8663A9AEAAE6CB35B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7EAB08A8B81300F7E2A489FB /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		8719637787A47BDC91E7442D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FF92205D818D38C6CDBB4156;
+			remoteInfo = NextAlarmWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B4FB1ADCC86A10BA018F1277 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5F592DF94F652E906ACDD58B /* NextAlarmWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		08507B8EFFE79C519F0EA5BF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = app.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = app/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = app/Info.plist; sourceTree = "<group>"; };
+		1F9EA6D5816E020441AA3972 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS26.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		4A09EA1EEFBBA9176571B8A5 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-app/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		6CC194CC36C8D9D4379769A7 /* NextAlarmWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NextAlarmWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7EAB08A8B81300F7E2A489FB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = app/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8F20A29B27E2899B9824F9D5 /* NextAlarmWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextAlarmWidget.swift; sourceTree = "<group>"; };
+		921FF88490E11B78DF052687 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A5FAE013BB5DCC2A0ACF3BD8 /* Pods-app.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.release.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = app/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
 		C35CC4AA33D3D33EB4398838 /* Pods-app.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-app.debug.xcconfig"; path = "Target Support Files/Pods-app/Pods-app.debug.xcconfig"; sourceTree = "<group>"; };
+		DFB4772FB56D6E99B47C6262 /* NextAlarmWidget.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = NextAlarmWidget.entitlements; sourceTree = "<group>"; };
 		EB3E8E84BD5979DEA224D0DE /* libPods-app.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-app.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = app/AppDelegate.swift; sourceTree = "<group>"; };
@@ -35,6 +69,14 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		092CD95D540CF944401795DB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				218C7826C3766C18F915F1AF /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -66,6 +108,7 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				EB3E8E84BD5979DEA224D0DE /* libPods-app.a */,
+				A8482D1F6C1645649B0E2944 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -94,6 +137,7 @@
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				CE39B27CB1711C0517BE4A4B /* Pods */,
 				B9806A38DF9002363F588109 /* ExpoModulesProviders */,
+				E73EEE32028F802AE6CE0E5B /* NextAlarmWidget */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -104,8 +148,17 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* app.app */,
+				6CC194CC36C8D9D4379769A7 /* NextAlarmWidget.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A8482D1F6C1645649B0E2944 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				1F9EA6D5816E020441AA3972 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		B9806A38DF9002363F588109 /* ExpoModulesProviders */ = {
@@ -135,6 +188,18 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		E73EEE32028F802AE6CE0E5B /* NextAlarmWidget */ = {
+			isa = PBXGroup;
+			children = (
+				8F20A29B27E2899B9824F9D5 /* NextAlarmWidget.swift */,
+				08507B8EFFE79C519F0EA5BF /* PrivacyInfo.xcprivacy */,
+				921FF88490E11B78DF052687 /* Info.plist */,
+				DFB4772FB56D6E99B47C6262 /* NextAlarmWidget.entitlements */,
+			);
+			name = NextAlarmWidget;
+			path = NextAlarmWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -151,15 +216,34 @@
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
 				5630B5B816AC4B0AB538A226 /* [Expo Dev Launcher] Strip Local Network Keys for Release */,
 				FDB3CB0914E6232C144DBB3E /* [CP] Embed Pods Frameworks */,
+				B4FB1ADCC86A10BA018F1277 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				29C62A6561EE7FEC7DAAE6C4 /* PBXTargetDependency */,
 			);
 			name = app;
 			productName = app;
 			productReference = 13B07F961A680F5B00A75B9A /* app.app */;
 			productType = "com.apple.product-type.application";
+		};
+		FF92205D818D38C6CDBB4156 /* NextAlarmWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 60B58715D3F56F453C615639 /* Build configuration list for PBXNativeTarget "NextAlarmWidget" */;
+			buildPhases = (
+				2BDD012D311FC76DFA74EF3C /* Sources */,
+				092CD95D540CF944401795DB /* Frameworks */,
+				EDE84CB9B31B9C284CCAC256 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NextAlarmWidget;
+			productName = NextAlarmWidget;
+			productReference = 6CC194CC36C8D9D4379769A7 /* NextAlarmWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -188,6 +272,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* app */,
+				FF92205D818D38C6CDBB4156 /* NextAlarmWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -201,6 +286,14 @@
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
 				FEAFEBB8663A9AEAAE6CB35B /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDE84CB9B31B9C284CCAC256 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				24944F152DB5591859B9135C /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -365,7 +458,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2BDD012D311FC76DFA74EF3C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9A58A9D9D3718C0FB44EAD19 /* NextAlarmWidget.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		29C62A6561EE7FEC7DAAE6C4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = NextAlarmWidget;
+			target = FF92205D818D38C6CDBB4156 /* NextAlarmWidget */;
+			targetProxy = 8719637787A47BDC91E7442D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -397,6 +507,7 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tntlikely.zhouerfuqi;
 				PRODUCT_NAME = app;
+				PROVISIONING_PROFILE_SPECIFIER = "$(ZF_APP_PROFILE)";
 				SWIFT_OBJC_BRIDGING_HEADER = "app/app-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -429,10 +540,34 @@
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.tntlikely.zhouerfuqi;
 				PRODUCT_NAME = app;
+				PROVISIONING_PROFILE_SPECIFIER = "$(ZF_APP_PROFILE)";
 				SWIFT_OBJC_BRIDGING_HEADER = "app/app-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		174C4A8BA86E9AF4EE7280BA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = NextAlarmWidget/NextAlarmWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JS3KDL8437;
+				INFOPLIST_FILE = NextAlarmWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tntlikely.zhouerfuqi.NextAlarmWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "$(ZF_WIDGET_PROFILE)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -570,6 +705,28 @@
 			};
 			name = Release;
 		};
+		943042133AD7AD54B88E53DB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = NextAlarmWidget/NextAlarmWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JS3KDL8437;
+				INFOPLIST_FILE = NextAlarmWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.4;
+				MARKETING_VERSION = 0.4.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.tntlikely.zhouerfuqi.NextAlarmWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "$(ZF_WIDGET_PROFILE)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -578,6 +735,15 @@
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
 				13B07F951A680F5B00A75B9A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		60B58715D3F56F453C615639 /* Build configuration list for PBXNativeTarget "NextAlarmWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				174C4A8BA86E9AF4EE7280BA /* Release */,
+				943042133AD7AD54B88E53DB /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

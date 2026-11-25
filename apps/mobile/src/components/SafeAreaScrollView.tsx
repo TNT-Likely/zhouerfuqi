@@ -7,7 +7,7 @@ export function SafeAreaScrollView({
   ...props
 }: ScrollViewProps & { backgroundColor: string }) {
   return (
-    <SafeAreaView edges={['top']} style={[styles.fill, { backgroundColor }]}>
+    <SafeAreaView edges={['top', 'right', 'bottom', 'left']} style={[styles.fill, { backgroundColor }]}>
       <ScrollView
         {...props}
         style={[styles.fill, style]}

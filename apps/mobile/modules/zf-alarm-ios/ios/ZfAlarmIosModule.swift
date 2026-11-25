@@ -2,6 +2,7 @@ import Foundation
 import UserNotifications
 import ExpoModulesCore
 import AlarmKit
+import WidgetKit
 
 /// 降级通知(UNUserNotificationCenter)的前台展示 + 点击路由。
 /// 点击:JS 已监听 → sendEvent 即时路由;JS 未就绪(冷启动)→ 落 UserDefaults,
@@ -54,6 +55,13 @@ public class ZfAlarmIosModule: Module {
     let scheduler = alarmScheduler
     Name("ZfAlarmIos")
     Events("zfNotificationTap")
+
+    Function("updateWidgetPlan") { (json: String) in
+      guard let defaults = UserDefaults(suiteName: "group.com.tntlikely.zhouerfuqi"),
+            defaults.string(forKey: "zf.next.alarms.v1") != json else { return }
+      defaults.set(json, forKey: "zf.next.alarms.v1")
+      WidgetCenter.shared.reloadTimelines(ofKind: "ZhouerfuqiNextAlarm")
+    }
 
     OnCreate {
       ZfNotificationDelegate.shared.module = self

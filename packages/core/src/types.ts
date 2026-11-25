@@ -11,6 +11,19 @@ export interface AlarmTime {
   label?: string;
 }
 
+export interface Shift {
+  id: string;
+  name: string;
+  times: AlarmTime[];
+}
+
+export interface DayOverride {
+  /** 完整替换当天的响铃时间。空列表表示这一天休息。 */
+  times?: AlarmTime[];
+  skippedTimeIds?: string[];
+  extraTimes?: AlarmTime[];
+}
+
 /**
  * 班制规则。日期一律使用 ISO `yyyy-mm-dd` 字符串(无时区歧义)。
  *
@@ -26,6 +39,7 @@ export type RepeatRule =
   | { kind: 'weekly'; weekdays: Weekday[] }
   | { kind: 'everyNWeeks'; n: number; weekdays: Weekday[]; anchor: string }
   | { kind: 'everyNDays'; n: number; anchor: string }
+  | { kind: 'cycle'; anchor: string; days: (string | null)[]; shifts: Shift[] }
   | { kind: 'customDates'; dates: string[] };
 
 /**
@@ -46,11 +60,13 @@ export interface AlarmGroup {
   times: AlarmTime[];
   rule: RepeatRule;
   holidayMode?: HolidayMode;
+  overrides?: Record<string, DayOverride>;
 }
 
 export type RingReason =
   | 'rule' // 规则命中(未被节假日取消)
-  | 'swap-workday'; // 调休补班日(规则未命中,但法定要上班)
+  | 'swap-workday' // 调休补班日(规则未命中,但法定要上班)
+  | 'override';
 
 export interface Occurrence {
   /** 所属闹钟组 */
@@ -61,6 +77,7 @@ export interface Occurrence {
   hour: number;
   minute: number;
   label?: string;
+  shiftName?: string;
   reason: RingReason;
 }
 
