@@ -16,7 +16,7 @@ All coordinates are pixels from the top left. On iOS and iPadOS 27 or later, the
 
 ## Sources · 源素材
 
-- The two illustrations are the original ImageGen PNGs. Edit the layered-paper scenery here. The prompts used for both images are preserved verbatim. 两幅母图保留 ImageGen 原始输出，改动蓝色纸景、光线或表盘时从这里开始。[Header illustration](sources/header-source.png) · [Search illustration](sources/search-source.png) · [Original prompts / 原始提示词](imagegen-briefs.md)
+- The original ImageGen illustrations measure 1914 × 822 px for the header and 1536 × 1024 px for search. Keep these source dimensions when editing the scenery, or update the source bounds in the renderer. 两幅母图保留 ImageGen 原始输出。改动纸景、光线或表盘时可沿用母图尺寸，采用新的画幅时同步调整脚本中的原图分区坐标。[Header illustration](sources/header-source.png) · [Search illustration](sources/search-source.png) · [Original prompts / 原始提示词](imagegen-briefs.md)
 - The localized cards are full crops of the 0.4.0 iOS home screen with sample shifts. On the 1320 × 2868 screen, the crop starts at (42, 405) and measures 1236 × 992 px. Only the background outside the four rounded corners is transparent. 英文卡显示 `7:00 AM`，中文卡显示 `07:00`。两张卡均取自 0.4.0 的 iOS 排班演示截图，保留原生字体、日期和系统登记状态。更新界面时，用相同语言的新截图替换相应卡片。[English card](sources/native-next-alarm-en-US.png) · [中文卡片](sources/native-next-alarm-zh-CN.png) · [Capture notes / 截图来源](../../.docs/acceptance-20261125-localization.md)
 
 ## Render · 导出
