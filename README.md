@@ -1,63 +1,44 @@
 <h1 align="center">
   <img src="apps/mobile/assets/icon.png" alt="" width="40" height="40" align="middle" />
-  周而复起 · RosterWake
+  RosterWake
 </h1>
 
-<p align="center"><strong>设好班表，闹钟按班次响。</strong></p>
-<p align="center"><a href="README.en.md">English</a> · 简体中文</p>
+<p align="center"><strong>A shift alarm for work schedules that change.</strong></p>
+<p align="center">English · <a href="README.zh-CN.md">简体中文</a></p>
 
 <p align="center">
-  <a href="docs/store-launch/zh-CN/app-store/01-next-alarm.png"><img src="docs/store-launch/zh-CN/app-store/01-next-alarm.png" alt="首页的下一次响铃及系统登记状态" width="31%" /></a>
-  <a href="docs/screens/promo.gif"><img src="docs/screens/promo.gif" alt="周而复起 0.3.0 的首页、排班月历和设置演示" width="31%" /></a>
-  <a href="docs/store-launch/zh-CN/app-store/02-calendar.png"><img src="docs/store-launch/zh-CN/app-store/02-calendar.png" alt="排班月历与当天响铃安排" width="31%" /></a>
+  <a href="docs/store-launch/en-US/app-store/01-next-alarm.png"><img src="docs/store-launch/en-US/app-store/01-next-alarm.png" alt="The next alarm and its system registration status" width="31%" /></a>
+  <a href="docs/store-launch/en-US/app-store/02-calendar.png"><img src="docs/store-launch/en-US/app-store/02-calendar.png" alt="A month of shifts and days off" width="31%" /></a>
+  <a href="docs/store-launch/en-US/app-store/03-rotation.png"><img src="docs/store-launch/en-US/app-store/03-rotation.png" alt="An early and late shift rotation with separate alarm times" width="31%" /></a>
 </p>
 
-<p align="center">
-  <a href="#下载">下载</a> · <a href="#从班表到响铃">使用方式</a> · <a href="#支持开发">支持开发</a>
-</p>
+<p align="center"><a href="docs/screens/promo.gif">Watch the demo (GIF, v0.3.0, Simplified Chinese)</a></p>
 
-周而复起是一款为大小周、轮班和自定义班表设计的开源闹钟。设好循环后，首页就能看到下一次响铃。排班数据保存在设备上，无需注册。
+Set a repeating shift rotation or pick dates on a calendar. RosterWake schedules your alarms from that plan and shows you which one is due next. Your schedules stay on your device.
 
-## 下载
+## Download
 
-| 渠道 | 入口 |
+| Platform | Where to find it |
 | --- | --- |
-| Android APK | [下载最新正式版](https://github.com/TNT-Likely/zhouerfuqi/releases/latest)。大多数安卓手机选择 `arm64-v8a`。 |
-| Android Google Play | [查看封闭测试招募和加入方式](https://github.com/TNT-Likely/zhouerfuqi/issues/1)。 |
-| iOS | [安装 TestFlight](https://apps.apple.com/app/testflight/id899247664)，再[加入周而复起测试](https://testflight.apple.com/join/9vNcHgha)。 |
+| Android APK | [Latest stable APK](https://github.com/TNT-Likely/zhouerfuqi/releases/latest). Most Android phones use `arm64-v8a`. |
+| Android on Google Play | [Closed test enrollment](https://github.com/TNT-Likely/zhouerfuqi/issues/1). |
+| iOS | [Join the public TestFlight beta](https://testflight.apple.com/join/9vNcHgha). |
 
-首发版支持简体中文和英文。上方静态截图来自 0.4.0，动图为 0.3.0 的操作演示。
+The 0.4.0 release includes English and Simplified Chinese. The screenshots above show 0.4.0.
 
-通过 GitHub APK 安装的用户，可在 **设置 → 检查更新** 中升级。
+## How it works
 
-## 从班表到响铃
+1. Choose weekdays, alternating Saturdays, a rotation such as 2 on and 2 off, or individual dates. Give each shift its own alarms.
+2. Check the next alarm on the home screen or widget. Use the monthly calendar to skip an alarm or change a single day.
+3. Open **Settings → Test alarm** to check the lock-screen behavior on your device.
 
-1. 在首页新建班组，选择排班规则。同一个班组可以设多个响铃时间，并一键开关整组。
-2. 在首页查看下次响铃和系统登记状态，或在月历查看整月班表。临时换班可以跳过一次或只改当天。
-3. 在 **设置 → 试响** 安排一次 30 秒试响，检查锁屏时的效果。
+On iOS 26 and later, RosterWake uses AlarmKit when alarm permission is granted. Earlier versions use local notifications. Android exact alarms and full-screen ringing depend on the device and its permission settings.
 
-| 规则 | 用法 |
-| --- | --- |
-| 每周几 | 每周固定在选中的星期几响铃，例如周一到周五。 |
-| 每 N 周 | 用一个锚点设置大小周等轮班周期。 |
-| 每 N 天 | 按固定天数间隔响铃，例如每三天一次。 |
-| 轮班循环 | 设置上二休二、早晚班轮换或自定义循环，为每种班次安排不同的闹钟。 |
-| 自定义月历 | 直接选中需要响铃的日期，适合每月变化的班表。 |
+You can export your schedule as a calendar file, or keep a JSON backup to restore later.
 
-班组可按需启用中国大陆法定节假日联动。固定班制会跳过放假日期，并可在调休补班日响铃。手动班表按选定日期响铃。节假日数据来自 [holiday-cn](https://github.com/NateScarlet/holiday-cn)。
+## Development
 
-## 响铃、外观与备份
-
-- **Android** 支持精确闹钟和锁屏全屏界面。可以在设置里查看响铃权限，按保活向导完成手机上的配置。
-- **iOS** 在 iOS 26 及以上使用 AlarmKit。较早的系统使用本地通知提醒。
-- 桌面小组件显示下一次响铃。支持导出班表为日历文件，也可以备份和恢复班组。
-- 在设置里可以切换日间或暗黑外观、调整主题色、更换头像。
-
-## 开发
-
-`packages/core` 是独立的 TypeScript 排班引擎，`apps/mobile` 是 Expo 和 React Native 应用。
-
-使用 Node.js 24 和 pnpm 11。
+The mobile app uses Expo and React Native. The scheduling engine lives in `packages/core`. Use Node.js 24 and pnpm 11.
 
 ```bash
 pnpm install --frozen-lockfile
@@ -65,12 +46,4 @@ pnpm test
 pnpm --dir apps/mobile start
 ```
 
-原生构建和真机调试见 [开发交接](docs/HANDOFF.md)。规则模型与响铃调度见 [技术架构](docs/architecture.md)。界面交互见 [HTML 设计稿](design/index.html)。
-
-GitHub Actions 提供三条发布流程。Release APK 发布签名 APK 和更新清单，Release Play 上传到 Google Play 封闭测试，Release iOS 上传到 TestFlight。
-
-## 支持开发
-
-如果周而复起帮你把班表和闹钟安排好了，欢迎通过同一作者的捐赠入口支持开发。[蜜蜂记账 BeeCount 捐赠页](https://github.com/TNT-Likely/BeeCount#-捐赠支持)
-
-[问题反馈](https://github.com/TNT-Likely/zhouerfuqi/issues) · [隐私说明](docs/privacy.md) · [MIT 许可证](LICENSE)
+[Report an issue](https://github.com/TNT-Likely/zhouerfuqi/issues) · [Privacy policy](docs/privacy.md) · [Support the developer](https://github.com/TNT-Likely/BeeCount#-捐赠支持) · [MIT license](LICENSE)
