@@ -7,6 +7,8 @@
 | 简体中文 | [中文文案](zh-CN/listing.md) | [iPhone 截图](zh-CN/app-store/) | [手机截图和宣传图](zh-CN/google-play/) |
 | English (U.S.) | [英文文案](en-US/listing.md) | [iPhone screenshots](en-US/app-store/) | [Phone screenshots and feature graphic](en-US/google-play/) |
 
+App Store 的标题横幅用昼夜交替表现轮班，中英文共用。搜索结果图展示对应语言的「下一次响铃」卡片。[标题横幅](app-store-creative/rosterwake-header.png) · [英文搜索图](app-store-creative/rosterwake-search-en-US.png) · [简中搜索图](app-store-creative/rosterwake-search-zh-CN.png) · [设计源文件与导出方法](../../design/app-store-creative/README.md)
+
 隐私政策使用 [仓库中的双语隐私政策](https://github.com/TNT-Likely/zhouerfuqi/blob/main/docs/privacy.md)，支持地址使用 [GitHub Issues](https://github.com/TNT-Likely/zhouerfuqi/issues)。商店发布时填写已公开可访问的对应地址。Google Play 的应用图标使用 [512 像素 PNG](google-play-icon.png)。iOS 图标从 App 自带资源获取。
 
 App Store Connect 的简体中文对应 `zh-Hans`，Google Play 对应 `zh-CN`。两个商店的美国英语均对应 `en-US`。
